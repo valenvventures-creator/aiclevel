@@ -5,7 +5,6 @@ import { Alert } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { demoLoginAction } from "@/server/auth/actions";
 import { dataMode } from "@/lib/env";
-import { DEMO_CREDENTIALS } from "@/server/db/demo-seed";
 
 export const metadata: Metadata = { title: "Log in" };
 
@@ -18,7 +17,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     <div className={wantsDemo ? "mt-8 rounded-2xl border border-line-gold bg-gold-400/[0.06] p-5" : "mt-6 rounded-2xl border border-line-gold bg-gold-400/[0.04] p-4"}>
       <p className="text-sm font-medium text-gold-200">Explore the Thought Authorities Demo</p>
       <p className="mt-1 text-xs text-ivory-muted">
-        A simulated organization with seeded data — clearly labelled and never presented as live A.I. output. ({DEMO_CREDENTIALS.email} / {DEMO_CREDENTIALS.password})
+        A simulated organization with seeded data — clearly labelled and never presented as live A.I. output.
       </p>
       <form action={demoLoginAction} className="mt-3">
         <Button variant={wantsDemo ? "gold" : "outline"} size="sm" type="submit" className="w-full">
