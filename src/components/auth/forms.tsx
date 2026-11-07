@@ -56,7 +56,7 @@ function DevLink({ state }: { state: FormState }) {
   if (!state.devLink) return null;
   return (
     <Alert tone="warn">
-      <strong>Demo mode — email delivery is simulated.</strong> Your secure link:{" "}
+      <strong>Local development — no email was sent.</strong> Your secure link:{" "}
       <Link href={state.devLink} className="underline underline-offset-2">
         open link
       </Link>

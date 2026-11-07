@@ -17,6 +17,13 @@ Secrets are never stored in localStorage. If `SESSION_SECRET` (≥ 32 chars) is 
 | Verify email | Token confirmed by POST button (link scanners can't consume it); resend rate-limited 3/h. Unverified users can use the product but cannot invite members or connect integrations. |
 | Invitations | 7-day token, SHA-256 hash stored, role ≤ inviter's assignable roles, email must match, membership created only in the invitation's organization, audited. |
 
+## Email delivery
+Without Supabase, account emails are sent through **Resend** (`src/server/email/`): verification at sign-up and on resend, password reset, and team invitations, using branded HTML and plain-text templates.
+- Configure with `RESEND_API_KEY` and `EMAIL_FROM`; the sender domain must be verified in Resend. Optional: `EMAIL_REPLY_TO`.
+- Links use `NEXT_PUBLIC_APP_URL`, then Netlify's runtime `URL`. They are never built from the request's Host header in production, which prevents password-reset link poisoning.
+- **Without an email provider:** production never shows verification or reset links on screen. Showing a reset link to whoever typed an email address would allow account takeover. Local development shows the link so the flows can be tested. Invitations fall back to a copyable link for the inviting admin only.
+- Supabase mode uses Supabase Auth's own emails for verification and recovery; invitations still go through Resend.
+
 ## Authorization
 `src/server/auth/permissions.ts` defines ~35 capabilities and a role → capability map:
 - **OWNER:** everything, including org deletion, ownership transfer, billing, CEO Leadership Intelligence.
