@@ -29,7 +29,18 @@ const QUICK: { label: string; mode: string; prompt: string }[] = [
   { label: "Executive vote", mode: "EXECUTIVE_VOTE", prompt: "" },
 ];
 
-export function SessionRunner({ sessionId, participants, modes, defaultMode, objective, autostart, canRun }: { sessionId: string; participants: RunnerExec[]; modes: ModeOption[]; defaultMode: string; objective: string; autostart: boolean; canRun: boolean }) {
+type StepEvent = { type: string; state?: string; executiveId?: string; executiveTitle?: string; stage?: string; label?: string; text?: string; error?: string; simulated?: boolean };
+
+const wait = (ms: number, signal: AbortSignal) => new Promise<void>((resolve) => {
+  const t = setTimeout(resolve, ms);
+  signal.addEventListener("abort", () => { clearTimeout(t); resolve(); }, { once: true });
+});
+
+/** Bounds the client loop independently of the server (which also caps a round's steps). */
+const MAX_CLIENT_STEPS = 60;
+const MAX_BUSY_WAITS = 20;
+
+export function SessionRunner({ sessionId, participants, modes, defaultMode, objective, autostart, resume, canRun }: { sessionId: string; participants: RunnerExec[]; modes: ModeOption[]; defaultMode: string; objective: string; autostart: boolean; resume: boolean; canRun: boolean }) {
   const router = useRouter();
   const [message, setMessage] = useState(autostart ? objective : "");
   const [mode, setMode] = useState(defaultMode);
@@ -44,9 +55,70 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
   const started = useRef(false);
   const map = new Map(participants.map((p) => [p.id, p]));
 
-  async function run(override?: { message?: string; mode?: string; only?: string }) {
-    const msg = (override?.message ?? message).trim();
-    if (!msg || running) return;
+  function onEvent(ev: StepEvent) {
+    if (ev.type === "stage") setStage(ev.label ?? null);
+    else if (ev.type === "turn_start") {
+      // A turn continued in a later step re-announces itself with the text so far.
+      setTurns((t) => {
+        const i = t.findIndex((x) => x.executiveId === ev.executiveId && x.stage === ev.stage && x.status === "speaking");
+        if (i === -1) return [...t, { executiveId: ev.executiveId!, stage: ev.stage!, text: ev.text ?? "", status: "speaking" }];
+        return t.map((x, j) => (j === i ? { ...x, text: ev.text ?? x.text } : x));
+      });
+    } else if (ev.type === "delta") setTurns((t) => t.map((x) => (x.executiveId === ev.executiveId && x.status === "speaking" ? { ...x, text: x.text + (ev.text ?? "") } : x)));
+    else if (ev.type === "turn_end") setTurns((t) => t.map((x) => (x.executiveId === ev.executiveId && x.status === "speaking" ? { ...x, status: "done", simulated: ev.simulated } : x)));
+    else if (ev.type === "turn_failed") {
+      setTurns((t) => t.map((x) => (x.executiveId === ev.executiveId && x.status === "speaking" ? { ...x, status: "failed", error: ev.error } : x)));
+      setFailures((f) => [...f, { id: ev.executiveId!, title: ev.executiveTitle ?? "Executive" }]);
+    } else if (ev.type === "error") setError(ev.error ?? "Session error");
+  }
+
+  /** Runs one bounded server step; returns how the step ended. */
+  async function step(signal: AbortSignal): Promise<string> {
+    const res = await fetch(`/api/sessions/${sessionId}/step`, { method: "POST", signal });
+    if (res.status === 429) return "busy";
+    if (!res.ok || !res.body) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? "The session could not continue.");
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    let ended = "interrupted";
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const ev = JSON.parse(line) as StepEvent;
+        if (ev.type === "step_end") {
+          ended = ev.state ?? "continue";
+          if (ev.state === "failed" && ev.error) setError(ev.error);
+        } else onEvent(ev);
+      }
+    }
+    return ended;
+  }
+
+  /** Drives the round step by step until it finishes, fails or is stopped. */
+  async function drive(ctrl: AbortController) {
+    let busy = 0;
+    let interrupted = 0;
+    for (let i = 0; i < MAX_CLIENT_STEPS && !ctrl.signal.aborted; i++) {
+      const state = await step(ctrl.signal);
+      if (state === "done" || state === "idle" || state === "failed") return;
+      if (state === "busy") {
+        // Another tab (or a step cut off a moment ago) holds the round; its lease expires shortly.
+        if (++busy > MAX_BUSY_WAITS) throw new Error("The session is busy in another window. Refresh the page to follow it.");
+        await wait(3000, ctrl.signal);
+      } else if (state === "interrupted") {
+        // The connection dropped mid-step; the server saved progress, so pick up again.
+        if (++interrupted > 3) throw new Error("The connection was interrupted. Refresh the page to resume the session.");
+        await wait(1500, ctrl.signal);
+      } else busy = 0;
+    }
+  }
+
+  async function begin(work: (ctrl: AbortController) => Promise<void>) {
     setRunning(true);
     setError(null);
     setTurns([]);
@@ -54,37 +126,7 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     try {
-      const m = override?.mode ?? mode;
-      const res = await fetch(`/api/sessions/${sessionId}/run`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: msg, mode: m, onlyExecutiveId: (override?.only ?? only) || undefined, voteOptions: m === "EXECUTIVE_VOTE" ? options.filter((o) => o.label.trim()) : undefined }),
-        signal: ctrl.signal,
-      });
-      if (!res.ok || !res.body) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? "The session could not run.");
-      setMessage("");
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
-      let buf = "";
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += dec.decode(value, { stream: true });
-        const lines = buf.split("\n");
-        buf = lines.pop() ?? "";
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          const ev = JSON.parse(line) as { type: string; executiveId?: string; executiveTitle?: string; stage?: string; label?: string; text?: string; error?: string; simulated?: boolean };
-          if (ev.type === "stage") setStage(ev.label ?? null);
-          else if (ev.type === "turn_start") setTurns((t) => [...t, { executiveId: ev.executiveId!, stage: ev.stage!, text: "", status: "speaking" }]);
-          else if (ev.type === "delta") setTurns((t) => t.map((x) => (x.executiveId === ev.executiveId && x.status === "speaking" ? { ...x, text: x.text + (ev.text ?? "") } : x)));
-          else if (ev.type === "turn_end") setTurns((t) => t.map((x) => (x.executiveId === ev.executiveId && x.status === "speaking" ? { ...x, status: "done", simulated: ev.simulated } : x)));
-          else if (ev.type === "turn_failed") {
-            setTurns((t) => t.map((x) => (x.executiveId === ev.executiveId && x.status === "speaking" ? { ...x, status: "failed", error: ev.error } : x)));
-            setFailures((f) => [...f, { id: ev.executiveId!, title: ev.executiveTitle ?? "Executive" }]);
-          } else if (ev.type === "error") setError(ev.error ?? "Session error");
-        }
-      }
+      await work(ctrl);
     } catch (e) {
       if ((e as Error).name !== "AbortError") setError((e as Error).message);
     } finally {
@@ -95,11 +137,38 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
     }
   }
 
+  async function run(override?: { message?: string; mode?: string; only?: string }) {
+    const msg = (override?.message ?? message).trim();
+    if (!msg || running) return;
+    await begin(async (ctrl) => {
+      const m = override?.mode ?? mode;
+      const res = await fetch(`/api/sessions/${sessionId}/run`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: msg, mode: m, onlyExecutiveId: (override?.only ?? only) || undefined, voteOptions: m === "EXECUTIVE_VOTE" ? options.filter((o) => o.label.trim()) : undefined }),
+        signal: ctrl.signal,
+      });
+      if (!res.ok) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? "The session could not run.");
+      setMessage("");
+      await drive(ctrl);
+    });
+  }
+
+  async function stop() {
+    abortRef.current?.abort();
+    await fetch(`/api/sessions/${sessionId}/run`, { method: "DELETE" }).catch(() => undefined);
+    router.refresh();
+  }
+
   useEffect(() => {
-    if (autostart && !started.current && canRun) {
+    if (started.current || !canRun) return;
+    if (resume) {
+      started.current = true;
+      queueMicrotask(() => void begin(drive)); // resume an unfinished round
+    } else if (autostart) {
       started.current = true;
       window.history.replaceState(null, "", `/sessions/${sessionId}`);
-      run({ message: objective });
+      queueMicrotask(() => void run({ message: objective }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
   }, []);
@@ -191,7 +260,7 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
           <div className="flex items-center justify-between">
             <span className="hidden text-[11px] text-ivory-faint sm:inline">⌘/Ctrl + Enter to convene · bounded to {participants.length} executives</span>
             {running ? (
-              <Button type="button" variant="outline" onClick={() => abortRef.current?.abort()}><Square className="size-3 fill-current" /> Stop session</Button>
+              <Button type="button" variant="outline" onClick={() => void stop()}><Square className="size-3 fill-current" /> Stop session</Button>
             ) : (
               <Button type="button" onClick={() => run()} disabled={!message.trim()}><Play className="size-4" /> Convene</Button>
             )}

@@ -1,22 +1,36 @@
 # C-Suite Orchestration
 
-The C-Suite Session is "convening leadership", implemented as a **server-side, bounded** orchestrator: `runCSuiteSession()` in `src/server/ai/orchestration/csuite-orchestrator.ts`, exposed as a streaming endpoint `POST /api/sessions/[id]/run`.
+The C-Suite Session is "convening leadership", implemented as a **server-side, bounded, stepwise** orchestrator in `src/server/ai/orchestration/csuite-orchestrator.ts`.
+
+Hosting platforms cap each request (Netlify: 60 s, including work after the response). A full round — several positions, reviews and a CEO synthesis — takes longer, so a round never runs in one request. It runs in **bounded steps**, the same pattern Studio uses (`advanceProductionJob`):
+
+| Endpoint | Function | What it does |
+|---|---|---|
+| `POST /api/sessions/[id]/run` | `startSessionRun()` | Records the question and the round's settings in `executive_sessions.run_state`; status `RUNNING`. JSON. |
+| `POST /api/sessions/[id]/step` | `advanceSessionRun()` | Runs ≤ `STEP_BUDGET_MS` (40 s) of the current stage under a 58 s lease. Streams NDJSON ending in `step_end`. |
+| `DELETE /api/sessions/[id]/run` | `cancelSessionRun()` | Stop: ends the round; what was already said stays in the record. |
 
 ```
-USER QUESTION
-  → load session, mode, participants (≤7), chair (CEO by default)
-  → persist question
-  → planStages(mode)                       (pure, unit-tested, bounded)
-  → for each stage:
-       resolve template (Prompt Registry)
-       for each turn (parallel for INDEPENDENT/VOTE, sequential otherwise):
-          assembleExecutiveContext (constitution, top-k memory, attachments)
-          aiGateway.stream → deltas → persist message (provider, model, prompt version, simulated)
-          on failure: retry ≤ maxRetries, then record "X could not complete the analysis" (no invented output)
-  → persist votes (EXECUTIVE_VOTE)
-  → CEO synthesis → structured Decision (recommendation, rationale, risks, confidence)
-  → done
+startSessionRun: persist question (metadata.run_id) → run_state { stage_index: 0, turns: {} }
+advanceSessionRun (one step):
+  take lease (busy if another step holds it)
+  plan = planStages(mode)                     (pure, unit-tested, bounded)
+  stage = plan[stage_index]; first step of a stage persists its label
+  pending turns stream (parallel for INDEPENDENT/VOTE, one at a time otherwise):
+     assembleExecutiveContext → aiGateway.stream
+     finished      → persist EXECUTIVE message (provider, model, prompt version, simulated, run_id)
+     budget hit    → keep partial text in run_state; next step continues it (<your_answer_so_far>)
+     error, no text→ retry ≤ maxRetries, then record "X could not complete the analysis" (never invented)
+     two steps with no new text → recorded as "could not respond within the time limit"
+  all turns done → stage_index + 1
+  past last stage → votes (this round's VOTE messages) → CEO synthesis → PROPOSED Decision
+                    → status ACTIVE, run_state null → step_end "done"
+  otherwise       → release lease → step_end "continue"
 ```
+
+The client (`SessionRunner`) starts the round, then calls `/step` until `done`, `idle` or `failed` (at most 60 client steps; the server stops a round after `MAX_STEPS` = 40). If the page is reloaded or the tab closed mid-round, the round is resumed automatically the next time the session is opened. A new question while an unfinished round has no active lease replaces it (recorded as "interrupted"). A step cut off by the host never leaves a session locked: the lease simply expires.
+
+Effort is `medium` for the first part of an answer and `low` for continuations, so the first text arrives inside a step.
 
 ## Modes (`src/config/sessions/modes.ts`)
 | Mode | Stages |
@@ -35,10 +49,10 @@ USER QUESTION
 If a review's lead is not at the table, that stage is skipped (never silently substituted). "Call on" runs a single executive.
 
 ## Bounds (`SESSION_LIMITS`)
-`maxParticipants = 7`, `maxRounds = 5`, `maxRetries = 1`, `maxTokensPerTurn`, `requestTimeoutMs` per stage, `costBudgetUsd` (budget enforcement hook in the gateway usage stream — Phase 6 hardening). Stage count and turn count are finite by construction; there is no "continue until agreement" loop.
+`maxParticipants = 7`, `maxRounds = 5`, `maxRetries = 1`, `maxTokensPerTurn`, `costBudgetUsd` (budget enforcement hook in the gateway usage stream — Phase 6 hardening). Stage count and turn count are finite by construction; there is no "continue until agreement" loop.
 
 ## Events (NDJSON)
-`stage`, `turn_start`, `delta`, `turn_end`, `turn_failed`, `decision`, `done`, `error`. The client (`SessionRunner`) renders live turns with a speaking indicator, then refreshes to the persisted transcript. Failed executives surface "Retry CFO analysis?".
+`stage`, `turn_start` (carries the text so far when a turn continues), `delta`, `turn_end`, `turn_failed`, `decision`, `done`, `step_end` (`continue` | `done` | `busy` | `idle` | `failed`), `error`. The client (`SessionRunner`) renders live turns with a speaking indicator, then refreshes to the persisted transcript. Failed executives surface "Retry CFO analysis?".
 
 ## Records
 - Transcript: `executive_session_messages` (sequence-numbered, metadata includes memory ids and context layers).

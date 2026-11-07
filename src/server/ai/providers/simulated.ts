@@ -39,7 +39,10 @@ export const SimulatedAdapter: ProviderAdapter = {
   isAvailable: () => true,
   async *stream(req): AsyncIterable<StreamChunk> {
     yield { type: "meta", provider: "simulated", model: "demo-template", simulated: true };
-    const text = compose(req);
+    let text = compose(req);
+    // A continuation request (Studio or C-Suite Session step) resumes after what was already written.
+    const soFar = /<(?:draft_so_far|your_answer_so_far)>\n([\s\S]*)\n<\/(?:draft_so_far|your_answer_so_far)>/.exec(lastUser(req))?.[1];
+    if (soFar && text.startsWith(soFar)) text = text.slice(soFar.length);
     const words = text.split(/(\s+)/);
     for (let i = 0; i < words.length; i += 6) {
       if (req.signal?.aborted) return;
