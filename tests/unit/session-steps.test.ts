@@ -6,13 +6,17 @@ import type { GenerateRequest, StreamChunk } from "@/server/ai/gateway/types";
  * apart, honouring the abort signal like a real streaming provider. A
  * continuation request resumes after the words already written.
  */
-const script = { words: [] as string[], delayMs: 0, calls: [] as GenerateRequest[], byTask: {} as Record<string, string[]> };
+const script = { words: [] as string[], delayMs: 0, calls: [] as GenerateRequest[], byTask: {} as Record<string, string[]>, webSources: false };
 
 vi.mock("@/server/ai/gateway", () => ({
   aiGateway: {
     async *stream(req: GenerateRequest): AsyncGenerator<StreamChunk> {
       script.calls.push(req);
       yield { type: "meta", provider: "anthropic", model: "claude-opus-5-5", simulated: false };
+      if (script.webSources && req.webResearch) {
+        yield { type: "activity", activity: "web_search" };
+        yield { type: "sources", sources: [{ url: "https://market.example/uk", title: "UK market 2026", cited: true }] };
+      }
       const soFar = /<your_answer_so_far>\n([\s\S]*)\n<\/your_answer_so_far>/.exec(req.messages[0].content)?.[1] ?? "";
       const start = soFar.trim() ? soFar.trim().split(/\s+/).length : 0;
       for (const w of (script.byTask[req.taskType] ?? script.words).slice(start)) {
@@ -55,6 +59,7 @@ describe("stepwise C-Suite Sessions", () => {
   beforeEach(async () => {
     script.calls = [];
     script.byTask = {};
+    script.webSources = false;
     await seedExecutivesForOrganization(org.id);
   });
 
@@ -237,5 +242,30 @@ describe("stepwise C-Suite Sessions", () => {
     expect(records[0]).toMatchObject({ status: "VERIFIED", category: "DECISIONS", verified_by: "u1" });
     expect(records[0].content).toContain("Chosen option: B — Wait");
     expect(records[0].content).toContain("The CEO had recommended option A.");
+  });
+
+  it("lets granted executives research the web in their positions, with sources kept on the record", async () => {
+    script.delayMs = 0;
+    script.words = ["Position."];
+    script.webSources = true;
+    const id = await newSession();
+    await startSessionRun({ organization: org, userId: "u1", sessionId: id, userMessage: "Enter the UK?" });
+    const activity: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      const r = await step(id, 2000);
+      activity.push(...r.events.filter((e) => e.type === "activity").map((e) => e.type));
+      if (r.state !== "continue") break;
+    }
+    expect(activity.length).toBeGreaterThan(0);
+    const messages = await db().sessionMessages.list(org.id, { where: { session_id: id }, orderBy: "sequence_number" });
+    const positions = messages.filter((m) => m.stage === "INDEPENDENT" && m.speaker_type === "EXECUTIVE");
+    expect(positions).toHaveLength(3);
+    for (const m of positions) {
+      expect(m.content).toContain("**Sources (web research)**");
+      expect(m.metadata.sources).toEqual([{ url: "https://market.example/uk", title: "UK market 2026", cited: true }]);
+    }
+    // No web research for the synthesis, and the research rules are in the researching executives' instructions.
+    expect(script.calls.find((c) => c.taskType === "session_synthesis")?.webResearch).toBeUndefined();
+    expect(script.calls.find((c) => c.taskType === "session_position")?.system).toContain("WEB RESEARCH");
   });
 });

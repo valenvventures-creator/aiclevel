@@ -276,7 +276,7 @@ export interface SessionRunState {
   /** Index into the bounded stage plan. */
   stage_index: number;
   /** Per-executive progress in the current stage. */
-  turns: Record<string, { text: string; done: boolean; attempts: number; empty_steps: number }>;
+  turns: Record<string, { text: string; done: boolean; attempts: number; empty_steps: number; sources?: { url: string; title: string; cited: boolean }[] }>;
   steps: number;
   lease_until: string | null;
   started_at: string;

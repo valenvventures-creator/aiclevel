@@ -19,10 +19,12 @@ export async function assembleExecutiveContext(args: {
   projectId?: string | null;
   fileIds?: string[];
   taskInstructions?: string;
+  /** True when the answer may use web research (see webResearchFor). */
+  webResearch?: boolean;
 }): Promise<BuiltPrompt & { memoryIds: string[] }> {
   const orgId = args.organization.id;
   const d = db();
-  const [constitution, memory, files, project, ceoIntelligence, platformRules, core] = await Promise.all([
+  const [constitution, memory, files, project, ceoIntelligence, platformRules, core, webResearchRules] = await Promise.all([
     getConstitution(orgId),
     retrieveMemory({ organizationId: orgId, query: args.query, executiveRole: args.exec.role_code, allowedCategories: args.exec.model.memory_categories, projectId: args.projectId, viewerRole: args.viewerRole, limit: 8 }),
     Promise.all((args.fileIds ?? []).slice(0, 5).map((id) => d.files.get(orgId, id))),
@@ -30,6 +32,7 @@ export async function assembleExecutiveContext(args: {
     args.exec.role_code === "CEO" ? d.ceoIntelligence.list(orgId, { where: { included: true }, limit: 20 }) : Promise.resolve([]),
     PromptRegistry.resolve(orgId, "platform_rules"),
     resolveCore(orgId, args.exec),
+    args.webResearch ? PromptRegistry.resolve(orgId, "web_research_rules") : Promise.resolve(null),
   ]);
   const ctx: ContextBundle = {
     organization: args.organization,
@@ -39,6 +42,6 @@ export async function assembleExecutiveContext(args: {
     project,
     ceoIntelligence,
   };
-  const built = buildExecutivePrompt({ platformRules, core, exec: args.exec, ctx, taskInstructions: args.taskInstructions });
+  const built = buildExecutivePrompt({ platformRules, core, exec: args.exec, ctx, taskInstructions: args.taskInstructions, webResearchRules });
   return { ...built, memoryIds: memory.map((m) => m.record.id) };
 }

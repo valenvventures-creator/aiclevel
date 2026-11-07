@@ -23,7 +23,7 @@ export const TOOL_REGISTRY: Record<string, ToolDefinition> = {
   get_organization_profile: { key: "get_organization_profile", label: "Organization profile", description: "Read the Organization Constitution.", kind: "internal", risk: "read", requiresApproval: false },
   calculator: { key: "calculator", label: "Calculator", description: "Deterministic arithmetic for financial analysis.", kind: "internal", risk: "compute", requiresApproval: false },
   spreadsheet_analysis: { key: "spreadsheet_analysis", label: "Spreadsheet analysis", description: "Analyze CSV/XLSX data.", kind: "internal", risk: "compute", requiresApproval: false },
-  web_research: { key: "web_research", label: "Web research", description: "Provider-hosted web search with citations.", kind: "provider", risk: "external_read", requiresApproval: false },
+  web_research: { key: "web_research", label: "Web research", description: "Search the web for current outside facts (markets, competitors, regulations, news) with sources cited. Runs on Claude's server-side web search; never sends confidential details in queries.", kind: "provider", risk: "external_read", requiresApproval: false },
   market_data: { key: "market_data", label: "Market data", description: "Approved market-data integration.", kind: "mcp", risk: "external_read", requiresApproval: false, requiresIntegration: "market_data" },
   code_tools: { key: "code_tools", label: "Code tools", description: "Sandboxed code execution.", kind: "provider", risk: "compute", requiresApproval: false },
   security_analysis: { key: "security_analysis", label: "Security analysis", description: "Security posture review tooling.", kind: "mcp", risk: "external_read", requiresApproval: false, requiresIntegration: "security" },

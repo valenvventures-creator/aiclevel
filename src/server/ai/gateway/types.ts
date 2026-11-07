@@ -29,18 +29,33 @@ export interface GenerateRequest {
   modelPreference?: { provider: ProviderId; model: string; fallbackProvider?: ProviderId | null; fallbackModel?: string | null; effort?: "low" | "medium" | "high" | "xhigh" | "max" };
   maxTokens?: number;
   promptVersion?: string;
+  /**
+   * Allow provider-hosted web search (Claude's server-side web_search tool),
+   * bounded to maxUses searches. Only providers that support it use it.
+   */
+  webResearch?: { maxUses: number };
   signal?: AbortSignal;
   correlationId?: string;
 }
 
+export interface WebSource {
+  url: string;
+  title: string;
+  /** True when the answer cites this page; false when it was only consulted. */
+  cited: boolean;
+}
+
 export interface StreamChunk {
-  type: "text" | "meta" | "error" | "done";
+  /** "activity": the model started a web search; "sources": web pages found or cited so far. */
+  type: "text" | "meta" | "error" | "done" | "activity" | "sources";
+  activity?: "web_search";
+  sources?: WebSource[];
   text?: string;
   provider?: ProviderId;
   model?: string;
   simulated?: boolean;
   error?: string;
-  usage?: { input_tokens: number; output_tokens: number };
+  usage?: { input_tokens: number; output_tokens: number; web_search_requests?: number };
   stopReason?: string;
 }
 

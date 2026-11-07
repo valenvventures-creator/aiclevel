@@ -19,6 +19,7 @@ import { assignableRoles, can } from "@/server/auth/permissions";
 import {
   addCeoIntelligenceAction, ceoIntelligenceOpAction, changePasswordAction, changeRoleAction, inviteMemberAction, removeMemberAction,
   revokeOtherSessionsAction, sendTestEmailAction, updateConstitutionAction, updateOrganizationAction, updateProfileAction,
+  setWebResearchForAllAction,
 } from "@/server/settings/actions";
 import { emailDiagnostics } from "@/server/email/diagnostics";
 
@@ -256,7 +257,27 @@ async function Tools({ ctx }: C) {
   const [execs, cfgs] = await Promise.all([AIExecutiveRegistry.getAllExecutives(ctx.organization.id), db().modelConfigs.list(ctx.organization.id)]);
   const cfg = new Map(cfgs.map((c) => [c.executive_id, c]));
   const tools = Object.values(TOOL_REGISTRY);
+  const withWeb = execs.filter((e) => cfg.get(e.id)?.tool_permissions.includes("web_research"));
+  const canConfigure = can(ctx.role, "executives.configure");
   return (
+    <>
+    <Card>
+      <SectionTitle>Web research</SectionTitle>
+      <p className="text-sm text-ivory-muted">
+        Executives with web research can search the web for current outside facts (markets, competitors, regulations, prices, news) when a question needs them, and list their sources under the answer.
+        Searches are limited per answer, never include confidential details, and web pages are treated as untrusted information.
+      </p>
+      <p className="mt-2 text-xs text-ivory-faint">
+        Turned on for {withWeb.length} of {execs.length} executives{withWeb.length > 0 && withWeb.length < execs.length ? ` (${withWeb.map((e) => e.short_title).join(", ")})` : ""}.
+        Requires a connected Anthropic (Claude) key; Claude web search costs about $0.01 per search. In demo mode answers are simulated and no searches run.
+      </p>
+      {canConfigure && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {withWeb.length < execs.length && <form action={setWebResearchForAllAction}><input type="hidden" name="enabled" value="true" /><Button size="sm" variant="gold">Turn on for all executives</Button></form>}
+          {withWeb.length > 0 && <form action={setWebResearchForAllAction}><input type="hidden" name="enabled" value="false" /><Button size="sm" variant="outline">Turn off for all</Button></form>}
+        </div>
+      )}
+    </Card>
     <Card>
       <p className="mb-4 text-sm text-ivory-muted">Tool access is role-specific. Tools marked <Badge tone="warn">Approval</Badge> always go through the Human Approval Layer. MCP tools require a connected integration.</p>
       <div className="overflow-x-auto">
@@ -274,6 +295,7 @@ async function Tools({ ctx }: C) {
       </div>
       <p className="mt-3 text-xs text-ivory-faint">Edit grants per executive in A.I. C-Suite → Configure.</p>
     </Card>
+    </>
   );
 }
 

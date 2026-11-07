@@ -13,7 +13,7 @@ C-Suite Memory is organizational intelligence — facts, decisions, commitments,
 human entry · uploaded document · executive conversation · C-Suite Session · report · external integration · API · research · import (onboarding Constitution).
 
 ## Retrieval (`src/server/memory/retrieval.ts`)
-Score = (0.55·similarity + 0.15·recency + 0.15·importance + executive-relevance boost + project boost + pin boost) × status weight, after hard filters: organization, not archived, viewer visibility, executive's permitted categories. Top-k (default 8) only — the full memory is never sent to a model.
+Score = (0.55·similarity + 0.15·recency + 0.15·importance + executive-relevance boost + project boost + pin boost) × status weight, after hard filters: organization, not archived, viewer visibility, executive's permitted categories (except approved decisions: VERIFIED or USER_CONFIRMED records in DECISIONS are organization-wide and every executive may recall them, see `isSharedDecision`). Top-k (default 8) only — the full memory is never sent to a model.
 
 - Demo/default: lexical embedding (hashed bag-of-words, 256-d) — labelled as lexical, not semantic.
 - Production: provider embeddings into `semantic_embedding vector(1536)`; `match_memory_records()` pre-filters ~40 candidates by cosine distance (HNSW), then the same ranking applies. Embedding worker is Phase 7.

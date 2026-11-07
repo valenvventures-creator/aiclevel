@@ -6,6 +6,8 @@ import { audit } from "@/server/audit";
 import { aiGateway } from "@/server/ai/gateway";
 import { fill, PromptRegistry } from "@/server/ai/prompts/registry";
 import { assembleExecutiveContext } from "@/server/ai/executives/context";
+import { mergeSources, sourcesMarkdown, stripSourcesSection, webResearchFor } from "@/server/ai/web-research";
+import type { WebSource } from "@/server/ai/gateway/types";
 import { notify } from "@/server/notifications";
 import type { Organization, ProductionJob, ProviderId, Role } from "@/types/domain";
 import { deriveTitle, routeStudioRequest } from "./router";
@@ -76,6 +78,10 @@ interface StepMeta {
   lease_until?: string | null;
   pending_revision?: string | null;
   error?: string;
+  /** Web pages found or cited while writing the current draft (kept across steps). */
+  draft_sources?: WebSource[];
+  /** Web sources of the latest finished version. */
+  sources?: WebSource[];
   [k: string]: unknown;
 }
 
@@ -91,7 +97,7 @@ export async function queueRevision(orgId: string, jobId: string, note: string) 
   const job = await db().productionJobs.get(orgId, jobId);
   if (!job) return;
   const meta = (job.metadata ?? {}) as StepMeta;
-  await db().productionJobs.update(orgId, jobId, { status: "REVISION_REQUESTED", metadata: { ...meta, pending_revision: note, draft: "", steps: 0, empty_steps: 0, lease_until: null, error: undefined } });
+  await db().productionJobs.update(orgId, jobId, { status: "REVISION_REQUESTED", metadata: { ...meta, pending_revision: note, draft: "", draft_sources: [], steps: 0, empty_steps: 0, lease_until: null, error: undefined } });
 }
 
 /** Reset a failed job so the next steps start over. */
@@ -99,7 +105,7 @@ export async function queueRetry(orgId: string, jobId: string) {
   const job = await db().productionJobs.get(orgId, jobId);
   if (!job) return;
   const meta = (job.metadata ?? {}) as StepMeta;
-  await db().productionJobs.update(orgId, jobId, { status: job.status === "FAILED" ? "QUEUED" : job.status, metadata: { ...meta, draft: "", steps: 0, empty_steps: 0, lease_until: null, error: undefined } });
+  await db().productionJobs.update(orgId, jobId, { status: job.status === "FAILED" ? "QUEUED" : job.status, metadata: { ...meta, draft: "", draft_sources: [], steps: 0, empty_steps: 0, lease_until: null, error: undefined } });
 }
 
 export async function advanceProductionJob(args: { organization: Organization; userId: string; viewerRole: Role; jobId: string; budgetMs?: number }): Promise<AdvanceResult> {
@@ -135,9 +141,11 @@ export async function advanceProductionJob(args: { organization: Organization; u
     artifact_type: job.artifact_type,
     request: job.request,
     contributors: contributors.map((c) => `${c.title} (${c.persona.primary_question})`).join("; ") || "none",
-    revision: revisionNote && prior ? `REVISION REQUEST: ${revisionNote}\nRevise the previous version below accordingly.\n<retrieved_content>\n${prior.content.slice(0, 20000)}\n</retrieved_content>` : "",
+    revision: revisionNote && prior ? `REVISION REQUEST: ${revisionNote}\nRevise the previous version below accordingly.\n<retrieved_content>\n${stripSourcesSection(prior.content).slice(0, 20000)}\n</retrieved_content>` : "",
   });
-  const built = await assembleExecutiveContext({ organization: args.organization, viewerRole: args.viewerRole, exec: lead, query: job.request, projectId: job.project_id, taskInstructions: task });
+  const web = webResearchFor(lead, "studio_production", { continuing: Boolean(draft) });
+  const built = await assembleExecutiveContext({ organization: args.organization, viewerRole: args.viewerRole, exec: lead, query: job.request, projectId: job.project_id, taskInstructions: task, webResearch: Boolean(web) });
+  let sources: WebSource[] = draft ? (meta.draft_sources ?? []) : [];
 
   // Continuation steps see the draft so far and must only add to it.
   const userContent = draft
@@ -166,9 +174,11 @@ export async function advanceProductionJob(args: { organization: Organization; u
       // Medium effort keeps time-to-first-text inside one step; later steps only continue writing.
       modelPreference: { provider: lead.model.primary_provider, model: lead.model.primary_model, fallbackProvider: lead.model.fallback_provider, fallbackModel: lead.model.fallback_model, effort: draft || (meta.empty_steps ?? 0) > 0 ? "low" : "medium" },
       promptVersion: tpl.versionTag,
+      webResearch: web,
       signal: ctrl.signal,
     })) {
-      if (c.type === "meta" && c.provider) {
+      if (c.type === "sources") sources = mergeSources(sources, c.sources);
+      else if (c.type === "meta" && c.provider) {
         provider = c.provider;
         model = c.model ?? null;
         simulated = Boolean(c.simulated);
@@ -176,7 +186,7 @@ export async function advanceProductionJob(args: { organization: Organization; u
         added += c.text;
         if (Date.now() - lastSave > STUDIO_LIMITS.DRAFT_SAVE_EVERY_MS) {
           lastSave = Date.now();
-          await d.productionJobs.update(orgId, job.id, { metadata: { ...meta, steps, lease_until: leaseUntil, draft: draft + added } });
+          await d.productionJobs.update(orgId, job.id, { metadata: { ...meta, steps, lease_until: leaseUntil, draft: draft + added, draft_sources: sources } });
         }
       } else if (c.type === "done") finished = c.stopReason !== "max_tokens";
       else if (c.type === "error") error = c.error ?? "Unknown error";
@@ -189,8 +199,9 @@ export async function advanceProductionJob(args: { organization: Organization; u
   if (error && !added) return fail(error);
 
   if (finished && !ctrl.signal.aborted) {
-    await d.artifacts.insert({ id: newId(), organization_id: orgId, job_id: job.id, version: (prior?.version ?? 0) + 1, artifact_type: job.artifact_type, content: full, file_id: null, revision_note: revisionNote, simulated, created_at: nowIso() });
-    await d.productionJobs.update(orgId, job.id, { status: "AWAITING_REVIEW", provider, model, completed_at: nowIso(), metadata: { ...meta, steps, draft: "", empty_steps: 0, lease_until: null, pending_revision: null, error: undefined } });
+    // Finished Work that used web research lists its sources.
+    await d.artifacts.insert({ id: newId(), organization_id: orgId, job_id: job.id, version: (prior?.version ?? 0) + 1, artifact_type: job.artifact_type, content: full + sourcesMarkdown(sources), file_id: null, revision_note: revisionNote, simulated, created_at: nowIso() });
+    await d.productionJobs.update(orgId, job.id, { status: "AWAITING_REVIEW", provider, model, completed_at: nowIso(), metadata: { ...meta, steps, draft: "", draft_sources: [], sources, empty_steps: 0, lease_until: null, pending_revision: null, error: undefined } });
     if (revisionNote) await audit(orgId, args.userId, "studio.revision", "production_job", job.id, {});
     await notify(orgId, args.userId, "studio.finished", "Finished Work ready", `${lead.title} completed "${job.title}".`, `/studio/${job.id}`);
     return { state: "done" };
@@ -201,6 +212,6 @@ export async function advanceProductionJob(args: { organization: Organization; u
   if (empty >= STUDIO_LIMITS.MAX_EMPTY_STEPS) {
     return fail(`${lead.title} did not produce any text within the hosting time limit. Retry, or lower this executive's reasoning effort in Settings → A.I. C-Suite.`);
   }
-  await d.productionJobs.update(orgId, job.id, { provider, model, metadata: { ...meta, steps, draft: full, empty_steps: empty, lease_until: null } });
+  await d.productionJobs.update(orgId, job.id, { provider, model, metadata: { ...meta, steps, draft: full, draft_sources: sources, empty_steps: empty, lease_until: null } });
   return { state: "continue", draftChars: full.length };
 }

@@ -74,6 +74,8 @@ export function buildExecutivePrompt(args: {
   exec: ResolvedExecutive;
   ctx: ContextBundle;
   taskInstructions?: string;
+  /** Present when this answer may use web research. */
+  webResearchRules?: ResolvedTemplate | null;
 }): BuiltPrompt {
   const { exec, ctx } = args;
   const layers: string[] = [];
@@ -97,6 +99,7 @@ export function buildExecutivePrompt(args: {
     }
   }
   if (args.taskInstructions) push("task_instructions", `# TASK INSTRUCTIONS\n${args.taskInstructions}`);
+  if (args.webResearchRules) push("web_research", `# ${args.webResearchRules.content}`);
   if (ctx.memory.length) {
     push(
       "c_suite_memory",
@@ -110,7 +113,7 @@ export function buildExecutivePrompt(args: {
   }
   if (ctx.project) push("project", `# PROJECT CONTEXT\n<project>\n${esc(ctx.project.name)}: ${esc(ctx.project.description)}\n</project>`);
 
-  return { system: parts.join("\n\n"), promptVersion: args.core.versionTag, layers };
+  return { system: parts.join("\n\n"), promptVersion: args.webResearchRules ? `${args.core.versionTag}+${args.webResearchRules.versionTag}` : args.core.versionTag, layers };
 }
 
 export function formatTranscript(entries: { speaker: string; stage: string; content: string }[], maxChars = 24000): string {

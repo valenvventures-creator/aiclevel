@@ -38,6 +38,15 @@ export interface ScoredMemory {
   similarity: number;
 }
 
+/**
+ * Decisions a person approved (or confirmed) are organization-wide knowledge:
+ * every executive may recall them, whatever memory categories their role
+ * normally searches. Unverified (PROPOSED) decision records stay scoped.
+ */
+export function isSharedDecision(r: Pick<MemoryRecord, "category" | "status">): boolean {
+  return r.category === "DECISIONS" && (r.status === "VERIFIED" || r.status === "USER_CONFIRMED");
+}
+
 export function rankMemories(records: MemoryRecord[], q: RetrievalQuery): ScoredMemory[] {
   const qv = lexicalEmbedding(q.query);
   const now = (q.now ?? new Date()).getTime();
@@ -46,7 +55,7 @@ export function rankMemories(records: MemoryRecord[], q: RetrievalQuery): Scored
     if (r.organization_id !== q.organizationId) continue; // tenant isolation, defence in depth
     if (r.status === "ARCHIVED") continue;
     if (!canView(r, q.viewerRole)) continue;
-    if (q.allowedCategories && q.allowedCategories !== "ALL" && !q.allowedCategories.includes(r.category)) continue;
+    if (q.allowedCategories && q.allowedCategories !== "ALL" && !q.allowedCategories.includes(r.category) && !isSharedDecision(r)) continue;
 
     const vec = r.embedding && r.embedding.length === qv.length ? r.embedding : lexicalEmbedding(`${r.title} ${r.content}`);
     const similarity = cosine(qv, vec);

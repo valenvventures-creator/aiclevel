@@ -130,6 +130,7 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
                     {synth && e && <ExecutiveAvatar src={e.avatar_url} shortTitle={e.short_title} accent={e.accent} size={28} ring={false} />}
                     <span className="text-sm font-semibold" style={{ color: e?.accent }}>{synth ? `${e?.title ?? "Chair"} — Synthesis` : e?.title}</span>
                     <span className="font-mono text-[10px] text-ivory-faint">{m.stage.replace(/_/g, " ")}</span>
+                    {Array.isArray(m.metadata?.sources) && m.metadata.sources.length > 0 && <Badge tone="info">Web research</Badge>}
                     {m.simulated && <SimulatedBadge />}
                   </div>
                   <Markdown>{synth ? stripRecommendedLine(m.content) : m.content}</Markdown>

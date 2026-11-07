@@ -70,7 +70,7 @@ export async function saveAsReportAction(fd: FormData) {
   if (!art) return;
   const cap = STUDIO_CAPABILITIES.find((c) => c.key === job.capability_key);
   const reportId = newId();
-  await db().reports.insert({ id: reportId, organization_id: orgId, project_id: job.project_id, report_type: cap?.report_type ?? "CEO Executive Brief", title: job.title, summary: art.content.replace(/[#>*_|-]/g, "").slice(0, 220).trim(), content: art.content, lead_executive_id: job.lead_executive_id, contributing_executive_ids: job.contributor_executive_ids, sources: [], version: art.version, source_session_id: null, simulated: art.simulated, created_by: ctx.user.id, created_at: nowIso() });
+  await db().reports.insert({ id: reportId, organization_id: orgId, project_id: job.project_id, report_type: cap?.report_type ?? "CEO Executive Brief", title: job.title, summary: art.content.replace(/[#>*_|-]/g, "").slice(0, 220).trim(), content: art.content, lead_executive_id: job.lead_executive_id, contributing_executive_ids: job.contributor_executive_ids, sources: (Array.isArray(job.metadata?.sources) ? (job.metadata.sources as { url: string; title: string }[]) : []).map((s) => ({ label: s.title, url: s.url })), version: art.version, source_session_id: null, simulated: art.simulated, created_by: ctx.user.id, created_at: nowIso() });
   await audit(orgId, ctx.user.id, "report.create", "report", reportId, { from_job: id });
   redirect(`/reports/${reportId}`);
 }
