@@ -24,6 +24,8 @@ function compose(req: GenerateRequest): string {
   switch (req.taskType) {
     case "session_vote":
       return `${SIMULATED_BANNER}\n\n| Option | Score | Reason |\n|---|---|---|\n| A | 7 | Strongest on ${lens.lens}. |\n| B | 5 | Viable, but ${lens.risk}. |\n\nVOTE: A | CONFIDENCE: 60`;
+    case "vote_options":
+      return "A: Proceed as proposed\nB: Run a limited pilot first\nC: Do not proceed for now";
     case "session_synthesis":
       return `${SIMULATED_BANNER}\n\n## Recommendation\nProceed in a staged, reversible way with a defined pilot before full commitment.\n\n## Rationale\nThe executive positions converge on value, but each seat raised a condition that a pilot can test cheaply.\n\n## Where the C-Suite agrees\n- The opportunity is aligned with current priorities.\n- A named owner and explicit success metrics are required.\n\n## Preserved dissent\n- Template output cannot represent genuine dissent; a live model will preserve real disagreement here.\n\n## Key risks\n| Risk | Severity | Owner |\n|---|---|---|\n| Unvalidated assumptions | MEDIUM | CEO |\n| Unreviewed obligations | MEDIUM | CLO |\n\n## Next steps\n| Action | Owner | When |\n|---|---|---|\n| Define pilot scope and metrics | CHRO | 1 week |\n| Build base/upside/downside model | CFO | 2 weeks |\n\n## Confidence\n55% — simulated; connect a provider for a real synthesis.`;
     case "studio_production":

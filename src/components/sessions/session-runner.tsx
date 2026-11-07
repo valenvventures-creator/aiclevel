@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Play, Plus, Square, Trash2 } from "lucide-react";
+import { Loader2, Play, Plus, Sparkles, Square, Trash2 } from "lucide-react";
 import { ExecutiveAvatar } from "@/components/executives/executive-avatar";
 import { Markdown } from "@/components/ui/markdown";
 import { Alert, Label, Select, SimulatedBadge, Textarea } from "@/components/ui/primitives";
@@ -27,9 +27,14 @@ const QUICK: { label: string; mode: string; prompt: string }[] = [
   { label: "Seek consensus", mode: "CONSENSUS", prompt: "" },
   { label: "Preserve dissent", mode: "DISSENT", prompt: "" },
   { label: "Executive vote", mode: "EXECUTIVE_VOTE", prompt: "" },
+  { label: "Discuss, then vote", mode: "DISCUSS_AND_VOTE", prompt: "" },
 ];
 
-type StepEvent = { type: string; state?: string; executiveId?: string; executiveTitle?: string; stage?: string; label?: string; text?: string; error?: string; simulated?: boolean };
+type StepEvent = { type: string; state?: string; executiveId?: string; executiveTitle?: string; stage?: string; label?: string; text?: string; error?: string; simulated?: boolean; index?: number; count?: number; finished?: number; total?: number };
+type Ballot = { id: string; label: string }[];
+type Progress = { index: number; count: number; label: string; finished: number; total: number };
+const VOTE_MODES = ["EXECUTIVE_VOTE", "DISCUSS_AND_VOTE"];
+const initials = (title: string) => title.split(" ").map((w) => w[0]).join("");
 
 const wait = (ms: number, signal: AbortSignal) => new Promise<void>((resolve) => {
   const t = setTimeout(resolve, ms);
@@ -44,7 +49,7 @@ const relabel = (opts: { id: string; label: string }[]) => opts.map((o, i) => ({
 const MAX_CLIENT_STEPS = 60;
 const MAX_BUSY_WAITS = 20;
 
-export function SessionRunner({ sessionId, participants, modes, defaultMode, objective, autostart, resume, canRun }: { sessionId: string; participants: RunnerExec[]; modes: ModeOption[]; defaultMode: string; objective: string; autostart: boolean; resume: boolean; canRun: boolean }) {
+export function SessionRunner({ sessionId, participants, modes, defaultMode, objective, autostart, resume, canRun, lastAsk }: { sessionId: string; participants: RunnerExec[]; modes: ModeOption[]; defaultMode: string; objective: string; autostart: boolean; resume: boolean; canRun: boolean; lastAsk: { question: string; ballot: Ballot | null } | null }) {
   const router = useRouter();
   const [message, setMessage] = useState(autostart ? objective : "");
   const [mode, setMode] = useState(defaultMode);
@@ -54,15 +59,21 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
   const [stage, setStage] = useState<string | null>(null);
   const [turns, setTurns] = useState<LiveTurn[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [failures, setFailures] = useState<{ id: string; title: string }[]>([]);
+  const [failures, setFailures] = useState<{ id: string; title: string; stage: string }[]>([]);
+  const [progress, setProgress] = useState<Progress | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestNote, setSuggestNote] = useState<string | null>(null);
+  // The question and ballot of the latest round, so a failed executive is retried on the same thing.
+  const [asked, setAsked] = useState(lastAsk);
   const abortRef = useRef<AbortController | null>(null);
   const started = useRef(false);
   const map = new Map(participants.map((p) => [p.id, p]));
   const filledOptions = options.filter((o) => o.label.trim()).length;
-  const voteBlocked = mode === "EXECUTIVE_VOTE" && filledOptions === 1;
+  const voteBlocked = VOTE_MODES.includes(mode) && filledOptions === 1;
 
   function onEvent(ev: StepEvent) {
     if (ev.type === "stage") setStage(ev.label ?? null);
+    else if (ev.type === "progress") setProgress({ index: ev.index ?? 1, count: ev.count ?? 1, label: ev.label ?? "", finished: ev.finished ?? 0, total: ev.total ?? 0 });
     else if (ev.type === "turn_start") {
       // A turn continued in a later step re-announces itself with the text so far.
       setTurns((t) => {
@@ -74,7 +85,7 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
     else if (ev.type === "turn_end") setTurns((t) => t.map((x) => (x.executiveId === ev.executiveId && x.status === "speaking" ? { ...x, status: "done", simulated: ev.simulated } : x)));
     else if (ev.type === "turn_failed") {
       setTurns((t) => t.map((x) => (x.executiveId === ev.executiveId && x.status === "speaking" ? { ...x, status: "failed", error: ev.error } : x)));
-      setFailures((f) => [...f, { id: ev.executiveId!, title: ev.executiveTitle ?? "Executive" }]);
+      setFailures((f) => [...f.filter((x) => x.id !== ev.executiveId), { id: ev.executiveId!, title: ev.executiveTitle ?? "Executive", stage: ev.stage ?? "" }]);
     } else if (ev.type === "error") setError(ev.error ?? "Session error");
   }
 
@@ -129,6 +140,7 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
     setError(null);
     setTurns([]);
     setFailures([]);
+    setProgress(null);
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     try {
@@ -138,26 +150,54 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
     } finally {
       setRunning(false);
       setStage(null);
+      setProgress(null);
       abortRef.current = null;
       router.refresh();
     }
   }
 
-  async function run(override?: { message?: string; mode?: string; only?: string }) {
+  async function run(override?: { message?: string; mode?: string; only?: string; ballot?: Ballot; retry?: boolean }) {
     const msg = (override?.message ?? message).trim();
     if (!msg || running) return;
+    const m = override?.mode ?? mode;
+    const ballot = override?.ballot ?? (VOTE_MODES.includes(m) ? options.filter((o) => o.label.trim()) : undefined);
     await begin(async (ctrl) => {
-      const m = override?.mode ?? mode;
       const res = await fetch(`/api/sessions/${sessionId}/run`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: msg, mode: m, onlyExecutiveId: (override?.only ?? only) || undefined, voteOptions: m === "EXECUTIVE_VOTE" ? options.filter((o) => o.label.trim()) : undefined }),
+        body: JSON.stringify({ message: msg, mode: m, onlyExecutiveId: (override?.only ?? only) || undefined, voteOptions: ballot, retry: override?.retry || undefined }),
         signal: ctrl.signal,
       });
       if (!res.ok) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? "The session could not run.");
-      setMessage("");
+      if (!override?.retry) setMessage("");
+      if (!override?.retry) setAsked({ question: msg, ballot: VOTE_MODES.includes(m) ? (ballot && ballot.length >= 2 ? ballot : [{ id: "A", label: "Proceed" }, { id: "B", label: "Do not proceed" }]) : null });
       await drive(ctrl);
     });
+  }
+
+  /** Re-runs one executive on the latest round's question: their vote if the vote failed, otherwise their analysis. */
+  function retry(f: { id: string; stage: string }) {
+    const question = asked?.question ?? objective;
+    if (f.stage === "VOTE" && asked?.ballot) void run({ message: question, only: f.id, mode: "EXECUTIVE_VOTE", ballot: asked.ballot, retry: true });
+    else void run({ message: question, only: f.id, mode: "EXECUTIVE_ROUND", retry: true });
+  }
+
+  /** Asks the chair to draft ballot options from the question; the person edits them before convening. */
+  async function suggestOptions() {
+    if (!message.trim() || suggesting) return;
+    setSuggesting(true);
+    setSuggestNote(null);
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}/suggest-options`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ question: message }) });
+      const data = (await res.json().catch(() => ({}))) as { options?: Ballot; simulated?: boolean; error?: string };
+      if (!res.ok || !data.options?.length) throw new Error(data.error ?? "Options could not be suggested right now.");
+      setOptions(data.options);
+      setSuggestNote(data.simulated ? "Simulated suggestions (demo mode) — edit them to fit your decision." : "Suggested by the CEO — edit, add or remove before convening.");
+    } catch (e) {
+      setSuggestNote((e as Error).message);
+    } finally {
+      setSuggesting(false);
+    }
   }
 
   async function stop() {
@@ -193,6 +233,20 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
               <span className="h-px flex-1 bg-line-gold" />
             </div>
           )}
+          {running && (
+            <div className="space-y-1.5" role="status">
+              <p className="text-center text-xs text-ivory-muted">
+                {progress
+                  ? <>Stage {progress.index} of {progress.count} · {progress.label} · {progress.finished} of {progress.total} {progress.total === 1 ? "executive" : "executives"} finished</>
+                  : "Convening the C-Suite…"}
+              </p>
+              {progress && (
+                <div className="mx-auto h-1 max-w-xs overflow-hidden rounded-full bg-ink-800" aria-hidden>
+                  <div className="h-full rounded-full bg-gold-400 transition-[width] duration-500" style={{ width: `${Math.round(((progress.index - 1 + (progress.total ? progress.finished / progress.total : 0)) / progress.count) * 100)}%` }} />
+                </div>
+              )}
+            </div>
+          )}
           {live.map((t, i) => {
             const e = map.get(t.executiveId);
             if (!e) return null;
@@ -221,7 +275,7 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
           {failures.map((f) => (
             <span key={f.id} className="mr-3 inline-flex items-center gap-2">
               {f.title} could not complete the analysis.
-              <button onClick={() => run({ message: objective, only: f.id, mode: "EXECUTIVE_ROUND" })} className="underline underline-offset-2">Retry {f.title.split(" ").map((w) => w[0]).join("")} analysis?</button>
+              <button onClick={() => retry(f)} className="underline underline-offset-2">Retry {initials(f.title)} {f.stage === "VOTE" ? "vote" : "analysis"}?</button>
             </span>
           ))}
         </Alert>
@@ -237,7 +291,7 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
             ))}
           </div>
           <p className="text-xs text-ivory-muted">{modes.find((m) => m.mode === mode)?.description}</p>
-          {mode === "EXECUTIVE_VOTE" && (
+          {VOTE_MODES.includes(mode) && (
             <fieldset className="space-y-2" aria-describedby="vote-options-help">
               <legend className="mb-1 text-xs font-medium text-ivory-muted">Options to vote on</legend>
               <div id="vote-options-help" className="space-y-1 rounded-lg border border-line px-3 py-2 text-[11px] text-ivory-muted">
@@ -251,7 +305,14 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
                   {options.length > 2 && <button type="button" onClick={() => setOptions((s) => relabel(s.filter((_, j) => j !== i)))} aria-label={`Remove option ${o.id}`} className="text-ivory-faint hover:text-risk"><Trash2 className="size-4" /></button>}
                 </div>
               ))}
-              {options.length < 6 && <button type="button" onClick={() => setOptions((s) => relabel([...s, { id: "", label: "" }]))} className="inline-flex items-center gap-1 text-xs text-gold-300"><Plus className="size-3" /> Add option</button>}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                {options.length < 6 && <button type="button" onClick={() => setOptions((s) => relabel([...s, { id: "", label: "" }]))} className="inline-flex items-center gap-1 text-xs text-gold-300"><Plus className="size-3" /> Add option</button>}
+                <button type="button" onClick={() => void suggestOptions()} disabled={!message.trim() || suggesting} title={message.trim() ? "The CEO drafts options from your question" : "Write your question first"} className="inline-flex items-center gap-1 text-xs text-gold-300 disabled:cursor-not-allowed disabled:opacity-50">
+                  {suggesting ? <Loader2 className="size-3 animate-spin" /> : <Sparkles className="size-3" />} Suggest options
+                </button>
+                {!message.trim() && <span className="text-[11px] text-ivory-faint">Write your question below to get suggestions.</span>}
+              </div>
+              {suggestNote && <p role="status" className="text-[11px] text-ivory-muted">{suggestNote}</p>}
               {filledOptions === 1 && <p role="status" className="text-[11px] text-warn">Add at least one more option, or clear this one to vote on Proceed / Do not proceed.</p>}
             </fieldset>
           )}

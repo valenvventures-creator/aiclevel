@@ -43,16 +43,32 @@ Effort is `medium` for the first part of an answer and `low` for continuations, 
 | CONSENSUS | Independent → convergence → synthesis |
 | DISSENT | Independent → dissent round (disagreement preserved) → synthesis |
 | EXECUTIVE_VOTE | Each executive scores options (`VOTE: <id> \| CONFIDENCE: <n>`) → vote synthesis (`RECOMMENDED OPTION: <id>`) |
+| DISCUSS_AND_VOTE | Short positions → vote (with the discussion in the record) → vote synthesis |
 | DEEP_DIVE | Independent → financial → risk → red team → synthesis |
 | RAPID_SESSION | Short positions → synthesis |
 
 If a review's lead is not at the table, that stage is skipped (never silently substituted). "Call on" runs a single executive.
 
 ## Executive Vote
-- **Ballot:** the options entered (2–6, lettered A–F). With fewer than two filled in, the ballot is `DEFAULT_VOTE_OPTIONS` — A: Proceed, B: Do not proceed — and the round is flagged `defaulted_options`. The ballot is stored on the round's QUESTION message (`metadata.vote_options`) and on the decision (`options_json`).
-- **Votes:** only votes for an option on the ballot are counted (`executive_session_votes`).
-- **Recommendation:** the `vote_synthesis` prompt asks the chair to end with `RECOMMENDED OPTION: <id>` (`parseRecommendedOption`). If that line is missing or names an option not on the ballot, the vote leader is used (`voteLeader`: most votes, ties broken on average confidence, a true tie gives none). Stored as `decisions.recommended_option`; approving the decision sets `chosen_option` from it if none was chosen.
-- **UI:** the session's right-hand panel shows the latest vote round — each option's wording, a vote count bar with average confidence, the CEO's recommended option and how each executive voted.
+Vote modes are those with a `VOTE` stage (`isVoteMode`): EXECUTIVE_VOTE and DISCUSS_AND_VOTE.
+
+- **Ballot:** the options entered (2–6, lettered A–F). With fewer than two filled in, the ballot is `DEFAULT_VOTE_OPTIONS` (A: Proceed, B: Do not proceed) and the round is flagged `defaulted_options`. The ballot is stored on the round's QUESTION message (`metadata.vote_options`) and on the decision (`options_json`).
+- **Suggest options:** `POST /api/sessions/[id]/suggest-options`. The chair drafts 2–4 options from the question (`suggest_vote_options` prompt, `vote_options` utility task), and the person edits them before convening. In demo mode the suggestions are simulated and labelled.
+- **Votes:** `executive_vote` (v2) includes the session record, so in DISCUSS_AND_VOTE the votes see the positions. `parseVoteDetails` reads:
+  - the vote line;
+  - every option's 1–10 score from the table (`scores_json`, migration 008);
+  - a short reason.
+
+  Only votes for an option on the ballot are counted.
+- **Rounds:** `groupVoteRounds` (`src/server/sessions/vote-rounds.ts`) splits votes at each question that opened a vote. A single-executive retry (`metadata.single_executive`, `retry`) joins its round, and a retried vote replaces that executive's earlier vote.
+- **Retry:** when an executive fails, "Retry … vote" re-runs their vote on the same question and ballot. Calling on one executive in a vote mode plans a single `VOTE` stage with no new decision. "Retry … analysis" re-runs other stages on the round's question.
+- **Recommendation:** the `vote_synthesis` prompt asks the chair to end with `RECOMMENDED OPTION: <id>` (`parseRecommendedOption`). If that line is missing or invalid, the vote leader is used (`voteLeader`). The result is stored as `decisions.recommended_option`. The line is hidden from people (`stripRecommendedLine`).
+- **Approval:** the person approving picks the option to adopt; it defaults to the CEO's recommendation. That becomes `chosen_option`, and the audit records both. An approved decision is saved to C-Suite Memory as a VERIFIED `DECISIONS` record with `source_id` = decision (`rememberApprovedDecision`), so later sessions retrieve it.
+- **UI:** the session's right-hand panel shows the latest round in full. For each option it shows the wording, votes, average score and confidence, a CEO recommends or Chosen badge, and a tie notice; each executive's vote expands to show their reason and scores. Earlier rounds sit under "Previous votes". In the transcript, votes show as compact cards with the full scoring behind "Show full scoring".
+- **Records:** Minutes and Decision Memos include "How the C-Suite voted" (`voteRoundMarkdown`). A Decision Memo is labelled simulated when the synthesis behind it was simulated.
+
+## Progress
+Each step streams `progress` events (`index`/`count` stages, `finished`/`total` executives in the stage). The session screen shows "Stage 1 of 2 · Short positions · 3 of 5 executives finished".
 
 ## Bounds (`SESSION_LIMITS`)
 `maxParticipants = 7`, `maxRounds = 5`, `maxRetries = 1`, `maxTokensPerTurn`, `costBudgetUsd` (budget enforcement hook in the gateway usage stream — Phase 6 hardening). Stage count and turn count are finite by construction; there is no "continue until agreement" loop.

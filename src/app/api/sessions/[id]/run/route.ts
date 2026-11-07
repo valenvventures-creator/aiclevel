@@ -13,6 +13,7 @@ const Body = z.object({
   participantIds: z.array(z.string().uuid()).max(7).optional(),
   onlyExecutiveId: z.string().uuid().optional(),
   voteOptions: z.array(z.object({ id: z.string().max(8), label: z.string().max(200) })).max(6).optional(),
+  retry: z.boolean().optional(),
 });
 
 /**
@@ -39,7 +40,7 @@ export async function POST(req: Request, { params }: RouteContext<"/api/sessions
       mode: body.mode,
       participantExecutiveIds: body.participantIds,
       attachmentIds,
-      options: { voteOptions: body.voteOptions, onlyExecutiveId: body.onlyExecutiveId },
+      options: { voteOptions: body.voteOptions, onlyExecutiveId: body.onlyExecutiveId, retry: body.retry },
     });
     if (result.state === "busy") return NextResponse.json({ error: result.error ?? "The executives are still answering the previous question. It will finish in a moment." }, { status: 409 });
     return NextResponse.json(result, { headers: { "cache-control": "no-store" } });

@@ -53,9 +53,26 @@ export default async function DecisionsPage() {
                 </div>
               )}
               {d.risks_json.length > 0 && <ul className="mt-3 flex flex-wrap gap-2">{d.risks_json.map((r, i) => <li key={i}><Badge tone={r.severity === "HIGH" ? "risk" : r.severity === "MEDIUM" ? "warn" : "neutral"}>{r.risk}</Badge></li>)}</ul>}
-              <div className="mt-5 flex flex-wrap gap-2 border-t border-line pt-4">
-                {canApprove && d.status !== "APPROVED" && ["APPROVED", "DEFERRED", "REJECTED"].map((s) => (
-                  <form key={s} action={updateDecisionStatusAction}><input type="hidden" name="id" value={d.id} /><input type="hidden" name="status" value={s} /><Button size="sm" variant={s === "APPROVED" ? "gold" : "outline"}>{s.charAt(0) + s.slice(1).toLowerCase()}</Button></form>
+              {canApprove && d.status !== "APPROVED" && <p className="mt-5 text-[11px] text-ivory-faint">Approving records your choice and saves this decision to C-Suite Memory, so the executives remember it in later sessions.</p>}
+              {d.status === "APPROVED" && <p className="mt-5 text-[11px] text-ivory-faint">Saved to C-Suite Memory.</p>}
+              <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-4">
+                {canApprove && d.status !== "APPROVED" && (
+                  <form action={updateDecisionStatusAction} className="flex flex-wrap items-center gap-2">
+                    <input type="hidden" name="id" value={d.id} />
+                    <input type="hidden" name="status" value="APPROVED" />
+                    {d.options_json.length > 0 && (
+                      <label className="flex items-center gap-2 text-xs text-ivory-muted">
+                        Adopt
+                        <select name="chosen_option" defaultValue={d.chosen_option ?? d.recommended_option ?? d.options_json[0].id} className="h-8 max-w-[16rem] rounded-full border border-line-strong bg-ink-900 px-3 text-xs text-ivory">
+                          {d.options_json.map((o) => <option key={o.id} value={o.id}>{o.id} — {o.label}{d.recommended_option === o.id ? " (CEO recommends)" : ""}</option>)}
+                        </select>
+                      </label>
+                    )}
+                    <Button size="sm" variant="gold">{d.options_json.length > 0 ? "Approve with this option" : "Approve"}</Button>
+                  </form>
+                )}
+                {canApprove && d.status !== "APPROVED" && ["DEFERRED", "REJECTED"].map((s) => (
+                  <form key={s} action={updateDecisionStatusAction}><input type="hidden" name="id" value={d.id} /><input type="hidden" name="status" value={s} /><Button size="sm" variant="outline">{s.charAt(0) + s.slice(1).toLowerCase()}</Button></form>
                 ))}
                 <form action={createDecisionMemoAction.bind(null, d.id)}><Button size="sm" variant="ghost">Decision memo</Button></form>
                 {d.session_id && <Link href={`/sessions/${d.session_id}`} className="inline-flex h-8 items-center px-3 text-xs text-gold-300">View session →</Link>}
