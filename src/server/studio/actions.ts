@@ -1,6 +1,5 @@
 "use server";
 
-import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -9,7 +8,7 @@ import { db, newId, nowIso } from "@/server/db/store";
 import { STUDIO_CAPABILITIES } from "@/config/studio/capabilities";
 import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { audit } from "@/server/audit";
-import { createProductionJob, runProductionJob } from "./service";
+import { createProductionJob, queueRetry, queueRevision } from "./service";
 import { routeStudioRequest } from "./router";
 
 export async function previewRouteAction(request: string) {
@@ -31,7 +30,7 @@ export async function submitStudioRequestAction(_: { error?: string }, fd: FormD
   if (!p.success) return { error: p.error.issues[0]?.message };
   const cap = STUDIO_CAPABILITIES.find((c) => c.key === p.data.capability_key)?.key;
   const job = await createProductionJob({ organization: ctx.organization, userId: ctx.user.id, request: p.data.request, capabilityKey: cap, priority: p.data.priority, projectId: p.data.project_id || null });
-  after(() => runProductionJob({ organization: ctx.organization, userId: ctx.user.id, viewerRole: ctx.role, jobId: job.id }).catch((err) => console.error("[studio] job failed", err)));
+  // Production runs in bounded steps driven from the job page (see advanceProductionJob).
   redirect(`/studio/${job.id}`);
 }
 
@@ -42,16 +41,14 @@ export async function requestRevisionAction(fd: FormData) {
   if (!note) return;
   const job = await db().productionJobs.get(ctx.organization.id, id);
   if (!job) return;
-  await db().productionJobs.update(ctx.organization.id, id, { status: "REVISION_REQUESTED" });
-  after(() => runProductionJob({ organization: ctx.organization, userId: ctx.user.id, viewerRole: ctx.role, jobId: id, revisionNote: note }).catch((err) => console.error("[studio] revision failed", err)));
+  await queueRevision(ctx.organization.id, id, note);
   revalidatePath(`/studio/${id}`);
 }
 
 export async function retryJobAction(fd: FormData) {
   const ctx = await authorize("studio.request");
   const id = String(fd.get("id"));
-  after(() => runProductionJob({ organization: ctx.organization, userId: ctx.user.id, viewerRole: ctx.role, jobId: id }).catch((err) => console.error("[studio] retry failed", err)));
-  await db().productionJobs.update(ctx.organization.id, id, { status: "QUEUED" });
+  await queueRetry(ctx.organization.id, id);
   revalidatePath(`/studio/${id}`);
 }
 
