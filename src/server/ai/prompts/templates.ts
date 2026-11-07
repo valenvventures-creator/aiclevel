@@ -102,6 +102,29 @@ Structure your output exactly:
 ## Confidence
 A single percentage and what would raise it.`),
 
+  T("vote_synthesis", "SESSION", `
+You chair this C-Suite Session, which has just held an Executive Vote. Objective: {{objective}}
+Options voted on:
+{{options}}
+Synthesize the votes below into ONE integrated recommendation. Report how the votes fell, represent each executive faithfully, and PRESERVE meaningful disagreement rather than smoothing it over. You may recommend an option other than the vote leader, but say why.
+<session_record>
+{{transcript}}
+</session_record>
+Structure your output exactly:
+## Recommendation
+Name the recommended option by its id and wording.
+## Rationale
+## Where the C-Suite agrees
+## Preserved dissent
+## Key risks
+| Risk | Severity (LOW/MEDIUM/HIGH) | Owner |
+## Next steps
+| Action | Owner | When |
+## Confidence
+A single percentage and what would raise it.
+End with a final line exactly in the form:
+RECOMMENDED OPTION: <option id>`),
+
   ...([
     ["financial_review", "FINANCIAL REVIEW led by the Chief Financial Officer. Quantify costs, revenue effects, cash/runway impact and ROI with explicit assumptions and base/upside/downside ranges. Label all estimates."],
     ["risk_review", "RISK REVIEW led by the Chief Legal Officer. Produce a risk register (issue, severity, likelihood, mitigation, documentation needed). State whether review by qualified legal counsel is recommended."],

@@ -36,6 +36,10 @@ const wait = (ms: number, signal: AbortSignal) => new Promise<void>((resolve) =>
   signal.addEventListener("abort", () => { clearTimeout(t); resolve(); }, { once: true });
 });
 
+const OPTION_EXAMPLES = ["e.g. Raise a $1.5M seed extension", "e.g. Stay bootstrapped and cut burn by 20%", "e.g. Take a $500K revenue-based loan"];
+/** Keeps option letters in order (A, B, C…) after one is added or removed. */
+const relabel = (opts: { id: string; label: string }[]) => opts.map((o, i) => ({ ...o, id: String.fromCharCode(65 + i) }));
+
 /** Bounds the client loop independently of the server (which also caps a round's steps). */
 const MAX_CLIENT_STEPS = 60;
 const MAX_BUSY_WAITS = 20;
@@ -54,6 +58,8 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
   const abortRef = useRef<AbortController | null>(null);
   const started = useRef(false);
   const map = new Map(participants.map((p) => [p.id, p]));
+  const filledOptions = options.filter((o) => o.label.trim()).length;
+  const voteBlocked = mode === "EXECUTIVE_VOTE" && filledOptions === 1;
 
   function onEvent(ev: StepEvent) {
     if (ev.type === "stage") setStage(ev.label ?? null);
@@ -232,22 +238,27 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
           </div>
           <p className="text-xs text-ivory-muted">{modes.find((m) => m.mode === mode)?.description}</p>
           {mode === "EXECUTIVE_VOTE" && (
-            <fieldset className="space-y-2">
+            <fieldset className="space-y-2" aria-describedby="vote-options-help">
               <legend className="mb-1 text-xs font-medium text-ivory-muted">Options to vote on</legend>
+              <div id="vote-options-help" className="space-y-1 rounded-lg border border-line px-3 py-2 text-[11px] text-ivory-muted">
+                <p>Enter each possible path as one short line, e.g. “Raise a $1.5M seed extension” or “Stay bootstrapped and cut burn by 20%”. Each executive scores every option and votes for one; the CEO then recommends one.</p>
+                <p className="text-gold-200">If you leave the fields empty, the executives vote on A: Proceed and B: Do not proceed.</p>
+              </div>
               {options.map((o, i) => (
                 <div key={o.id} className="flex items-center gap-2">
                   <span className="w-6 font-mono text-xs text-gold-300">{o.id}</span>
-                  <input value={o.label} onChange={(e) => setOptions((s) => s.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} placeholder={`Option ${o.id}`} aria-label={`Option ${o.id}`} className="h-9 flex-1 rounded-lg border border-line-strong bg-ink-900 px-3 text-sm" />
-                  {options.length > 2 && <button type="button" onClick={() => setOptions((s) => s.filter((_, j) => j !== i))} aria-label={`Remove option ${o.id}`} className="text-ivory-faint hover:text-risk"><Trash2 className="size-4" /></button>}
+                  <input value={o.label} onChange={(e) => setOptions((s) => s.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} placeholder={OPTION_EXAMPLES[i] ?? `Option ${o.id}`} aria-label={`Option ${o.id}`} maxLength={200} className="h-9 min-w-0 flex-1 rounded-lg border border-line-strong bg-ink-900 px-3 text-sm" />
+                  {options.length > 2 && <button type="button" onClick={() => setOptions((s) => relabel(s.filter((_, j) => j !== i)))} aria-label={`Remove option ${o.id}`} className="text-ivory-faint hover:text-risk"><Trash2 className="size-4" /></button>}
                 </div>
               ))}
-              {options.length < 6 && <button type="button" onClick={() => setOptions((s) => [...s, { id: String.fromCharCode(65 + s.length), label: "" }])} className="inline-flex items-center gap-1 text-xs text-gold-300"><Plus className="size-3" /> Add option</button>}
+              {options.length < 6 && <button type="button" onClick={() => setOptions((s) => relabel([...s, { id: "", label: "" }]))} className="inline-flex items-center gap-1 text-xs text-gold-300"><Plus className="size-3" /> Add option</button>}
+              {filledOptions === 1 && <p role="status" className="text-[11px] text-warn">Add at least one more option, or clear this one to vote on Proceed / Do not proceed.</p>}
             </fieldset>
           )}
           <div className="grid gap-3 sm:grid-cols-[1fr_220px]">
             <div>
               <Label htmlFor="session-msg">Your question to the C-Suite</Label>
-              <Textarea id="session-msg" value={message} onChange={(e) => setMessage(e.target.value)} rows={3} placeholder="What should the C-Suite consider?" onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) run(); }} />
+              <Textarea id="session-msg" value={message} onChange={(e) => setMessage(e.target.value)} rows={3} placeholder="What should the C-Suite consider?" onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !voteBlocked) run(); }} />
             </div>
             <div>
               <Label htmlFor="session-only">Call on</Label>
@@ -262,7 +273,7 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
             {running ? (
               <Button type="button" variant="outline" onClick={() => void stop()}><Square className="size-3 fill-current" /> Stop session</Button>
             ) : (
-              <Button type="button" onClick={() => run()} disabled={!message.trim()}><Play className="size-4" /> Convene</Button>
+              <Button type="button" onClick={() => run()} disabled={!message.trim() || voteBlocked}><Play className="size-4" /> Convene</Button>
             )}
           </div>
         </section>

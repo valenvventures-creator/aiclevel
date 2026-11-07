@@ -4,11 +4,13 @@ import type { Metadata } from "next";
 import { FileText, Gavel, ScrollText } from "lucide-react";
 import { ExecutiveAvatar } from "@/components/executives/executive-avatar";
 import { SessionRunner } from "@/components/sessions/session-runner";
+import { VoteResults } from "@/components/sessions/vote-results";
 import { Markdown } from "@/components/ui/markdown";
 import { Badge, Card, SectionTitle, SimulatedBadge } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { formatRelative } from "@/lib/utils";
-import { SESSION_MODES } from "@/config/sessions/modes";
+import { DEFAULT_VOTE_OPTIONS, SESSION_MODES } from "@/config/sessions/modes";
+import { tallyVotes } from "@/server/ai/orchestration/plan";
 import { db } from "@/server/db/store";
 import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { requireContext } from "@/server/organizations/service";
@@ -37,6 +39,15 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
   // A round in progress has saved state; "RUNNING" without it is a round an older version left behind.
   const inProgress = Boolean(session.run_state);
   const status = session.status === "RUNNING" && !inProgress ? "ACTIVE" : session.status === "RUNNING" ? "IN SESSION" : session.status;
+
+  // Latest Executive Vote round: its ballot, its votes and the decision it produced.
+  const voteQuestion = [...messages].reverse().find((m) => m.stage === "QUESTION" && Array.isArray(m.metadata?.vote_options));
+  const roundVotes = voteQuestion ? votes.filter((v) => v.created_at >= voteQuestion.created_at) : votes;
+  const roundDecision = voteQuestion ? decisions.find((d) => d.created_at >= voteQuestion.created_at) : decisions.find((d) => d.options_json.length > 0);
+  const legacyIds = [...new Set(roundVotes.map((v) => v.option_id))].sort();
+  const ballot = (voteQuestion?.metadata?.vote_options as { id: string; label: string }[] | undefined)
+    ?? (roundDecision?.options_json.length ? roundDecision.options_json : legacyIds.map((id) => ({ id, label: DEFAULT_VOTE_OPTIONS.find((o) => o.id === id)?.label ?? `Option ${id}` })));
+  const voteTally = tallyVotes(ballot, roundVotes);
 
   return (
     <div className="grid gap-8 xl:grid-cols-[1fr_320px]">
@@ -122,9 +133,16 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
           {decisions.length === 0 ? (
             <p className="text-sm text-ivory-faint">A structured decision is recorded after a CEO synthesis.</p>
           ) : (
-            decisions.map((d) => (
-              <div key={d.id} className="space-y-2">
+            decisions.map((d, i) => (
+              <div key={d.id} className={i > 0 ? "mt-4 space-y-2 border-t border-line pt-4" : "space-y-2"}>
                 <div className="flex items-center justify-between"><Badge tone={d.status === "APPROVED" ? "ok" : "gold"}>{d.status}</Badge><span className="font-mono text-[10px] text-ivory-faint">CONF {Math.round(d.confidence * 100)}%</span></div>
+                <p className="text-xs text-ivory-muted">“{d.question}”</p>
+                {d.recommended_option && (
+                  <p className="rounded-lg border border-line-gold/60 bg-gold-400/[0.05] px-3 py-2 text-sm">
+                    <span className="block font-mono text-[10px] tracking-[0.18em] text-gold-300">CEO RECOMMENDS</span>
+                    Option {d.recommended_option}{d.options_json.find((o) => o.id === d.recommended_option) ? ` — ${d.options_json.find((o) => o.id === d.recommended_option)!.label}` : ""}
+                  </p>
+                )}
                 <p className="text-sm">{d.recommendation.slice(0, 280)}</p>
                 {d.risks_json.length > 0 && (
                   <ul className="space-y-1 text-xs text-ivory-muted">{d.risks_json.slice(0, 4).map((r, i) => <li key={i}>• {r.risk} <span className="text-warn">({r.severity})</span></li>)}</ul>
@@ -134,16 +152,17 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
             ))
           )}
         </Card>
-        {votes.length > 0 && (
-          <Card>
-            <SectionTitle>Executive vote</SectionTitle>
-            <ul className="space-y-2">
-              {votes.map((v) => {
-                const e = map.get(v.executive_id);
-                return <li key={v.id} className="flex items-center justify-between text-sm"><span style={{ color: e?.accent }}>{e?.short_title}</span><span className="font-mono">Option {v.option_id} · {Math.round(v.confidence * 100)}%</span></li>;
-              })}
-            </ul>
-          </Card>
+        {roundVotes.length > 0 && (
+          <VoteResults
+            question={voteQuestion?.content ?? roundDecision?.question ?? null}
+            tally={voteTally}
+            voters={roundVotes.map((v) => {
+              const e = map.get(v.executive_id);
+              return { id: v.id, shortTitle: e?.short_title ?? "EXEC", accent: e?.accent ?? "currentColor", optionId: v.option_id, confidence: v.confidence };
+            })}
+            recommended={roundDecision?.recommended_option ?? null}
+            defaulted={Boolean(voteQuestion?.metadata?.defaulted_options)}
+          />
         )}
         <Card>
           <SectionTitle>Record</SectionTitle>

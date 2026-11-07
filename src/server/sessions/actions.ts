@@ -103,7 +103,11 @@ export async function updateDecisionStatusAction(fd: FormData) {
   const id = String(fd.get("id"));
   const status = String(fd.get("status"));
   if (!["APPROVED", "REJECTED", "DEFERRED", "UNDER_REVIEW"].includes(status)) return;
-  await db().decisions.update(ctx.organization.id, id, { status: status as "APPROVED" });
+  const decision = await db().decisions.get(ctx.organization.id, id);
+  if (!decision) return;
+  // Approving a vote's decision adopts the recommended option unless one was already chosen.
+  const chosen = status === "APPROVED" && !decision.chosen_option && decision.recommended_option ? { chosen_option: decision.recommended_option } : {};
+  await db().decisions.update(ctx.organization.id, id, { status: status as "APPROVED", ...chosen });
   await audit(ctx.organization.id, ctx.user.id, "approval.action", "decision", id, { status });
   revalidatePath("/decisions");
 }

@@ -1,6 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { SESSION_LIMITS, SESSION_MODES, type SessionStageDef } from "@/config/sessions/modes";
+import { DEFAULT_VOTE_OPTIONS, SESSION_LIMITS, SESSION_MODES, type SessionStageDef } from "@/config/sessions/modes";
 import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { db, newId, nowIso } from "@/server/db/store";
 import { audit } from "@/server/audit";
@@ -10,7 +10,7 @@ import { formatTranscript } from "../prompts/builders";
 import { assembleExecutiveContext } from "../executives/context";
 import type { TaskType } from "../gateway/types";
 import type { CSuiteSession, CSuiteSessionMessage, Organization, ResolvedExecutive, Role, SessionMode, SessionRunState } from "@/types/domain";
-import { planStages, parseVote, type PlannedStage } from "./plan";
+import { planStages, parseRecommendedOption, parseVote, tallyVotes, voteLeader, type PlannedStage } from "./plan";
 
 /**
  * C-SUITE ORCHESTRATOR (server-side only) — STEPWISE.
@@ -105,6 +105,10 @@ export async function startSessionRun(input: StartRunInput): Promise<{ state: "s
     await persist({ speaker_type: "SYSTEM", speaker_id: null, stage: "INTERRUPTED", content: "The previous round was interrupted before it finished", provider: null, model: null, prompt_version: null, simulated: false, metadata: { run_id: session.run_state.run_id } });
   }
   const mode = input.mode ?? session.mode;
+  // An Executive Vote always has a ballot: the options given, or Proceed / Do not proceed.
+  const givenOptions = (input.options?.voteOptions ?? []).filter((o) => o.label.trim()).map((o) => ({ id: o.id.toUpperCase(), label: o.label.trim() }));
+  const isVote = mode === "EXECUTIVE_VOTE" && !input.options?.onlyExecutiveId;
+  const ballot = isVote ? (givenOptions.length >= 2 ? givenOptions : DEFAULT_VOTE_OPTIONS) : givenOptions.length ? givenOptions : null;
   const participantIds = (input.participantExecutiveIds ?? session.participant_executive_ids).filter((p) => session.participant_executive_ids.includes(p)).slice(0, SESSION_LIMITS.maxParticipants);
   const run: SessionRunState = {
     run_id: randomUUID(),
@@ -112,7 +116,7 @@ export async function startSessionRun(input: StartRunInput): Promise<{ state: "s
     mode,
     participant_ids: participantIds.length ? participantIds : session.participant_executive_ids,
     only_executive_id: input.options?.onlyExecutiveId ?? null,
-    vote_options: input.options?.voteOptions?.length ? input.options.voteOptions : null,
+    vote_options: ballot,
     attachment_ids: input.attachmentIds ?? [],
     stage_index: 0,
     turns: {},
@@ -120,7 +124,7 @@ export async function startSessionRun(input: StartRunInput): Promise<{ state: "s
     lease_until: null,
     started_at: nowIso(),
   };
-  await persist({ speaker_type: "USER", speaker_id: input.userId, stage: "QUESTION", content: input.userMessage, provider: null, model: null, prompt_version: null, simulated: false, metadata: { run_id: run.run_id } });
+  await persist({ speaker_type: "USER", speaker_id: input.userId, stage: "QUESTION", content: input.userMessage, provider: null, model: null, prompt_version: null, simulated: false, metadata: { run_id: run.run_id, vote_options: isVote ? ballot : undefined, defaulted_options: isVote && givenOptions.length < 2 ? true : undefined } });
   await d.sessions.update(orgId, session.id, { status: "RUNNING", mode, started_at: session.started_at ?? nowIso(), run_state: run });
   await audit(orgId, input.userId, "session.run", "executive_session", session.id, { mode, participants: run.participant_ids.length });
   return { state: "started", runId: run.run_id };
@@ -251,7 +255,8 @@ export async function* advanceSessionRun(input: AdvanceRunInput): AsyncGenerator
     const roundMessages = (await d.sessionMessages.list(orgId, { where: { session_id: session.id }, orderBy: "sequence_number" })).filter((m) => m.metadata?.run_id === run.run_id);
     for (const m of roundMessages.filter((x) => x.stage === "VOTE" && x.speaker_type === "EXECUTIVE")) {
       const v = parseVote(m.content);
-      if (v) await d.votes.insert({ id: newId(), organization_id: orgId, session_id: session.id, executive_id: m.speaker_id!, option_id: v.option, score: 0, reason: m.content.slice(0, 400), confidence: v.confidence / 100, created_at: nowIso() });
+      // Only votes for an option on the ballot are counted.
+      if (v && (!run.vote_options || run.vote_options.some((o) => o.id === v.option))) await d.votes.insert({ id: newId(), organization_id: orgId, session_id: session.id, executive_id: m.speaker_id!, option_id: v.option, score: 0, reason: m.content.slice(0, 400), confidence: v.confidence / 100, created_at: nowIso() });
     }
     const synthesis = [...roundMessages].reverse().find((m) => m.stage === "SYNTHESIS" && m.speaker_type === "EXECUTIVE");
     if (synthesis) {
@@ -304,7 +309,7 @@ async function* runStageStep(args: {
       participants: args.executives.map((e) => e.title).join(", "),
       mandate: exec.functional_mandate,
       transcript,
-      options: (run.vote_options ?? [{ id: "A", label: "Proceed" }, { id: "B", label: "Do not proceed" }]).map((o) => `- ${o.id}: ${o.label}`).join("\n"),
+      options: (run.vote_options ?? DEFAULT_VOTE_OPTIONS).map((o) => `- ${o.id}: ${o.label}`).join("\n"),
     });
     const built = await assembleExecutiveContext({ organization: input.organization, viewerRole: input.viewerRole, exec, query: `${session.objective} ${run.question}`, fileIds: run.attachment_ids, taskInstructions: task });
     const content = state.text
@@ -408,7 +413,8 @@ async function* mergeGenerators(gens: AsyncGenerator<OrchestratorEvent>[]): Asyn
 }
 
 async function recordDecision(session: CSuiteSession, input: AdvanceRunInput, run: SessionRunState, synthesis: string): Promise<string> {
-  const section = (name: string) => synthesis.split(/\n## /).find((s) => s.toLowerCase().startsWith(name.toLowerCase()))?.split("\n").slice(1).join("\n").trim() ?? "";
+  // Sections are "## Heading" lines; the answer may start with one directly.
+  const section = (name: string) => `\n${synthesis}`.split(/\n##\s+/).find((s) => s.toLowerCase().startsWith(name.toLowerCase()))?.split("\n").slice(1).join("\n").trim() ?? "";
   const confMatch = section("Confidence").match(/(\d{1,3})\s*%/);
   const risks = section("Key risks")
     .split("\n")
@@ -416,6 +422,16 @@ async function recordDecision(session: CSuiteSession, input: AdvanceRunInput, ru
     .map((l) => l.split("|").map((c) => c.trim()).filter(Boolean))
     .filter((c) => c.length >= 2)
     .map((c) => ({ risk: c[0], severity: (["LOW", "MEDIUM", "HIGH"].find((s) => c[1].toUpperCase().includes(s)) ?? "MEDIUM") as "LOW" | "MEDIUM" | "HIGH" }));
+  // After a vote: the option the chair named, or else the vote leader.
+  let recommended: string | null = null;
+  if (run.mode === "EXECUTIVE_VOTE" && run.vote_options?.length) {
+    const ids = run.vote_options.map((o) => o.id);
+    recommended = parseRecommendedOption(synthesis, ids);
+    if (!recommended) {
+      const votes = await db().votes.list(input.organization.id, { where: { session_id: session.id } });
+      recommended = voteLeader(tallyVotes(run.vote_options, votes.filter((v) => v.created_at >= run.started_at)));
+    }
+  }
   const id = newId();
   await db().decisions.insert({
     id,
@@ -426,7 +442,8 @@ async function recordDecision(session: CSuiteSession, input: AdvanceRunInput, ru
     question: run.question,
     options_json: run.vote_options ?? [],
     chosen_option: null,
-    recommendation: section("Recommendation") || synthesis.slice(0, 600),
+    recommended_option: recommended,
+    recommendation: (section("Recommendation") || synthesis.slice(0, 600)).replace(/\n?RECOMMENDED OPTION:.*$/im, "").trim(),
     rationale: section("Rationale"),
     risks_json: risks,
     financial_implications_json: null,

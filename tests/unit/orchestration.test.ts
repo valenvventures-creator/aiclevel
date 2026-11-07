@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SESSION_LIMITS, SESSION_MODES } from "@/config/sessions/modes";
-import { parseVote, planStages } from "@/server/ai/orchestration/plan";
+import { parseRecommendedOption, parseVote, planStages, tallyVotes, voteLeader } from "@/server/ai/orchestration/plan";
 import { resolvedExec } from "./fixtures";
 
 const all = ["CEO", "CFO", "CCO", "CHRO", "CTO", "CLO", "CIO"].map((r) => resolvedExec(r));
@@ -40,5 +40,28 @@ describe("C-Suite orchestration plan", () => {
   it("parses executive votes", () => {
     expect(parseVote("...\nVOTE: b | CONFIDENCE: 72")).toEqual({ option: "B", confidence: 72 });
     expect(parseVote("no vote")).toBeNull();
+  });
+});
+
+describe("Executive Vote results", () => {
+  const ballot = [{ id: "A", label: "Raise" }, { id: "B", label: "Bootstrap" }, { id: "C", label: "Loan" }];
+
+  it("tallies every option in ballot order, ignoring unknown ids", () => {
+    const t = tallyVotes(ballot, [{ option_id: "B", confidence: 0.6 }, { option_id: "B", confidence: 0.8 }, { option_id: "A", confidence: 0.9 }, { option_id: "Z", confidence: 1 }]);
+    expect(t.map((x) => [x.id, x.votes])).toEqual([["A", 1], ["B", 2], ["C", 0]]);
+    expect(t[1].avgConfidence).toBeCloseTo(0.7);
+    expect(t[2].avgConfidence).toBeNull();
+  });
+
+  it("picks the vote leader, breaking ties on confidence and refusing true ties", () => {
+    expect(voteLeader(tallyVotes(ballot, [{ option_id: "A", confidence: 0.5 }, { option_id: "B", confidence: 0.9 }]))).toBe("B");
+    expect(voteLeader(tallyVotes(ballot, [{ option_id: "A", confidence: 0.5 }, { option_id: "B", confidence: 0.5 }]))).toBeNull();
+    expect(voteLeader(tallyVotes(ballot, []))).toBeNull();
+  });
+
+  it("reads the chair's recommended option only when it was on the ballot", () => {
+    expect(parseRecommendedOption("…\nRECOMMENDED OPTION: **c**", ["A", "B", "C"])).toBe("C");
+    expect(parseRecommendedOption("RECOMMENDED OPTION: D", ["A", "B", "C"])).toBeNull();
+    expect(parseRecommendedOption("No line here", ["A"])).toBeNull();
   });
 });

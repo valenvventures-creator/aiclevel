@@ -6,7 +6,7 @@ import type { GenerateRequest, StreamChunk } from "@/server/ai/gateway/types";
  * apart, honouring the abort signal like a real streaming provider. A
  * continuation request resumes after the words already written.
  */
-const script = { words: [] as string[], delayMs: 0, calls: [] as GenerateRequest[] };
+const script = { words: [] as string[], delayMs: 0, calls: [] as GenerateRequest[], byTask: {} as Record<string, string[]> };
 
 vi.mock("@/server/ai/gateway", () => ({
   aiGateway: {
@@ -15,7 +15,7 @@ vi.mock("@/server/ai/gateway", () => ({
       yield { type: "meta", provider: "anthropic", model: "claude-opus-5-5", simulated: false };
       const soFar = /<your_answer_so_far>\n([\s\S]*)\n<\/your_answer_so_far>/.exec(req.messages[0].content)?.[1] ?? "";
       const start = soFar.trim() ? soFar.trim().split(/\s+/).length : 0;
-      for (const w of script.words.slice(start)) {
+      for (const w of (script.byTask[req.taskType] ?? script.words).slice(start)) {
         await new Promise((r) => setTimeout(r, script.delayMs));
         if (req.signal?.aborted) return;
         yield { type: "text", text: `${w} ` };
@@ -32,12 +32,12 @@ const { db, newId, nowIso } = await import("@/server/db/store");
 
 const org = { id: "org-sessions", name: "Session Test", slug: "session-test", logo_url: null, owner_id: "u1", industry: null, subscription_status: "TRIAL" as const, is_demo: false, created_at: new Date().toISOString() };
 
-async function newSession(status: "ACTIVE" | "RUNNING" = "ACTIVE") {
+async function newSession(status: "ACTIVE" | "RUNNING" = "ACTIVE", mode: "CEO_SYNTHESIS" | "EXECUTIVE_VOTE" = "CEO_SYNTHESIS") {
   const execs = await AIExecutiveRegistry.getAllExecutives(org.id);
   const pick = execs.filter((e) => ["CEO", "CFO", "CTO"].includes(e.role_code));
   const id = newId();
   await db().sessions.insert({
-    id, organization_id: org.id, project_id: null, created_by: "u1", title: "Seed extension", objective: "Should we raise a seed extension?", mode: "CEO_SYNTHESIS",
+    id, organization_id: org.id, project_id: null, created_by: "u1", title: "Seed extension", objective: "Should we raise a seed extension?", mode,
     status, chair_executive_id: pick.find((e) => e.role_code === "CEO")!.id, participant_executive_ids: pick.map((e) => e.id), created_at: nowIso(), started_at: null, ended_at: null,
   });
   return id;
@@ -52,6 +52,7 @@ async function step(sessionId: string, budgetMs: number) {
 describe("stepwise C-Suite Sessions", () => {
   beforeEach(async () => {
     script.calls = [];
+    script.byTask = {};
     await seedExecutivesForOrganization(org.id);
   });
 
@@ -145,5 +146,38 @@ describe("stepwise C-Suite Sessions", () => {
     expect(messages.filter((m) => m.metadata?.failed).length).toBeGreaterThan(0);
     expect(messages.some((m) => m.speaker_type === "EXECUTIVE")).toBe(false);
     expect((await db().sessions.get(org.id, id))?.status).toBe("FAILED");
+  });
+
+  it("runs an Executive Vote on the given options and records the CEO's recommended option", async () => {
+    script.delayMs = 0;
+    script.byTask = { session_vote: ["|", "B", "|", "8", "|", "\nVOTE:", "B", "|", "CONFIDENCE:", "70"], session_synthesis: ["##", "Recommendation\nOption", "B.\n##", "Confidence\n60%\nRECOMMENDED", "OPTION:", "B"] };
+    const id = await newSession("ACTIVE", "EXECUTIVE_VOTE");
+    const options = [{ id: "A", label: "Raise a seed extension" }, { id: "B", label: "Stay bootstrapped" }];
+    await startSessionRun({ organization: org, userId: "u1", sessionId: id, userMessage: "How do we fund 2027?", options: { voteOptions: options } });
+    for (let i = 0; i < 10; i++) if ((await step(id, 2000)).state !== "continue") break;
+
+    const votes = await db().votes.list(org.id, { where: { session_id: id } });
+    expect(votes).toHaveLength(3);
+    expect(votes.every((v) => v.option_id === "B")).toBe(true);
+    const [decision] = await db().decisions.list(org.id, { where: { session_id: id } });
+    expect(decision.options_json).toEqual(options);
+    expect(decision.recommended_option).toBe("B");
+    expect(decision.recommendation).not.toContain("RECOMMENDED OPTION");
+    // The vote prompt listed the real options.
+    expect(script.calls.find((c) => c.taskType === "session_vote")?.system).toContain("B: Stay bootstrapped");
+  });
+
+  it("votes on Proceed / Do not proceed when the option fields are left empty", async () => {
+    script.delayMs = 0;
+    script.byTask = { session_vote: ["VOTE:", "A", "|", "CONFIDENCE:", "65"], session_synthesis: ["##", "Recommendation\nProceed."] };
+    const id = await newSession("ACTIVE", "EXECUTIVE_VOTE");
+    await startSessionRun({ organization: org, userId: "u1", sessionId: id, userMessage: "Launch in the UK?", options: { voteOptions: [{ id: "A", label: " " }, { id: "B", label: "" }] } });
+    for (let i = 0; i < 10; i++) if ((await step(id, 2000)).state !== "continue") break;
+    const [question] = await db().sessionMessages.list(org.id, { where: { session_id: id, stage: "QUESTION" } });
+    expect(question.metadata.vote_options).toEqual([{ id: "A", label: "Proceed" }, { id: "B", label: "Do not proceed" }]);
+    expect(question.metadata.defaulted_options).toBe(true);
+    const [decision] = await db().decisions.list(org.id, { where: { session_id: id } });
+    // No "RECOMMENDED OPTION" line: the vote leader is used.
+    expect(decision.recommended_option).toBe("A");
   });
 });
