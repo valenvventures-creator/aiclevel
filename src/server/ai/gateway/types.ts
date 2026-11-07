@@ -49,9 +49,32 @@ export interface ProviderAdapter {
   stream(req: GenerateRequest & { model: string }): AsyncIterable<StreamChunk>;
 }
 
+/** Why a provider call failed — drives retry/fallback and the message shown to people. */
+export type ProviderErrorKind = "auth" | "permission" | "model_unavailable" | "bad_request" | "rate_limit" | "server" | "network" | "unknown";
+
 export class ProviderError extends Error {
-  constructor(public readonly provider: ProviderId, message: string, public readonly retryable: boolean) {
+  constructor(
+    public readonly provider: ProviderId,
+    message: string,
+    public readonly retryable: boolean,
+    public readonly kind: ProviderErrorKind = "unknown",
+  ) {
     super(message);
     this.name = "ProviderError";
   }
+}
+
+const PROVIDER_LABEL: Record<ProviderId, string> = { anthropic: "Claude (Anthropic)", openai: "OpenAI", simulated: "Simulation" };
+const KEY_NAME: Partial<Record<ProviderId, string>> = { anthropic: "ANTHROPIC_API_KEY", openai: "OPENAI_API_KEY" };
+
+/** Maps an HTTP status from a provider to a typed, human-readable ProviderError. Never includes key material. */
+export function providerErrorFromStatus(provider: ProviderId, status: number, model: string, detail?: string): ProviderError {
+  const name = PROVIDER_LABEL[provider];
+  const key = KEY_NAME[provider] ?? "the API key";
+  if (status === 401) return new ProviderError(provider, `${name} rejected the API key (401). Check ${key} in your hosting environment variables.`, false, "auth");
+  if (status === 403) return new ProviderError(provider, `${name} denied access (403). The key in ${key} lacks permission for this request or model.`, false, "permission");
+  if (status === 404) return new ProviderError(provider, `${name} could not find model "${model}" (404). Choose a model your account can use in Settings → AI Models.`, false, "model_unavailable");
+  if (status === 429) return new ProviderError(provider, `${name} rate limit or quota reached (429).`, true, "rate_limit");
+  if (status >= 500) return new ProviderError(provider, `${name} is temporarily unavailable (${status}).`, true, "server");
+  return new ProviderError(provider, `${name} rejected the request (${status})${detail ? `: ${detail}` : ""}.`, false, "bad_request");
 }

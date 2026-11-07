@@ -1,6 +1,6 @@
 import "server-only";
 import { env } from "@/lib/env";
-import { ProviderError, type GenerateRequest, type ProviderAdapter, type StreamChunk } from "../gateway/types";
+import { ProviderError, providerErrorFromStatus, type GenerateRequest, type ProviderAdapter, type StreamChunk } from "../gateway/types";
 
 /**
  * OpenAI adapter (fallback reasoning, future image/audio). Uses the Chat
@@ -11,7 +11,9 @@ export const OpenAIAdapter: ProviderAdapter = {
   id: "openai",
   isAvailable: () => Boolean(env.openaiApiKey),
   async *stream(req: GenerateRequest & { model: string }): AsyncIterable<StreamChunk> {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    let res: Response;
+    try {
+      res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       signal: req.signal,
       headers: { "content-type": "application/json", authorization: `Bearer ${env.openaiApiKey}` },
@@ -22,9 +24,21 @@ export const OpenAIAdapter: ProviderAdapter = {
         max_completion_tokens: req.maxTokens ?? 8000,
         messages: [{ role: "system", content: req.system }, ...req.messages],
       }),
-    });
+      });
+    } catch (err) {
+      if ((err as Error)?.name === "AbortError") throw err;
+      throw new ProviderError("openai", "OpenAI could not be reached from the server.", true, "network");
+    }
     if (!res.ok || !res.body) {
-      throw new ProviderError("openai", `OpenAI API error ${res.status}`, res.status === 429 || res.status >= 500);
+      // OpenAI error bodies can echo part of the key on 401, so only the error code/type is surfaced.
+      let detail: string | undefined;
+      try {
+        const j = (await res.json()) as { error?: { code?: string; type?: string } };
+        detail = j.error?.code ?? j.error?.type ?? undefined;
+      } catch {
+        /* non-JSON body */
+      }
+      throw providerErrorFromStatus("openai", res.status, req.model, detail);
     }
     yield { type: "meta", provider: "openai", model: req.model, simulated: false };
     const reader = res.body.getReader();
