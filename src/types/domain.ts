@@ -256,6 +256,7 @@ export const SESSION_MODES = [
   "CONSENSUS",
   "DISSENT",
   "EXECUTIVE_VOTE",
+  "DISCUSS_AND_VOTE",
   "DEEP_DIVE",
   "RAPID_SESSION",
 ] as const;
@@ -322,9 +323,12 @@ export interface CSuiteVote {
   session_id: UUID;
   executive_id: UUID;
   option_id: string;
+  /** Score (1–10) the executive gave the option they voted for. */
   score: number;
   reason: string;
   confidence: number;
+  /** Every option's score (1–10) from this executive's scoring table. */
+  scores_json?: Record<string, number> | null;
   created_at: ISODate;
 }
 

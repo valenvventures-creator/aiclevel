@@ -43,6 +43,7 @@ export const SESSION_MODES: Record<SessionMode, SessionModeDef> = {
   CONSENSUS: { mode: "CONSENSUS", label: "Consensus", description: "Executives work toward a unified recommendation.", stages: [independent, { key: "CHALLENGE", label: "Convergence round", promptKey: "consensus" }, synthesis], maxRounds: 3 },
   DISSENT: { mode: "DISSENT", label: "Dissent", description: "Meaningful disagreement is explicitly preserved in the record.", stages: [independent, { key: "CHALLENGE", label: "Dissent round", promptKey: "dissent" }, synthesis], maxRounds: 3 },
   EXECUTIVE_VOTE: { mode: "EXECUTIVE_VOTE", label: "Executive Vote", description: "Each executive independently scores the defined options.", stages: [{ key: "VOTE", label: "Executive vote", promptKey: "executive_vote" }, { ...synthesis, promptKey: "vote_synthesis" }], maxRounds: 2 },
+  DISCUSS_AND_VOTE: { mode: "DISCUSS_AND_VOTE", label: "Discuss, then Vote", description: "Each executive gives a short position first, then all score the defined options with the discussion in view; the CEO recommends one.", stages: [{ ...independent, label: "Short positions", promptKey: "rapid" }, { key: "VOTE", label: "Executive vote", promptKey: "executive_vote" }, { ...synthesis, promptKey: "vote_synthesis" }], maxRounds: 3 },
   DEEP_DIVE: { mode: "DEEP_DIVE", label: "Deep Dive", description: "Long-form multi-stage session: positions, all specialty reviews, challenge and synthesis.", stages: [independent, review("Financial review", "CFO", "financial_review"), review("Risk review", "CLO", "risk_review"), { key: "CHALLENGE", label: "Red-team challenge", promptKey: "red_team" }, synthesis], maxRounds: 5 },
   RAPID_SESSION: { mode: "RAPID_SESSION", label: "Rapid Session", description: "Short executive analysis with brief positions and a quick synthesis.", stages: [{ ...independent, promptKey: "rapid" }, synthesis], maxRounds: 2 },
 };
@@ -55,3 +56,8 @@ export const SESSION_LIMITS = {
   requestTimeoutMs: 120_000,
   costBudgetUsd: 5,
 } as const;
+
+/** Modes that hold an Executive Vote (and so take a ballot of options). */
+export function isVoteMode(mode: SessionMode): boolean {
+  return SESSION_MODES[mode].stages.some((s) => s.key === "VOTE");
+}

@@ -12,7 +12,7 @@ export interface PlatformTemplate {
   content: string;
 }
 
-const T = (key: string, type: PlatformTemplate["type"], content: string): PlatformTemplate => ({ key, version: 1, type, content: content.trim() });
+const T = (key: string, type: PlatformTemplate["type"], content: string, version = 1): PlatformTemplate => ({ key, version, type, content: content.trim() });
 
 export const PLATFORM_TEMPLATES: PlatformTemplate[] = [
   T("platform_rules", "PLATFORM", `
@@ -81,8 +81,20 @@ Review the positions below. If you hold a meaningful disagreement, state it prec
 EXECUTIVE VOTE. Objective: {{objective}}
 Options:
 {{options}}
-Score EACH option 1–10 from your mandate ({{mandate}}). Respond with a Markdown table (Option | Score | Reason) followed by a final line exactly in the form:
-VOTE: <option id> | CONFIDENCE: <0-100>`),
+Any discussion so far is in the record below; weigh it, but score from your own mandate ({{mandate}}).
+<session_record>
+{{transcript}}
+</session_record>
+Score EACH option 1–10. Respond with a Markdown table (Option | Score | Reason), one row per option, using the option id in the Option column and a one-sentence reason. Then a final line exactly in the form:
+VOTE: <option id> | CONFIDENCE: <0-100>`, 2),
+
+  T("suggest_vote_options", "SESSION", `
+Draft the options for an Executive Vote. Objective: {{objective}}
+Question to decide: {{question}}
+Propose 2 to 4 genuinely different, realistic courses of action the organization could take — not yes/no variants of one idea. Each option is one short line (under 12 words) written as an action.
+Output ONLY the options, one per line, in exactly this form:
+A: <option>
+B: <option>`),
 
   T("ceo_synthesis", "SESSION", `
 You chair this C-Suite Session. Objective: {{objective}}

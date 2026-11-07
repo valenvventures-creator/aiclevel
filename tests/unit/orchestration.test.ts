@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SESSION_LIMITS, SESSION_MODES } from "@/config/sessions/modes";
-import { parseRecommendedOption, parseVote, planStages, tallyVotes, voteLeader } from "@/server/ai/orchestration/plan";
+import { parseRecommendedOption, parseVote, parseVoteDetails, planStages, stripRecommendedLine, tallyVotes, tiedLeaders, voteLeader } from "@/server/ai/orchestration/plan";
 import { resolvedExec } from "./fixtures";
 
 const all = ["CEO", "CFO", "CCO", "CHRO", "CTO", "CLO", "CIO"].map((r) => resolvedExec(r));
@@ -63,5 +63,52 @@ describe("Executive Vote results", () => {
     expect(parseRecommendedOption("…\nRECOMMENDED OPTION: **c**", ["A", "B", "C"])).toBe("C");
     expect(parseRecommendedOption("RECOMMENDED OPTION: D", ["A", "B", "C"])).toBeNull();
     expect(parseRecommendedOption("No line here", ["A"])).toBeNull();
+  });
+});
+
+describe("vote details and ties", () => {
+  const ids = ["A", "B", "C"];
+  const answer = [
+    "| Option | Score | Reason |",
+    "|---|---|---|",
+    "| **A** | 8 | Strongest runway. |",
+    "| Option B | 6 | Slower, but cheaper. |",
+    "| C — loan | 3.5 | Covenants bite. |",
+    "",
+    "VOTE: A | CONFIDENCE: 72",
+  ].join("\n");
+
+  it("reads the vote, every option's score and the reason for the chosen option", () => {
+    const v = parseVoteDetails(answer, ids);
+    expect(v).toEqual({ option: "A", confidence: 72, scores: { A: 8, B: 6, C: 3.5 }, reason: "Strongest runway." });
+  });
+
+  it("falls back to the text before the vote line when there is no table", () => {
+    expect(parseVoteDetails("I back the pilot because it is reversible.\nVOTE: B | CONFIDENCE: 55", ids)?.reason).toBe("I back the pilot because it is reversible.");
+  });
+
+  it("averages scores across all voters, and reports true vote ties", () => {
+    const t = tallyVotes([{ id: "A", label: "x" }, { id: "B", label: "y" }], [
+      { option_id: "A", confidence: 0.7, scores_json: { A: 8, B: 6 } },
+      { option_id: "B", confidence: 0.6, scores_json: { A: 4, B: 9 } },
+    ]);
+    expect(t[0].avgScore).toBe(6);
+    expect(t[1].avgScore).toBe(7.5);
+    expect(tiedLeaders(t)).toEqual(["A", "B"]);
+  });
+
+  it("hides the machine-readable recommendation line from people", () => {
+    expect(stripRecommendedLine("## Confidence\n60%\n\nRECOMMENDED OPTION: B")).toBe("## Confidence\n60%");
+  });
+
+  it("asks a single called-on executive for their vote in a vote mode", () => {
+    const plan = planStages(SESSION_MODES.EXECUTIVE_VOTE, all.slice(0, 3), ceo, all[1].id);
+    expect(plan).toHaveLength(1);
+    expect(plan[0].def.key).toBe("VOTE");
+    expect(plan[0].turns.map((t) => t.exec.id)).toEqual([all[1].id]);
+  });
+
+  it("discusses before voting in Discuss, then Vote", () => {
+    expect(planStages(SESSION_MODES.DISCUSS_AND_VOTE, all.slice(0, 3), ceo).map((s) => s.def.key)).toEqual(["INDEPENDENT", "VOTE", "SYNTHESIS"]);
   });
 });

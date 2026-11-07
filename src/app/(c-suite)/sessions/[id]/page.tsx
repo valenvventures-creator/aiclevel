@@ -10,7 +10,8 @@ import { Badge, Card, SectionTitle, SimulatedBadge } from "@/components/ui/primi
 import { Button } from "@/components/ui/button";
 import { formatRelative } from "@/lib/utils";
 import { DEFAULT_VOTE_OPTIONS, SESSION_MODES } from "@/config/sessions/modes";
-import { tallyVotes } from "@/server/ai/orchestration/plan";
+import { parseVoteDetails, stripRecommendedLine } from "@/server/ai/orchestration/plan";
+import { groupVoteRounds } from "@/server/sessions/vote-rounds";
 import { db } from "@/server/db/store";
 import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { requireContext } from "@/server/organizations/service";
@@ -40,14 +41,13 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
   const inProgress = Boolean(session.run_state);
   const status = session.status === "RUNNING" && !inProgress ? "ACTIVE" : session.status === "RUNNING" ? "IN SESSION" : session.status;
 
-  // Latest Executive Vote round: its ballot, its votes and the decision it produced.
-  const voteQuestion = [...messages].reverse().find((m) => m.stage === "QUESTION" && Array.isArray(m.metadata?.vote_options));
-  const roundVotes = voteQuestion ? votes.filter((v) => v.created_at >= voteQuestion.created_at) : votes;
-  const roundDecision = voteQuestion ? decisions.find((d) => d.created_at >= voteQuestion.created_at) : decisions.find((d) => d.options_json.length > 0);
-  const legacyIds = [...new Set(roundVotes.map((v) => v.option_id))].sort();
-  const ballot = (voteQuestion?.metadata?.vote_options as { id: string; label: string }[] | undefined)
-    ?? (roundDecision?.options_json.length ? roundDecision.options_json : legacyIds.map((id) => ({ id, label: DEFAULT_VOTE_OPTIONS.find((o) => o.id === id)?.label ?? `Option ${id}` })));
-  const voteTally = tallyVotes(ballot, roundVotes);
+  // Vote rounds (ballot, votes, decision) — shared with Minutes and Decision Memos.
+  const rounds = groupVoteRounds(messages, votes, decisions);
+  const ballotAt = (at: string) => [...rounds].reverse().find((r) => r.askedAt <= at)?.ballot ?? DEFAULT_VOTE_OPTIONS;
+  const canApprove = can(ctx.role, "decisions.approve");
+  // What the last round asked, so a failed executive can be retried on the same question and ballot.
+  const lastAsk = [...messages].reverse().find((m) => m.stage === "QUESTION" && !m.metadata?.retry);
+  const optionName = (d: (typeof decisions)[number], id: string | null | undefined) => (id ? `Option ${id}${d.options_json.find((o) => o.id === id) ? ` — ${d.options_json.find((o) => o.id === id)!.label}` : ""}` : "");
 
   return (
     <div className="grid gap-8 xl:grid-cols-[1fr_320px]">
@@ -88,13 +88,40 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
             if (m.speaker_type === "USER") {
               return (
                 <div key={m.id} className="rounded-2xl border border-line-gold/60 bg-gold-400/[0.05] p-4">
-                  <p className="font-mono text-[10px] tracking-[0.2em] text-gold-300">LEADERSHIP · {formatRelative(m.created_at).toUpperCase()}</p>
+                  <p className="font-mono text-[10px] tracking-[0.2em] text-gold-300">LEADERSHIP{m.metadata?.retry ? " · RETRY" : ""} · {formatRelative(m.created_at).toUpperCase()}</p>
                   <p className="mt-1.5 text-sm">{m.content}</p>
                 </div>
               );
             }
             const e = map.get(m.speaker_id ?? "");
             const synth = m.stage === "SYNTHESIS";
+            if (m.stage === "VOTE") {
+              const ballot = ballotAt(m.created_at);
+              const vote = parseVoteDetails(m.content, ballot.map((o) => o.id));
+              if (vote) {
+                return (
+                  <article key={m.id} className="flex gap-3 rounded-2xl border border-line p-4">
+                    {e && <ExecutiveAvatar src={e.avatar_url} shortTitle={e.short_title} accent={e.accent} size={36} ring={false} />}
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-semibold" style={{ color: e?.accent }}>{e?.title}</span>
+                        <span className="font-mono text-[10px] text-ivory-faint">VOTE</span>
+                        {m.simulated && <SimulatedBadge />}
+                      </div>
+                      <p className="text-sm">
+                        Voted <span className="font-mono text-gold-300">{vote.option}</span> — {ballot.find((o) => o.id === vote.option)?.label ?? `Option ${vote.option}`}
+                        <span className="text-ivory-faint"> · {vote.confidence}% confidence</span>
+                      </p>
+                      {vote.reason && <p className="mt-1 text-sm text-ivory-muted">{vote.reason}</p>}
+                      <details className="group mt-2">
+                        <summary className="cursor-pointer list-none text-xs text-gold-300 hover:text-gold-200">Show full scoring</summary>
+                        <div className="mt-2"><Markdown>{m.content}</Markdown></div>
+                      </details>
+                    </div>
+                  </article>
+                );
+              }
+            }
             return (
               <article key={m.id} className={synth ? "plate p-5 shadow-[var(--shadow-gold)]" : "flex gap-3 rounded-2xl border border-line p-4"}>
                 {!synth && e && <ExecutiveAvatar src={e.avatar_url} shortTitle={e.short_title} accent={e.accent} size={36} ring={false} />}
@@ -105,7 +132,7 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
                     <span className="font-mono text-[10px] text-ivory-faint">{m.stage.replace(/_/g, " ")}</span>
                     {m.simulated && <SimulatedBadge />}
                   </div>
-                  <Markdown>{m.content}</Markdown>
+                  <Markdown>{synth ? stripRecommendedLine(m.content) : m.content}</Markdown>
                 </div>
               </article>
             );
@@ -123,6 +150,7 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
             autostart={sp.autostart === "1" && messages.filter((m) => m.speaker_type === "USER").length === 0}
             resume={inProgress}
             canRun={canRun}
+            lastAsk={lastAsk ? { question: lastAsk.content, ballot: (lastAsk.metadata?.vote_options as { id: string; label: string }[] | undefined) ?? null } : null}
           />
         </div>
       </div>
@@ -137,33 +165,31 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
               <div key={d.id} className={i > 0 ? "mt-4 space-y-2 border-t border-line pt-4" : "space-y-2"}>
                 <div className="flex items-center justify-between"><Badge tone={d.status === "APPROVED" ? "ok" : "gold"}>{d.status}</Badge><span className="font-mono text-[10px] text-ivory-faint">CONF {Math.round(d.confidence * 100)}%</span></div>
                 <p className="text-xs text-ivory-muted">“{d.question}”</p>
-                {d.recommended_option && (
+                {d.chosen_option ? (
+                  <p className="rounded-lg border border-ok/40 bg-ok/[0.06] px-3 py-2 text-sm">
+                    <span className="block font-mono text-[10px] tracking-[0.18em] text-ok">CHOSEN</span>
+                    {optionName(d, d.chosen_option)}
+                    {d.recommended_option && d.recommended_option !== d.chosen_option && <span className="mt-0.5 block text-xs text-ivory-muted">The CEO recommended {optionName(d, d.recommended_option)}.</span>}
+                  </p>
+                ) : d.recommended_option && (
                   <p className="rounded-lg border border-line-gold/60 bg-gold-400/[0.05] px-3 py-2 text-sm">
                     <span className="block font-mono text-[10px] tracking-[0.18em] text-gold-300">CEO RECOMMENDS</span>
-                    Option {d.recommended_option}{d.options_json.find((o) => o.id === d.recommended_option) ? ` — ${d.options_json.find((o) => o.id === d.recommended_option)!.label}` : ""}
+                    {optionName(d, d.recommended_option)}
                   </p>
                 )}
                 <p className="text-sm">{d.recommendation.slice(0, 280)}</p>
                 {d.risks_json.length > 0 && (
                   <ul className="space-y-1 text-xs text-ivory-muted">{d.risks_json.slice(0, 4).map((r, i) => <li key={i}>• {r.risk} <span className="text-warn">({r.severity})</span></li>)}</ul>
                 )}
+                {canApprove && d.status !== "APPROVED" && (
+                  <Link href={`/decisions#${d.id}`} className="flex h-8 items-center justify-center rounded-full bg-gold-400/10 text-xs font-medium text-gold-200 hover:bg-gold-400/20">Review &amp; approve →</Link>
+                )}
                 <form action={createDecisionMemoAction.bind(null, d.id)}><Button size="sm" variant="outline" className="w-full"><Gavel className="size-3.5" /> Create decision memo</Button></form>
               </div>
             ))
           )}
         </Card>
-        {roundVotes.length > 0 && (
-          <VoteResults
-            question={voteQuestion?.content ?? roundDecision?.question ?? null}
-            tally={voteTally}
-            voters={roundVotes.map((v) => {
-              const e = map.get(v.executive_id);
-              return { id: v.id, shortTitle: e?.short_title ?? "EXEC", accent: e?.accent ?? "currentColor", optionId: v.option_id, confidence: v.confidence };
-            })}
-            recommended={roundDecision?.recommended_option ?? null}
-            defaulted={Boolean(voteQuestion?.metadata?.defaulted_options)}
-          />
-        )}
+        <VoteResults rounds={rounds} voters={Object.fromEntries(execs.map((e) => [e.id, { shortTitle: e.short_title, title: e.title, accent: e.accent }]))} />
         <Card>
           <SectionTitle>Record</SectionTitle>
           <div className="space-y-2">

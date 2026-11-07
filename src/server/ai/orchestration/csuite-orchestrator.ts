@@ -1,6 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { DEFAULT_VOTE_OPTIONS, SESSION_LIMITS, SESSION_MODES, type SessionStageDef } from "@/config/sessions/modes";
+import { DEFAULT_VOTE_OPTIONS, isVoteMode, SESSION_LIMITS, SESSION_MODES, type SessionStageDef } from "@/config/sessions/modes";
 import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { db, newId, nowIso } from "@/server/db/store";
 import { audit } from "@/server/audit";
@@ -10,7 +10,7 @@ import { formatTranscript } from "../prompts/builders";
 import { assembleExecutiveContext } from "../executives/context";
 import type { TaskType } from "../gateway/types";
 import type { CSuiteSession, CSuiteSessionMessage, Organization, ResolvedExecutive, Role, SessionMode, SessionRunState } from "@/types/domain";
-import { planStages, parseRecommendedOption, parseVote, tallyVotes, voteLeader, type PlannedStage } from "./plan";
+import { planStages, parseRecommendedOption, parseVoteDetails, tallyVotes, voteLeader, type PlannedStage } from "./plan";
 
 /**
  * C-SUITE ORCHESTRATOR (server-side only) — STEPWISE.
@@ -40,11 +40,12 @@ export const SESSION_STEP_LIMITS = {
 } as const;
 
 export type OrchestratorEvent =
-  | { type: "stage"; stage: string; label: string }
+  | { type: "stage"; stage: string; label: string; index: number; count: number }
+  | { type: "progress"; index: number; count: number; label: string; finished: number; total: number }
   | { type: "turn_start"; executiveId: string; executiveTitle: string; stage: string; text: string }
   | { type: "delta"; executiveId: string; text: string }
   | { type: "turn_end"; executiveId: string; messageId: string; simulated: boolean; provider: string | null; model: string | null }
-  | { type: "turn_failed"; executiveId: string; executiveTitle: string; error: string }
+  | { type: "turn_failed"; executiveId: string; executiveTitle: string; error: string; stage: string }
   | { type: "decision"; decisionId: string }
   | { type: "done"; status: "ADJOURNED" | "FAILED" }
   | { type: "step_end"; state: "continue" | "done" | "busy" | "idle" | "failed"; error?: string }
@@ -88,7 +89,7 @@ export interface StartRunInput {
   mode?: SessionMode;
   participantExecutiveIds?: string[];
   attachmentIds?: string[];
-  options?: { voteOptions?: { id: string; label: string }[]; onlyExecutiveId?: string };
+  options?: { voteOptions?: { id: string; label: string }[]; onlyExecutiveId?: string; retry?: boolean };
 }
 
 export async function startSessionRun(input: StartRunInput): Promise<{ state: "started" | "busy"; runId?: string; error?: string }> {
@@ -107,8 +108,9 @@ export async function startSessionRun(input: StartRunInput): Promise<{ state: "s
   const mode = input.mode ?? session.mode;
   // An Executive Vote always has a ballot: the options given, or Proceed / Do not proceed.
   const givenOptions = (input.options?.voteOptions ?? []).filter((o) => o.label.trim()).map((o) => ({ id: o.id.toUpperCase(), label: o.label.trim() }));
-  const isVote = mode === "EXECUTIVE_VOTE" && !input.options?.onlyExecutiveId;
-  const ballot = isVote ? (givenOptions.length >= 2 ? givenOptions : DEFAULT_VOTE_OPTIONS) : givenOptions.length ? givenOptions : null;
+  const isVote = isVoteMode(mode);
+  const single = Boolean(input.options?.onlyExecutiveId);
+  const ballot = isVote ? (givenOptions.length >= 2 ? givenOptions : DEFAULT_VOTE_OPTIONS) : null;
   const participantIds = (input.participantExecutiveIds ?? session.participant_executive_ids).filter((p) => session.participant_executive_ids.includes(p)).slice(0, SESSION_LIMITS.maxParticipants);
   const run: SessionRunState = {
     run_id: randomUUID(),
@@ -124,7 +126,7 @@ export async function startSessionRun(input: StartRunInput): Promise<{ state: "s
     lease_until: null,
     started_at: nowIso(),
   };
-  await persist({ speaker_type: "USER", speaker_id: input.userId, stage: "QUESTION", content: input.userMessage, provider: null, model: null, prompt_version: null, simulated: false, metadata: { run_id: run.run_id, vote_options: isVote ? ballot : undefined, defaulted_options: isVote && givenOptions.length < 2 ? true : undefined } });
+  await persist({ speaker_type: "USER", speaker_id: input.userId, stage: "QUESTION", content: input.userMessage, provider: null, model: null, prompt_version: null, simulated: false, metadata: { run_id: run.run_id, vote_options: isVote ? ballot : undefined, defaulted_options: isVote && givenOptions.length < 2 ? true : undefined, single_executive: single || undefined, retry: input.options?.retry || undefined } });
   await d.sessions.update(orgId, session.id, { status: "RUNNING", mode, started_at: session.started_at ?? nowIso(), run_state: run });
   await audit(orgId, input.userId, "session.run", "executive_session", session.id, { mode, participants: run.participant_ids.length });
   return { state: "started", runId: run.run_id };
@@ -227,13 +229,15 @@ export async function* advanceSessionRun(input: AdvanceRunInput): AsyncGenerator
 
   if (run.stage_index < plan.length) {
     const stage = plan[run.stage_index];
+    const stageEvent = { type: "stage" as const, stage: stage.def.key, label: stage.def.label, index: run.stage_index + 1, count: plan.length };
     if (!Object.keys(run.turns).length) {
-      yield { type: "stage", stage: stage.def.key, label: stage.def.label };
+      yield stageEvent;
       await persist({ speaker_type: "SYSTEM", speaker_id: null, stage: stage.def.key, content: stage.def.label, provider: null, model: null, prompt_version: null, simulated: false, metadata: { run_id: run.run_id } });
       run.turns = Object.fromEntries(stage.turns.map((t) => [t.exec.id, { text: "", done: false, attempts: 0, empty_steps: 0 }]));
     } else {
-      yield { type: "stage", stage: stage.def.key, label: stage.def.label };
+      yield stageEvent;
     }
+    yield { type: "progress", index: run.stage_index + 1, count: plan.length, label: stage.def.label, finished: Object.values(run.turns).filter((t) => t.done).length, total: stage.turns.length };
 
     // Shared record of the conversation so far (bounded), rebuilt from persisted messages.
     const fresh = await d.sessionMessages.list(orgId, { where: { session_id: session.id }, orderBy: "sequence_number" });
@@ -242,7 +246,7 @@ export async function* advanceSessionRun(input: AdvanceRunInput): AsyncGenerator
       .slice(-14)
       .map((m) => ({ speaker: m.speaker_type === "USER" ? "Leadership" : (titleOf.get(m.speaker_id ?? "") ?? "Executive"), stage: m.stage, content: m.content }));
 
-    yield* runStageStep({ input, session, run, stage, executives, record, persist, budgetMs: input.budgetMs ?? SESSION_STEP_LIMITS.STEP_BUDGET_MS, modeLabel: modeDef.label, modeDescription: modeDef.description });
+    yield* runStageStep({ input, session, run, stage, stageIndex: run.stage_index + 1, stageCount: plan.length, executives, record, persist, budgetMs: input.budgetMs ?? SESSION_STEP_LIMITS.STEP_BUDGET_MS, modeLabel: modeDef.label, modeDescription: modeDef.description });
 
     if (Object.values(run.turns).every((t) => t.done)) {
       run.stage_index += 1;
@@ -254,9 +258,10 @@ export async function* advanceSessionRun(input: AdvanceRunInput): AsyncGenerator
     // Round complete: votes and the structured decision record.
     const roundMessages = (await d.sessionMessages.list(orgId, { where: { session_id: session.id }, orderBy: "sequence_number" })).filter((m) => m.metadata?.run_id === run.run_id);
     for (const m of roundMessages.filter((x) => x.stage === "VOTE" && x.speaker_type === "EXECUTIVE")) {
-      const v = parseVote(m.content);
+      const ids = (run.vote_options ?? DEFAULT_VOTE_OPTIONS).map((o) => o.id);
+      const v = parseVoteDetails(m.content, ids);
       // Only votes for an option on the ballot are counted.
-      if (v && (!run.vote_options || run.vote_options.some((o) => o.id === v.option))) await d.votes.insert({ id: newId(), organization_id: orgId, session_id: session.id, executive_id: m.speaker_id!, option_id: v.option, score: 0, reason: m.content.slice(0, 400), confidence: v.confidence / 100, created_at: nowIso() });
+      if (v && ids.includes(v.option)) await d.votes.insert({ id: newId(), organization_id: orgId, session_id: session.id, executive_id: m.speaker_id!, option_id: v.option, score: v.scores[v.option] ?? 0, scores_json: v.scores, reason: v.reason, confidence: v.confidence / 100, created_at: nowIso() });
     }
     const synthesis = [...roundMessages].reverse().find((m) => m.stage === "SYNTHESIS" && m.speaker_type === "EXECUTIVE");
     if (synthesis) {
@@ -280,6 +285,8 @@ async function* runStageStep(args: {
   session: CSuiteSession;
   run: SessionRunState;
   stage: PlannedStage;
+  stageIndex: number;
+  stageCount: number;
   executives: ResolvedExecutive[];
   record: { speaker: string; stage: string; content: string }[];
   persist: (m: NewMessage) => Promise<CSuiteSessionMessage>;
@@ -299,6 +306,7 @@ async function* runStageStep(args: {
   const onAbort = () => ctrl.abort();
   input.signal?.addEventListener("abort", onAbort);
 
+  const progress = (): OrchestratorEvent => ({ type: "progress", index: args.stageIndex, count: args.stageCount, label: stage.def.label, finished: Object.values(run.turns).filter((t) => t.done).length, total: stage.turns.length });
   const turnGen = async function* (exec: ResolvedExecutive): AsyncGenerator<OrchestratorEvent> {
     const state = run.turns[exec.id];
     yield { type: "turn_start", executiveId: exec.id, executiveTitle: exec.title, stage: stage.def.key, text: state.text };
@@ -354,6 +362,7 @@ async function* runStageStep(args: {
       const row = await args.persist({ speaker_type: "EXECUTIVE", speaker_id: exec.id, stage: stage.def.key, content: state.text, provider: (provider as CSuiteSessionMessage["provider"]) ?? null, model, prompt_version: `${built.promptVersion}+${template.versionTag}`, simulated, metadata: { run_id: run.run_id, memory_ids: built.memoryIds, layers: built.layers } });
       state.done = true;
       yield { type: "turn_end", executiveId: exec.id, messageId: row.id, simulated, provider, model };
+      yield progress();
       return;
     }
     // Failure without any text: retry once, then record it. Never invent a response.
@@ -362,7 +371,8 @@ async function* runStageStep(args: {
       if (state.attempts > SESSION_LIMITS.maxRetries) {
         await args.persist({ speaker_type: "SYSTEM", speaker_id: exec.id, stage: stage.def.key, content: `${exec.title} could not complete the analysis.`, provider: null, model: null, prompt_version: null, simulated: false, metadata: { run_id: run.run_id, failed: true, error } });
         state.done = true;
-        yield { type: "turn_failed", executiveId: exec.id, executiveTitle: exec.title, error };
+        yield { type: "turn_failed", executiveId: exec.id, executiveTitle: exec.title, error, stage: stage.def.key };
+        yield progress();
       }
       return;
     }
@@ -372,7 +382,8 @@ async function* runStageStep(args: {
       if (state.empty_steps >= SESSION_STEP_LIMITS.MAX_EMPTY_STEPS) {
         await args.persist({ speaker_type: "SYSTEM", speaker_id: exec.id, stage: stage.def.key, content: `${exec.title} could not respond within the time limit.`, provider: null, model: null, prompt_version: null, simulated: false, metadata: { run_id: run.run_id, failed: true } });
         state.done = true;
-        yield { type: "turn_failed", executiveId: exec.id, executiveTitle: exec.title, error: "No response within the time limit." };
+        yield { type: "turn_failed", executiveId: exec.id, executiveTitle: exec.title, error: "No response within the time limit.", stage: stage.def.key };
+        yield progress();
       }
     } else state.empty_steps = 0;
   };
@@ -424,7 +435,7 @@ async function recordDecision(session: CSuiteSession, input: AdvanceRunInput, ru
     .map((c) => ({ risk: c[0], severity: (["LOW", "MEDIUM", "HIGH"].find((s) => c[1].toUpperCase().includes(s)) ?? "MEDIUM") as "LOW" | "MEDIUM" | "HIGH" }));
   // After a vote: the option the chair named, or else the vote leader.
   let recommended: string | null = null;
-  if (run.mode === "EXECUTIVE_VOTE" && run.vote_options?.length) {
+  if (isVoteMode(run.mode) && !run.only_executive_id && run.vote_options?.length) {
     const ids = run.vote_options.map((o) => o.id);
     recommended = parseRecommendedOption(synthesis, ids);
     if (!recommended) {

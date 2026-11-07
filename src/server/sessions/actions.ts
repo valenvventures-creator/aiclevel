@@ -8,6 +8,9 @@ import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { db, newId, nowIso } from "@/server/db/store";
 import { audit } from "@/server/audit";
 import { SESSION_LIMITS } from "@/config/sessions/modes";
+import { stripRecommendedLine } from "@/server/ai/orchestration/plan";
+import { rememberApprovedDecision } from "@/server/decisions/memory";
+import { groupVoteRounds, roundForDecision, voteRoundMarkdown } from "./vote-rounds";
 import { SESSION_MODES as MODES, type SessionMode } from "@/types/domain";
 
 const Create = z.object({
@@ -58,11 +61,15 @@ export async function createMinutesAction(sessionId: string) {
   if (!s) return;
   const msgs = await db().sessionMessages.list(orgId, { where: { session_id: s.id }, orderBy: "sequence_number" });
   const execs = new Map((await AIExecutiveRegistry.getAllExecutives(orgId)).map((e) => [e.id, e]));
+  const [votes, decisions] = await Promise.all([db().votes.list(orgId, { where: { session_id: s.id } }), db().decisions.list(orgId, { where: { session_id: s.id } })]);
+  const rounds = groupVoteRounds(msgs, votes, decisions);
+  const titleOf = (id: string) => execs.get(id)?.title ?? "Executive";
   const body = [
     `# Minutes — ${s.title}`,
     `**Objective:** ${s.objective}`,
     `**Mode:** ${s.mode.replace(/_/g, " ")} · **Participants:** ${s.participant_executive_ids.map((id) => execs.get(id)?.short_title).filter(Boolean).join(", ")}`,
-    ...msgs.filter((m) => m.speaker_type !== "SYSTEM").map((m) => `## ${m.speaker_type === "USER" ? "Leadership" : (execs.get(m.speaker_id ?? "")?.title ?? "Executive")} — ${m.stage.replace(/_/g, " ").toLowerCase()}\n${m.content}`),
+    ...msgs.filter((m) => m.speaker_type !== "SYSTEM").map((m) => `## ${m.speaker_type === "USER" ? "Leadership" : (execs.get(m.speaker_id ?? "")?.title ?? "Executive")} — ${m.stage.replace(/_/g, " ").toLowerCase()}\n${stripRecommendedLine(m.content)}`),
+    ...rounds.filter((r) => r.votes.length).map((r, i, all) => voteRoundMarkdown(r, titleOf, all.length > 1 ? `## How the C-Suite voted — round ${i + 1}` : "## How the C-Suite voted")),
   ].join("\n\n");
   const id = newId();
   const simulated = msgs.some((m) => m.simulated);
@@ -81,33 +88,56 @@ export async function createDecisionMemoAction(decisionId: string) {
   const orgId = ctx.organization.id;
   const dcs = await db().decisions.get(orgId, decisionId);
   if (!dcs) return;
+  const s = dcs.session_id ? await db().sessions.get(orgId, dcs.session_id) : null;
+  const execs = new Map((await AIExecutiveRegistry.getAllExecutives(orgId)).map((e) => [e.id, e]));
+  const [msgs, votes, decisions] = s
+    ? await Promise.all([
+        db().sessionMessages.list(orgId, { where: { session_id: s.id }, orderBy: "sequence_number" }),
+        db().votes.list(orgId, { where: { session_id: s.id } }),
+        db().decisions.list(orgId, { where: { session_id: s.id } }),
+      ])
+    : [[], [], []];
+  const round = roundForDecision(groupVoteRounds(msgs, votes, decisions), dcs);
+  const optionText = (id: string | null | undefined) => (id ? `Option ${id}${dcs.options_json.find((o) => o.id === id) ? ` — ${dcs.options_json.find((o) => o.id === id)!.label}` : ""}` : "");
   const content = [
     `# Decision Memo — ${dcs.title}`,
     `**Question:** ${dcs.question}`,
+    dcs.recommended_option ? `**CEO recommends:** ${optionText(dcs.recommended_option)}` : "",
+    dcs.chosen_option ? `**Chosen:** ${optionText(dcs.chosen_option)}` : "",
     `## Recommendation\n${dcs.recommendation}`,
     dcs.rationale && `## Rationale\n${dcs.rationale}`,
+    round && round.votes.length ? voteRoundMarkdown(round, (id) => execs.get(id)?.title ?? "Executive") : "",
     dcs.risks_json.length ? `## Risks\n| Risk | Severity |\n|---|---|\n${dcs.risks_json.map((r) => `| ${r.risk} | ${r.severity} |`).join("\n")}` : "",
     `## Confidence\n${Math.round(dcs.confidence * 100)}%`,
     `## Status\n${dcs.status}`,
   ].filter(Boolean).join("\n\n");
-  const s = dcs.session_id ? await db().sessions.get(orgId, dcs.session_id) : null;
+  // Labelled simulated when the synthesis behind this decision was simulated (never presented as live).
+  const synthesis = [...msgs].reverse().find((m) => m.stage === "SYNTHESIS" && m.speaker_type === "EXECUTIVE" && m.created_at <= dcs.created_at);
+  const simulated = synthesis ? synthesis.simulated : msgs.some((m) => m.simulated);
   const ceo = await AIExecutiveRegistry.getByRole(orgId, "CEO");
   const id = newId();
-  await db().reports.insert({ id, organization_id: orgId, project_id: dcs.project_id, report_type: "Decision Memo", title: `Decision Memo — ${dcs.title}`, summary: dcs.recommendation.slice(0, 200), content, lead_executive_id: s?.chair_executive_id ?? ceo?.id ?? "", contributing_executive_ids: s?.participant_executive_ids ?? [], sources: [], version: 1, source_session_id: s?.id ?? null, simulated: false, created_by: ctx.user.id, created_at: nowIso() });
+  await db().reports.insert({ id, organization_id: orgId, project_id: dcs.project_id, report_type: "Decision Memo", title: `Decision Memo — ${dcs.title}`, summary: dcs.recommendation.slice(0, 200), content, lead_executive_id: s?.chair_executive_id ?? ceo?.id ?? "", contributing_executive_ids: s?.participant_executive_ids ?? [], sources: [], version: 1, source_session_id: s?.id ?? null, simulated, created_by: ctx.user.id, created_at: nowIso() });
   await audit(orgId, ctx.user.id, "report.create", "report", id, { type: "decision_memo" });
   redirect(`/reports/${id}`);
 }
 
 export async function updateDecisionStatusAction(fd: FormData) {
   const ctx = await authorize("decisions.approve");
+  const orgId = ctx.organization.id;
   const id = String(fd.get("id"));
   const status = String(fd.get("status"));
   if (!["APPROVED", "REJECTED", "DEFERRED", "UNDER_REVIEW"].includes(status)) return;
-  const decision = await db().decisions.get(ctx.organization.id, id);
+  const decision = await db().decisions.get(orgId, id);
   if (!decision) return;
-  // Approving a vote's decision adopts the recommended option unless one was already chosen.
-  const chosen = status === "APPROVED" && !decision.chosen_option && decision.recommended_option ? { chosen_option: decision.recommended_option } : {};
-  await db().decisions.update(ctx.organization.id, id, { status: status as "APPROVED", ...chosen });
-  await audit(ctx.organization.id, ctx.user.id, "approval.action", "decision", id, { status });
+  // The person approving decides which option is adopted (defaults to the CEO's recommendation).
+  const picked = String(fd.get("chosen_option") ?? "").toUpperCase();
+  const chosenOption =
+    status === "APPROVED" && decision.options_json.length
+      ? (decision.options_json.some((o) => o.id === picked) ? picked : (decision.chosen_option ?? decision.recommended_option ?? null))
+      : decision.chosen_option;
+  await db().decisions.update(orgId, id, { status: status as "APPROVED", chosen_option: chosenOption });
+  await audit(orgId, ctx.user.id, "approval.action", "decision", id, { status, chosen_option: chosenOption, recommended_option: decision.recommended_option ?? null });
+  if (status === "APPROVED") await rememberApprovedDecision({ ...decision, status: "APPROVED", chosen_option: chosenOption }, ctx.user.id);
   revalidatePath("/decisions");
+  if (decision.session_id) revalidatePath(`/sessions/${decision.session_id}`);
 }

@@ -29,10 +29,12 @@ const { seedExecutivesForOrganization } = await import("@/server/executives/seed
 const { AIExecutiveRegistry } = await import("@/server/executives/registry");
 const { startSessionRun, advanceSessionRun, cancelSessionRun } = await import("@/server/ai/orchestration/csuite-orchestrator");
 const { db, newId, nowIso } = await import("@/server/db/store");
+const { groupVoteRounds } = await import("@/server/sessions/vote-rounds");
+const { rememberApprovedDecision } = await import("@/server/decisions/memory");
 
 const org = { id: "org-sessions", name: "Session Test", slug: "session-test", logo_url: null, owner_id: "u1", industry: null, subscription_status: "TRIAL" as const, is_demo: false, created_at: new Date().toISOString() };
 
-async function newSession(status: "ACTIVE" | "RUNNING" = "ACTIVE", mode: "CEO_SYNTHESIS" | "EXECUTIVE_VOTE" = "CEO_SYNTHESIS") {
+async function newSession(status: "ACTIVE" | "RUNNING" = "ACTIVE", mode: "CEO_SYNTHESIS" | "EXECUTIVE_VOTE" | "DISCUSS_AND_VOTE" = "CEO_SYNTHESIS") {
   const execs = await AIExecutiveRegistry.getAllExecutives(org.id);
   const pick = execs.filter((e) => ["CEO", "CFO", "CTO"].includes(e.role_code));
   const id = newId();
@@ -179,5 +181,61 @@ describe("stepwise C-Suite Sessions", () => {
     const [decision] = await db().decisions.list(org.id, { where: { session_id: id } });
     // No "RECOMMENDED OPTION" line: the vote leader is used.
     expect(decision.recommended_option).toBe("A");
+  });
+
+  it("stores every option's score and the reason with each vote", async () => {
+    script.delayMs = 0;
+    script.byTask = { session_vote: ["|", "Option", "|", "Score", "|", "Reason", "|\n|---|---|---|\n|", "A", "|", "8", "|", "Runway", "first.", "|\n|", "B", "|", "5", "|", "Slower.", "|\nVOTE:", "A", "|", "CONFIDENCE:", "70"], session_synthesis: ["##", "Recommendation\nA."] };
+    const id = await newSession("ACTIVE", "EXECUTIVE_VOTE");
+    await startSessionRun({ organization: org, userId: "u1", sessionId: id, userMessage: "Fund how?", options: { voteOptions: [{ id: "A", label: "Raise" }, { id: "B", label: "Bootstrap" }] } });
+    for (let i = 0; i < 10; i++) if ((await step(id, 2000)).state !== "continue") break;
+    const [v] = await db().votes.list(org.id, { where: { session_id: id } });
+    expect(v.scores_json).toEqual({ A: 8, B: 5 });
+    expect(v.score).toBe(8);
+    expect(v.reason).toBe("Runway first.");
+  });
+
+  it("retries a failed vote as a vote on the same ballot, inside the same round", async () => {
+    script.delayMs = 0;
+    script.byTask = { session_vote: ["VOTE:", "B", "|", "CONFIDENCE:", "60"], session_synthesis: ["##", "Recommendation\nB."] };
+    const id = await newSession("ACTIVE", "EXECUTIVE_VOTE");
+    const ballot = [{ id: "A", label: "Raise" }, { id: "B", label: "Bootstrap" }];
+    await startSessionRun({ organization: org, userId: "u1", sessionId: id, userMessage: "Fund how?", options: { voteOptions: ballot } });
+    for (let i = 0; i < 10; i++) if ((await step(id, 2000)).state !== "continue") break;
+    const cfo = (await AIExecutiveRegistry.getAllExecutives(org.id)).find((e) => e.role_code === "CFO")!;
+    await startSessionRun({ organization: org, userId: "u1", sessionId: id, userMessage: "Fund how?", mode: "EXECUTIVE_VOTE", options: { voteOptions: ballot, onlyExecutiveId: cfo.id, retry: true } });
+    for (let i = 0; i < 10; i++) if ((await step(id, 2000)).state !== "continue") break;
+
+    const messages = await db().sessionMessages.list(org.id, { where: { session_id: id }, orderBy: "sequence_number" });
+    expect(messages.filter((m) => m.stage === "VOTE" && m.speaker_type === "EXECUTIVE" && m.speaker_id === cfo.id)).toHaveLength(2);
+    expect(await db().decisions.list(org.id, { where: { session_id: id } })).toHaveLength(1); // no second decision
+    const rounds = groupVoteRounds(messages, await db().votes.list(org.id, { where: { session_id: id } }), await db().decisions.list(org.id, { where: { session_id: id } }));
+    expect(rounds).toHaveLength(1);
+    expect(rounds[0].votes).toHaveLength(3); // the retry replaced the CFO's earlier vote
+  });
+
+  it("discusses before voting in Discuss, then Vote, and the votes see the discussion", async () => {
+    script.delayMs = 0;
+    script.words = ["Position", "text."];
+    script.byTask = { session_vote: ["VOTE:", "A", "|", "CONFIDENCE:", "80"], session_synthesis: ["##", "Recommendation\nA.\nRECOMMENDED", "OPTION:", "A"] };
+    const id = await newSession("ACTIVE", "DISCUSS_AND_VOTE");
+    await startSessionRun({ organization: org, userId: "u1", sessionId: id, userMessage: "Expand to the UK?", mode: "DISCUSS_AND_VOTE" });
+    for (let i = 0; i < 15; i++) if ((await step(id, 2000)).state !== "continue") break;
+    const messages = await db().sessionMessages.list(org.id, { where: { session_id: id }, orderBy: "sequence_number" });
+    expect(messages.filter((m) => m.speaker_type === "EXECUTIVE").map((m) => m.stage)).toEqual(["INDEPENDENT", "INDEPENDENT", "INDEPENDENT", "VOTE", "VOTE", "VOTE", "SYNTHESIS"]);
+    expect(script.calls.find((c) => c.taskType === "session_vote")?.system).toContain("Position text.");
+    const [decision] = await db().decisions.list(org.id, { where: { session_id: id } });
+    expect(decision.recommended_option).toBe("A");
+  });
+
+  it("saves an approved decision to C-Suite Memory as verified, once", async () => {
+    const decision = { id: newId(), organization_id: org.id, project_id: null, session_id: null, title: "UK expansion", question: "Expand to the UK?", options_json: [{ id: "A", label: "Proceed" }, { id: "B", label: "Wait" }], chosen_option: "B", recommended_option: "A", recommendation: "Pilot first.", rationale: "Reversible.", risks_json: [], financial_implications_json: null, technology_implications_json: null, people_implications_json: null, impact_implications_json: null, confidence: 0.6, status: "APPROVED" as const, created_by: "u1", created_at: nowIso() };
+    await rememberApprovedDecision(decision, "u1");
+    await rememberApprovedDecision(decision, "u1");
+    const records = await db().memory.list(org.id, { where: { source_id: decision.id } });
+    expect(records).toHaveLength(1);
+    expect(records[0]).toMatchObject({ status: "VERIFIED", category: "DECISIONS", verified_by: "u1" });
+    expect(records[0].content).toContain("Chosen option: B — Wait");
+    expect(records[0].content).toContain("The CEO had recommended option A.");
   });
 });
