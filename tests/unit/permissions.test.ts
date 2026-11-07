@@ -31,3 +31,16 @@ describe("role-based authorization", () => {
     expect(() => assertCan("MEMBER", "team.invite")).toThrow(AuthorizationError);
   });
 });
+
+describe("report deletion", () => {
+  it("lets operators delete any report and members only their own", async () => {
+    const { canDeleteReport } = await import("@/server/auth/permissions");
+    const mine = { created_by: "me" };
+    const theirs = { created_by: "someone-else" };
+    for (const role of ["OWNER", "ADMIN", "EXECUTIVE"] as const) expect(canDeleteReport(role, "me", theirs)).toBe(true);
+    expect(canDeleteReport("MEMBER", "me", mine)).toBe(true);
+    expect(canDeleteReport("MEMBER", "me", theirs)).toBe(false);
+    expect(canDeleteReport("ADVISOR", "me", mine)).toBe(false);
+    expect(canDeleteReport("VIEWER", "me", mine)).toBe(false);
+  });
+});

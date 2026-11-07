@@ -4,15 +4,18 @@ import type { Metadata } from "next";
 import { ExecChip } from "@/components/hq/widgets";
 import { Markdown } from "@/components/ui/markdown";
 import { ExportButtons } from "@/components/reports/export-buttons";
-import { Badge, Card, SectionTitle, SimulatedBadge } from "@/components/ui/primitives";
+import { Alert, Badge, Card, SectionTitle, SimulatedBadge } from "@/components/ui/primitives";
+import { DeleteReportButton } from "@/components/reports/delete-report-button";
+import { canDeleteReport } from "@/server/auth/permissions";
 import { db } from "@/server/db/store";
 import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { requireContext } from "@/server/organizations/service";
 
 export const metadata: Metadata = { title: "Report" };
 
-export default async function ReportPage({ params }: PageProps<"/reports/[id]">) {
+export default async function ReportPage({ params, searchParams }: PageProps<"/reports/[id]">) {
   const { id } = await params;
+  const sp = await searchParams;
   const ctx = await requireContext();
   const r = await db().reports.get(ctx.organization.id, id);
   if (!r) notFound();
@@ -24,6 +27,11 @@ export default async function ReportPage({ params }: PageProps<"/reports/[id]">)
         <div className="mt-3 flex flex-wrap items-center gap-2"><Badge tone="gold">{r.report_type}</Badge><Badge>v{r.version}</Badge>{r.simulated && <SimulatedBadge />}</div>
         <h1 className="mt-3 font-heading text-3xl font-semibold sm:text-4xl">{r.title}</h1>
         <p className="mt-2 text-sm text-ivory-muted">{r.summary}</p>
+        {sp.error === "forbidden" && (
+          <div className="mt-6">
+            <Alert tone="risk">You don&apos;t have permission to delete this report. Owners, Admins and Executives can delete any report; members can delete reports they created.</Alert>
+          </div>
+        )}
         <div className="surface mt-8 p-6 sm:p-8"><Markdown>{r.content}</Markdown></div>
       </article>
       <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
@@ -43,6 +51,13 @@ export default async function ReportPage({ params }: PageProps<"/reports/[id]">)
           <ExportButtons href={`/api/reports/${r.id}/export`} />
           <p className="mt-3 text-xs text-ivory-faint">PDF and Word include Thought Authorities branding, the lead executive and page numbers.</p>
         </Card>
+        {canDeleteReport(ctx.role, ctx.user.id, r) && (
+          <Card>
+            <SectionTitle>Manage</SectionTitle>
+            <DeleteReportButton id={r.id} title={r.title} from="detail" />
+            <p className="mt-3 text-xs text-ivory-faint">Deleting removes this report for everyone in your organization. Linked sessions, decisions and Studio work are kept.</p>
+          </Card>
+        )}
       </aside>
     </div>
   );
