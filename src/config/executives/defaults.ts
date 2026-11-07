@@ -115,7 +115,7 @@ export const EXECUTIVE_SEEDS: readonly ExecutiveSeed[] = [
       { name: "Investment analysis", description: "Valuation, returns and capital allocation." },
       { name: "Financial risk", description: "Liquidity, concentration and exposure analysis." },
     ],
-    model: strategic("cfo_core", ["calculator", "spreadsheet_analysis", "search_files", "search_memory", "market_data"], ["FINANCE", "COMPANY", "STRATEGY", "DECISIONS", "RISKS", "PROJECTS", "DEADLINES"]),
+    model: strategic("cfo_core", ["calculator", "spreadsheet_analysis", "search_files", "search_memory", "market_data", "web_research"], ["FINANCE", "COMPANY", "STRATEGY", "DECISIONS", "RISKS", "PROJECTS", "DEADLINES"]),
   },
   {
     role_code: "CCO",
@@ -185,7 +185,7 @@ export const EXECUTIVE_SEEDS: readonly ExecutiveSeed[] = [
       { name: "Performance systems", description: "Accountability, management cadence and metrics." },
       { name: "Culture", description: "Employee experience and values in practice." },
     ],
-    model: strategic("chro_core", ["search_files", "search_memory", "get_project"], ["HR", "PEOPLE", "PROJECTS", "COMPANY", "DEADLINES", "LESSONS", "STRATEGY"]),
+    model: strategic("chro_core", ["search_files", "search_memory", "get_project", "web_research"], ["HR", "PEOPLE", "PROJECTS", "COMPANY", "DEADLINES", "LESSONS", "STRATEGY"]),
   },
   {
     role_code: "CTO",
@@ -255,7 +255,7 @@ export const EXECUTIVE_SEEDS: readonly ExecutiveSeed[] = [
       { name: "Compliance awareness", description: "Regulatory awareness and obligations." },
       { name: "Risk", description: "Downside, ethical and decision risk." },
     ],
-    model: strategic("clo_core", ["search_files", "search_memory", "policy_search"], ["GOVERNANCE", "RISKS", "DECISIONS", "COMPANY", "RELATIONSHIPS", "DOCUMENTS"]),
+    model: strategic("clo_core", ["search_files", "search_memory", "policy_search", "web_research"], ["GOVERNANCE", "RISKS", "DECISIONS", "COMPANY", "RELATIONSHIPS", "DOCUMENTS"]),
   },
   {
     role_code: "CIO",

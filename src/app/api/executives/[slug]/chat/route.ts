@@ -4,6 +4,8 @@ import { apiError, ndjson } from "@/lib/http";
 import { authorize } from "@/server/organizations/service";
 import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { db, newId, nowIso } from "@/server/db/store";
+import { mergeSources, sourcesMarkdown, webResearchFor } from "@/server/ai/web-research";
+import type { WebSource } from "@/server/ai/gateway/types";
 import { aiGateway } from "@/server/ai/gateway";
 import { assembleExecutiveContext } from "@/server/ai/executives/context";
 import { rateLimit } from "@/server/auth/rate-limit";
@@ -55,7 +57,8 @@ export async function POST(req: Request, { params }: RouteContext<"/api/executiv
     const recent: ChatMessage[] = history.slice(-HISTORY_TURNS * 2).map((m) => ({ role: m.role === "user" ? "user" : "assistant", content: m.content }));
     while (recent.length && recent[0].role !== "user") recent.shift();
 
-    const built = await assembleExecutiveContext({ organization: ctx.organization, viewerRole: ctx.role, exec, query: body.message, projectId: conversation.project_id, fileIds: body.fileIds });
+    const web = webResearchFor(exec, "executive_conversation");
+    const built = await assembleExecutiveContext({ organization: ctx.organization, viewerRole: ctx.role, exec, query: body.message, projectId: conversation.project_id, fileIds: body.fileIds, webResearch: Boolean(web) });
     const abort = new AbortController();
     req.signal.addEventListener("abort", () => abort.abort());
     const conversationId = conversation.id;
@@ -67,6 +70,7 @@ export async function POST(req: Request, { params }: RouteContext<"/api/executiv
       let model: string | null = null;
       let simulated = false;
       let failed = false;
+      let sources: WebSource[] = [];
       await d.executives.update(orgId, exec!.id, { status: "WORKING" });
       try {
         for await (const c of aiGateway.stream({
@@ -79,6 +83,7 @@ export async function POST(req: Request, { params }: RouteContext<"/api/executiv
           messages: recent,
           modelPreference: { provider: exec!.model.primary_provider, model: exec!.model.primary_model, fallbackProvider: exec!.model.fallback_provider, fallbackModel: exec!.model.fallback_model, effort: exec!.model.effort },
           promptVersion: built.promptVersion,
+          webResearch: web,
           signal: abort.signal,
         })) {
           if (c.type === "meta" && c.provider) {
@@ -87,6 +92,8 @@ export async function POST(req: Request, { params }: RouteContext<"/api/executiv
             simulated = Boolean(c.simulated);
             yield { type: "meta", provider, model, simulated };
           } else if (c.type === "meta" && c.text) yield { type: "notice", text: c.text };
+          else if (c.type === "activity" && c.activity === "web_search") yield { type: "activity", text: "Searching the web…" };
+          else if (c.type === "sources") sources = mergeSources(sources, c.sources);
           else if (c.type === "text" && c.text) {
             text += c.text;
             yield { type: "delta", text: c.text };
@@ -94,6 +101,12 @@ export async function POST(req: Request, { params }: RouteContext<"/api/executiv
             failed = true;
             yield { type: "error", error: c.error };
           }
+        }
+        // Answers that used web research list their sources.
+        const sourceList = text.trim() ? sourcesMarkdown(sources) : "";
+        if (sourceList) {
+          text += sourceList;
+          yield { type: "delta", text: sourceList };
         }
       } finally {
         await d.executives.update(orgId, exec!.id, { status: "AVAILABLE" });

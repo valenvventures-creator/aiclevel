@@ -56,8 +56,11 @@ export const PRICE_TABLE: Record<string, [number, number]> = {
   "claude-haiku-5-5": [0.1, 0.5],
 };
 
-export function estimateCost(model: string, input: number, output: number): number {
+/** Claude web search: $10 per 1,000 searches, plus the tokens of the results the model reads. */
+export const WEB_SEARCH_USD_PER_REQUEST = 0.01;
+
+export function estimateCost(model: string, input: number, output: number, webSearches = 0): number {
   const p = PRICE_TABLE[model];
-  if (!p) return 0;
-  return (input * p[0] + output * p[1]) / 1_000_000;
+  const tokens = p ? (input * p[0] + output * p[1]) / 1_000_000 : 0;
+  return tokens + webSearches * WEB_SEARCH_USD_PER_REQUEST;
 }

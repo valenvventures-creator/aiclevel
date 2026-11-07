@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { ArrowUp, BookmarkPlus, Check, Copy, CornerUpRight, Loader2, Mic, MicOff, Pencil, Play, RotateCcw, Square, Users, Volume2 } from "lucide-react";
+import { ArrowUp, BookmarkPlus, Check, Copy, CornerUpRight, Globe, Loader2, Mic, MicOff, Pencil, Play, RotateCcw, Square, Users, Volume2 } from "lucide-react";
 import { ExecutiveAvatar } from "@/components/executives/executive-avatar";
 import { Markdown } from "@/components/ui/markdown";
 import { Alert, SimulatedBadge } from "@/components/ui/primitives";
@@ -39,6 +39,7 @@ export function ExecutiveConversation({ exec, others, conversationId: initialId,
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [activity, setActivity] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -53,6 +54,7 @@ export function ExecutiveConversation({ exec, others, conversationId: initialId,
     if ((!content && !opts.regenerate) || streaming) return;
     setError(null);
     setNotice(null);
+    setActivity(null);
     setStreaming(true);
     const placeholder: UIMessage = { id: `pending-${Date.now()}`, role: "executive", content: "", pending: true };
     setMessages((m) => {
@@ -92,7 +94,11 @@ export function ExecutiveConversation({ exec, others, conversationId: initialId,
             setConversationId(ev.conversationId);
           } else if (ev.type === "meta") setMessages((m) => m.map((x) => (x.id === placeholder.id ? { ...x, simulated: ev.simulated, model: ev.model } : x)));
           else if (ev.type === "notice") setNotice(ev.text ?? null);
-          else if (ev.type === "delta") setMessages((m) => m.map((x) => (x.id === placeholder.id ? { ...x, content: x.content + (ev.text ?? "") } : x)));
+          else if (ev.type === "activity") setActivity(ev.text ?? null);
+          else if (ev.type === "delta") {
+            setActivity(null);
+            setMessages((m) => m.map((x) => (x.id === placeholder.id ? { ...x, content: x.content + (ev.text ?? "") } : x)));
+          }
           else if (ev.type === "error") setError(ev.error ?? "Unknown error");
           else if (ev.type === "done" && ev.messageId) setMessages((m) => m.map((x) => (x.id === placeholder.id ? { ...x, id: ev.messageId!, pending: false } : x)));
         }
@@ -101,6 +107,7 @@ export function ExecutiveConversation({ exec, others, conversationId: initialId,
       if ((e as Error).name !== "AbortError") setError((e as Error).message);
     } finally {
       setStreaming(false);
+      setActivity(null);
       abortRef.current = null;
       setMessages((m) => m.filter((x) => !(x.pending && !x.content)).map((x) => ({ ...x, pending: false })));
       router.refresh();
@@ -154,6 +161,11 @@ export function ExecutiveConversation({ exec, others, conversationId: initialId,
         {messages.map((m, i) => (
           <MessageRow key={m.id} m={m} exec={exec} others={others} isLastExec={i === lastExecIdx} streaming={streaming} conversationId={conversationId} onRegenerate={() => send("", { regenerate: true })} onEdit={() => setInput(m.content)} onContinue={() => send("Continue from where you left off.")} />
         ))}
+        {streaming && activity && (
+          <p role="status" className="flex items-center gap-2 pl-12 text-xs text-gold-300">
+            <Globe className="size-3.5 animate-pulse" aria-hidden /> {activity}
+          </p>
+        )}
         {notice && <Alert tone="warn">{notice}</Alert>}
         {error && (
           <Alert tone="risk">

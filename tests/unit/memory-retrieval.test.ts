@@ -23,6 +23,15 @@ describe("C-Suite Memory retrieval", () => {
     const out = rankMemories(rows, { ...base, query: "burn rate", allowedCategories: ["FINANCE"] });
     expect(out.map((r) => r.record.category)).toEqual(["FINANCE"]);
   });
+  it("lets every executive recall approved decisions, but not unverified ones", () => {
+    const rows = [
+      memory({ title: "Decision: UK expansion", content: "UK expansion pilot approved", category: "DECISIONS", status: "VERIFIED" }),
+      memory({ title: "Decision draft: UK expansion", content: "UK expansion pilot proposed", category: "DECISIONS", status: "PROPOSED" }),
+    ];
+    // e.g. the CHRO, whose categories do not include DECISIONS
+    const out = rankMemories(rows, { ...base, query: "UK expansion pilot", allowedCategories: ["HR", "PEOPLE"] });
+    expect(out.map((r) => r.record.status)).toEqual(["VERIFIED"]);
+  });
   it("ranks verified above proposed for equal relevance", () => {
     const rows = [memory({ title: "Pricing", content: "enterprise pricing annual", status: "PROPOSED" }), memory({ title: "Pricing", content: "enterprise pricing annual", status: "VERIFIED" })];
     const out = rankMemories(rows, { ...base, query: "enterprise pricing" });

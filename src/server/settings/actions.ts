@@ -180,6 +180,23 @@ export async function updateExecutiveConfigAction(_: SettingsState, fd: FormData
   } catch (e) { return fail(e); }
 }
 
+/** Turns web research on or off for every executive in one step (Settings → Tools). */
+export async function setWebResearchForAllAction(fd: FormData) {
+  const ctx = await authorize("executives.configure");
+  const enable = fd.get("enabled") === "true";
+  const orgId = ctx.organization.id;
+  const configs = await db().modelConfigs.list(orgId);
+  for (const c of configs) {
+    const has = c.tool_permissions.includes("web_research");
+    if (enable === has) continue;
+    const tool_permissions = enable ? [...c.tool_permissions, "web_research"] : c.tool_permissions.filter((t) => t !== "web_research");
+    await db().modelConfigs.update(orgId, c.id, { tool_permissions });
+  }
+  await audit(orgId, ctx.user.id, "executive.config_change", "ai_executive", null, { web_research: enable ? "all_on" : "all_off" });
+  revalidatePath("/settings/tools");
+  revalidatePath("/executives", "layout");
+}
+
 export async function addCeoIntelligenceAction(_: SettingsState, fd: FormData): Promise<SettingsState> {
   try {
     const ctx = await authorize("ceo_intelligence.manage");

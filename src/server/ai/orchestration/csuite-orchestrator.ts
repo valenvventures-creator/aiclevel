@@ -8,6 +8,7 @@ import { aiGateway } from "../gateway";
 import { fill, PromptRegistry } from "../prompts/registry";
 import { formatTranscript } from "../prompts/builders";
 import { assembleExecutiveContext } from "../executives/context";
+import { mergeSources, sourcesMarkdown, webResearchFor } from "../web-research";
 import type { TaskType } from "../gateway/types";
 import type { CSuiteSession, CSuiteSessionMessage, Organization, ResolvedExecutive, Role, SessionMode, SessionRunState } from "@/types/domain";
 import { planStages, parseRecommendedOption, parseVoteDetails, tallyVotes, voteLeader, type PlannedStage } from "./plan";
@@ -44,6 +45,7 @@ export type OrchestratorEvent =
   | { type: "progress"; index: number; count: number; label: string; finished: number; total: number }
   | { type: "turn_start"; executiveId: string; executiveTitle: string; stage: string; text: string }
   | { type: "delta"; executiveId: string; text: string }
+  | { type: "activity"; executiveId: string; label: string }
   | { type: "turn_end"; executiveId: string; messageId: string; simulated: boolean; provider: string | null; model: string | null }
   | { type: "turn_failed"; executiveId: string; executiveTitle: string; error: string; stage: string }
   | { type: "decision"; decisionId: string }
@@ -319,7 +321,8 @@ async function* runStageStep(args: {
       transcript,
       options: (run.vote_options ?? DEFAULT_VOTE_OPTIONS).map((o) => `- ${o.id}: ${o.label}`).join("\n"),
     });
-    const built = await assembleExecutiveContext({ organization: input.organization, viewerRole: input.viewerRole, exec, query: `${session.objective} ${run.question}`, fileIds: run.attachment_ids, taskInstructions: task });
+    const web = webResearchFor(exec, STAGE_TASK[stage.def.key], { continuing: Boolean(state.text) });
+    const built = await assembleExecutiveContext({ organization: input.organization, viewerRole: input.viewerRole, exec, query: `${session.objective} ${run.question}`, fileIds: run.attachment_ids, taskInstructions: task, webResearch: Boolean(web) });
     const content = state.text
       ? `${run.question}\n\n<your_answer_so_far>\n${state.text.slice(-30_000)}\n</your_answer_so_far>\n\nYour answer above is unfinished. Continue it from exactly where it ends. Output only the continuation — do not repeat any text already written.`
       : run.question;
@@ -342,9 +345,12 @@ async function* runStageStep(args: {
       modelPreference: { provider: exec.model.primary_provider, model: exec.model.primary_model, fallbackProvider: exec.model.fallback_provider, fallbackModel: exec.model.fallback_model, effort: state.text || state.empty_steps > 0 ? "low" : "medium" },
       maxTokens: SESSION_LIMITS.maxTokensPerTurn,
       promptVersion: template.versionTag,
+      webResearch: web,
       signal: ctrl.signal,
     })) {
-      if (c.type === "meta" && c.provider) {
+      if (c.type === "activity" && c.activity === "web_search") yield { type: "activity", executiveId: exec.id, label: "Searching the web…" };
+      else if (c.type === "sources") state.sources = mergeSources(state.sources ?? [], c.sources);
+      else if (c.type === "meta" && c.provider) {
         provider = c.provider;
         model = c.model ?? null;
         simulated = Boolean(c.simulated);
@@ -359,7 +365,10 @@ async function* runStageStep(args: {
     if (ctrl.signal.aborted) error = null;
 
     if (finished && !ctrl.signal.aborted && !error && state.text.trim()) {
-      const row = await args.persist({ speaker_type: "EXECUTIVE", speaker_id: exec.id, stage: stage.def.key, content: state.text, provider: (provider as CSuiteSessionMessage["provider"]) ?? null, model, prompt_version: `${built.promptVersion}+${template.versionTag}`, simulated, metadata: { run_id: run.run_id, memory_ids: built.memoryIds, layers: built.layers } });
+      // Answers that used web research list their sources (kept across steps in the round state).
+      const sourceList = sourcesMarkdown(state.sources ?? []);
+      if (sourceList) yield { type: "delta", executiveId: exec.id, text: sourceList };
+      const row = await args.persist({ speaker_type: "EXECUTIVE", speaker_id: exec.id, stage: stage.def.key, content: state.text + sourceList, provider: (provider as CSuiteSessionMessage["provider"]) ?? null, model, prompt_version: `${built.promptVersion}+${template.versionTag}`, simulated, metadata: { run_id: run.run_id, memory_ids: built.memoryIds, layers: built.layers, ...(state.sources?.length ? { sources: state.sources } : {}) } });
       state.done = true;
       yield { type: "turn_end", executiveId: exec.id, messageId: row.id, simulated, provider, model };
       yield progress();

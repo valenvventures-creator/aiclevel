@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Play, Plus, Sparkles, Square, Trash2 } from "lucide-react";
+import { Globe, Loader2, Play, Plus, Sparkles, Square, Trash2 } from "lucide-react";
 import { ExecutiveAvatar } from "@/components/executives/executive-avatar";
 import { Markdown } from "@/components/ui/markdown";
 import { Alert, Label, Select, SimulatedBadge, Textarea } from "@/components/ui/primitives";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 export interface RunnerExec { id: string; title: string; short_title: string; avatar_url: string | null; accent: string; role_code: string }
 export interface ModeOption { mode: string; label: string; description: string }
 
-interface LiveTurn { executiveId: string; stage: string; text: string; status: "speaking" | "done" | "failed"; simulated?: boolean; error?: string }
+interface LiveTurn { executiveId: string; stage: string; text: string; status: "speaking" | "done" | "failed"; simulated?: boolean; error?: string; activity?: string | null }
 
 const QUICK: { label: string; mode: string; prompt: string }[] = [
   { label: "Ask everyone", mode: "EXECUTIVE_ROUND", prompt: "" },
@@ -81,7 +81,8 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
         if (i === -1) return [...t, { executiveId: ev.executiveId!, stage: ev.stage!, text: ev.text ?? "", status: "speaking" }];
         return t.map((x, j) => (j === i ? { ...x, text: ev.text ?? x.text } : x));
       });
-    } else if (ev.type === "delta") setTurns((t) => t.map((x) => (x.executiveId === ev.executiveId && x.status === "speaking" ? { ...x, text: x.text + (ev.text ?? "") } : x)));
+    } else if (ev.type === "activity") setTurns((t) => t.map((x) => (x.executiveId === ev.executiveId && x.status === "speaking" ? { ...x, activity: ev.label ?? null } : x)));
+    else if (ev.type === "delta") setTurns((t) => t.map((x) => (x.executiveId === ev.executiveId && x.status === "speaking" ? { ...x, text: x.text + (ev.text ?? ""), activity: null } : x)));
     else if (ev.type === "turn_end") setTurns((t) => t.map((x) => (x.executiveId === ev.executiveId && x.status === "speaking" ? { ...x, status: "done", simulated: ev.simulated } : x)));
     else if (ev.type === "turn_failed") {
       setTurns((t) => t.map((x) => (x.executiveId === ev.executiveId && x.status === "speaking" ? { ...x, status: "failed", error: ev.error } : x)));
@@ -259,6 +260,7 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
                     {t.status === "speaking" && <SpeakingIndicator />}
                     {t.simulated && <SimulatedBadge />}
                   </div>
+                  {t.status === "speaking" && t.activity && <p role="status" className="mb-1 flex items-center gap-1.5 text-xs text-gold-300"><Globe className="size-3.5 animate-pulse" aria-hidden /> {t.activity}</p>}
                   {t.status === "failed" ? (
                     <p className="text-sm text-risk">{e.title} could not complete the analysis.</p>
                   ) : t.text ? <Markdown>{t.text}</Markdown> : <p className="text-sm text-ivory-faint">Preparing position…</p>}

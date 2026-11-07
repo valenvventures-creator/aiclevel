@@ -58,7 +58,7 @@ export const aiGateway = {
     for (const [i, attempt] of attempts.entries()) {
       const started = Date.now();
       let emitted = false;
-      let usage = { input_tokens: 0, output_tokens: 0 };
+      let usage: { input_tokens: number; output_tokens: number; web_search_requests?: number } = { input_tokens: 0, output_tokens: 0 };
       try {
         const adapter = ADAPTERS[attempt.provider];
         for await (const chunk of adapter.stream({ ...req, model: attempt.model, maxTokens: req.maxTokens ?? route.maxTokens, modelPreference: { ...route, ...req.modelPreference, effort: route.effort } })) {
@@ -111,7 +111,7 @@ export function summarizeFailures(failures: string[]): string {
   return `No A.I. provider could complete the request. ${failures.join(" ")}`;
 }
 
-async function recordUsage(req: GenerateRequest, provider: ProviderId, model: string, usage: { input_tokens: number; output_tokens: number }, latency: number, correlationId: string, success: boolean) {
+async function recordUsage(req: GenerateRequest, provider: ProviderId, model: string, usage: { input_tokens: number; output_tokens: number; web_search_requests?: number }, latency: number, correlationId: string, success: boolean) {
   try {
     await db().usage.insert({
       id: newId(),
@@ -123,7 +123,7 @@ async function recordUsage(req: GenerateRequest, provider: ProviderId, model: st
       request_type: req.taskType,
       input_tokens: usage.input_tokens,
       output_tokens: usage.output_tokens,
-      estimated_cost_usd: estimateCost(model, usage.input_tokens, usage.output_tokens),
+      estimated_cost_usd: estimateCost(model, usage.input_tokens, usage.output_tokens, usage.web_search_requests ?? 0),
       latency_ms: latency,
       correlation_id: correlationId,
       success,
