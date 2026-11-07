@@ -3,7 +3,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SignJWT, jwtVerify } from "jose";
 import { cache } from "react";
-import { dataMode, env, sessionSecret } from "@/lib/env";
+import { randomBytes } from "node:crypto";
+import { configuredSessionSecret, dataMode, env, ephemeralSessionSecret } from "@/lib/env";
+import { records } from "@/server/db/records";
 import { demoIdentity } from "./identity";
 import { supabaseServer } from "@/server/db/supabase";
 import type { UserProfile } from "@/types/domain";
@@ -15,6 +17,31 @@ const REMEMBER_TTL_S = 60 * 60 * 24 * 30;
 
 /* ------------------------- demo-mode session cookie ------------------------ */
 
+let secretPromise: Promise<Uint8Array> | null = null;
+
+/**
+ * HS256 signing key. `SESSION_SECRET` wins; otherwise a random secret is
+ * generated once and stored in the database so all instances agree on it
+ * (an ephemeral key would log users out whenever a new instance handles a request).
+ */
+function sessionSecret(): Promise<Uint8Array> {
+  return (secretPromise ??= (async () => {
+    const enc = (s: string) => new TextEncoder().encode(s);
+    const configured = configuredSessionSecret();
+    if (configured) return enc(configured);
+    const store = records();
+    if (store.kind === "memory") return enc(ephemeralSessionSecret());
+    const row = { id: "session_secret", value: randomBytes(48).toString("hex") };
+    await store.insertIfAbsent("app_config", row, { organizationId: "global" });
+    const saved = await store.get<{ id: string; value: string }>("app_config", "session_secret");
+    if (!saved?.value) throw new Error("Session secret could not be loaded");
+    return enc(saved.value);
+  })().catch((err) => {
+    secretPromise = null;
+    throw err;
+  }));
+}
+
 export async function createDemoSession(userId: string, remember: boolean) {
   const ttl = remember ? REMEMBER_TTL_S : SHORT_TTL_S;
   const jwt = await new SignJWT({ sub: userId })
@@ -22,7 +49,7 @@ export async function createDemoSession(userId: string, remember: boolean) {
     .setIssuedAt()
     .setExpirationTime(`${ttl}s`)
     .setIssuer("thought-authorities")
-    .sign(sessionSecret());
+    .sign(await sessionSecret());
   (await cookies()).set(SESSION_COOKIE, jwt, {
     httpOnly: true,
     secure: env.isProduction,
@@ -36,9 +63,9 @@ async function readDemoSession(): Promise<string | null> {
   const raw = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!raw) return null;
   try {
-    const { payload } = await jwtVerify(raw, sessionSecret(), { issuer: "thought-authorities" });
+    const { payload } = await jwtVerify(raw, await sessionSecret(), { issuer: "thought-authorities" });
     if (!payload.sub || !payload.iat) return null;
-    if (payload.iat < demoIdentity.sessionsValidAfter(payload.sub)) return null; // revoked
+    if (payload.iat < (await demoIdentity.sessionsValidAfter(payload.sub))) return null; // revoked
     return payload.sub;
   } catch {
     return null;

@@ -5,11 +5,10 @@ import { MemoryForm } from "@/components/memory/memory-form";
 import { Badge, Card, EmptyState, PageHeader, SectionTitle, type Tone } from "@/components/ui/primitives";
 import { cn, formatRelative } from "@/lib/utils";
 import { db } from "@/server/db/store";
-import { requireContext } from "@/server/organizations/service";
+import { listTeam, requireContext } from "@/server/organizations/service";
 import { can } from "@/server/auth/permissions";
 import { canView, rankMemories } from "@/server/memory/retrieval";
 import { memoryOpAction } from "@/server/memory/actions";
-import { demoIdentity } from "@/server/auth/identity";
 import { MEMORY_CATEGORIES, MEMORY_STATUSES, type MemoryRecord } from "@/types/domain";
 
 export const metadata: Metadata = { title: "C-Suite Memory" };
@@ -26,7 +25,8 @@ export default async function MemoryPage({ searchParams }: PageProps<"/memory">)
   const selectedId = s("id");
   const ctx = await requireContext();
   const orgId = ctx.organization.id;
-  const [all, projects] = await Promise.all([db().memory.list(orgId, { orderBy: "updated_at", desc: true, limit: 1000 }), db().projects.list(orgId)]);
+  const [all, projects, team] = await Promise.all([db().memory.list(orgId, { orderBy: "updated_at", desc: true, limit: 1000 }), db().projects.list(orgId), listTeam(orgId)]);
+  const names = new Map(team.map((m) => [m.user_id, m.profile?.first_name]));
   let rows = all.filter((m) => canView(m, ctx.role));
   if (category) rows = rows.filter((m) => m.category === category);
   if (status) rows = rows.filter((m) => m.status === status);
@@ -35,7 +35,7 @@ export default async function MemoryPage({ searchParams }: PageProps<"/memory">)
   const selected = selectedId ? all.find((m) => m.id === selectedId && canView(m, ctx.role)) : undefined;
   const canWrite = can(ctx.role, "memory.write");
   const link = (p: Record<string, string>) => `/memory?${new URLSearchParams(Object.entries({ q, category, status, ...p }).filter(([, v]) => v))}`;
-  const author = (id: string | null) => (id ? (demoIdentity.getUser(id)?.first_name ?? "Team member") : "—");
+  const author = (id: string | null) => (id ? (names.get(id) ?? "Team member") : "—");
 
   return (
     <div>

@@ -11,6 +11,7 @@ import { demoIdentity } from "@/server/auth/identity";
 import { passwordSchema } from "@/server/auth/schemas";
 import { supabaseServer } from "@/server/db/supabase";
 import { db, newId, nowIso } from "@/server/db/store";
+import { DEMO_USER_ID } from "@/server/db/demo-seed";
 import { audit } from "@/server/audit";
 import { TOOL_REGISTRY } from "@/config/tools/registry";
 import { ROLES, type OrganizationConstitution, type Role } from "@/types/domain";
@@ -32,7 +33,7 @@ export async function updateProfileAction(_: SettingsState, fd: FormData): Promi
     if (dataMode() === "supabase") {
       const sb = await supabaseServer();
       await sb.from("profiles").update({ ...p, display_name: p.display_name || null }).eq("id", ctx.user.id);
-    } else demoIdentity.updateProfile(ctx.user.id, { ...p, display_name: p.display_name || null });
+    } else await demoIdentity.updateProfile(ctx.user.id, { ...p, display_name: p.display_name || null });
     revalidatePath("/", "layout");
     return { ok: true, message: "Profile saved." };
   } catch (e) { return fail(e); }
@@ -49,6 +50,7 @@ export async function changePasswordAction(_: SettingsState, fd: FormData): Prom
       const { error } = await sb.auth.updateUser({ password: p.password });
       if (error) return { error: "Could not update password." };
     } else {
+      if (ctx.user.id === DEMO_USER_ID) return { error: "The shared demo account's password cannot be changed. Create your own account to set a password." };
       const ok = await demoIdentity.checkPassword(ctx.user.email, p.current);
       if (!ok.ok) return { error: "Your current password is incorrect." };
       await demoIdentity.setPassword(ctx.user.id, p.password, false);
@@ -63,8 +65,9 @@ export async function revokeOtherSessionsAction() {
   if (dataMode() === "supabase") {
     const sb = await supabaseServer();
     await sb.auth.signOut({ scope: "others" });
-  } else {
-    demoIdentity.revokeSessions(ctx.user.id);
+  } else if (ctx.user.id !== DEMO_USER_ID) {
+    // The shared demo account is used by many visitors at once; never sign them all out.
+    await demoIdentity.revokeSessions(ctx.user.id);
     // Re-issue the current session so this device stays signed in.
     const { createDemoSession } = await import("@/server/auth/session");
     await createDemoSession(ctx.user.id, false);

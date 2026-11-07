@@ -24,7 +24,7 @@ async function updateProfile(userId: string, patch: Partial<UserProfile>) {
   if (dataMode() === "supabase") {
     const sb = await supabaseServer();
     await sb.from("profiles").update(patch).eq("id", userId);
-  } else demoIdentity.updateProfile(userId, patch);
+  } else await demoIdentity.updateProfile(userId, patch);
 }
 
 /** Owner's active onboarding organization (created at step 2). */

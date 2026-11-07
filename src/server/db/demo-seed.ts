@@ -4,7 +4,8 @@ import { demoIdentity } from "@/server/auth/identity";
 import { createOrganization, getConstitution } from "@/server/organizations/service";
 import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { lexicalEmbedding } from "@/server/memory/embeddings";
-import { db, newId } from "./store";
+import { db, newId, nowIso } from "./store";
+import { records } from "./records";
 import type { ExecutiveRoleCode, MemoryCategory, MemoryRecord, MemoryStatus, ReportType, UserProfile } from "@/types/domain";
 
 /**
@@ -14,24 +15,58 @@ import type { ExecutiveRoleCode, MemoryCategory, MemoryRecord, MemoryStatus, Rep
  */
 export const DEMO_CREDENTIALS = { email: "demo@thoughtauthorities.ai", password: "csuite-demo-2026" } as const;
 export const DEMO_ORG_ID = "00000000-0000-4000-8000-00000000d3e0";
-const DEMO_USER_ID = "00000000-0000-4000-8000-00000000a11c";
+export const DEMO_USER_ID = "00000000-0000-4000-8000-00000000a11c";
 
 const g = globalThis as unknown as { __taDemoSeed?: Promise<void> };
 
 export function ensureDemoSeeded(): Promise<void> {
   if (dataMode() !== "demo") return Promise.resolve();
-  return (g.__taDemoSeed ??= seed().catch((err) => {
+  return (g.__taDemoSeed ??= seedOnce().catch((err) => {
     g.__taDemoSeed = undefined;
     throw err;
   }));
 }
 
+/* The demo seed runs exactly once per database, even when several serverless
+ * instances start at the same time: one instance takes a lock row, seeds, and
+ * writes a completion marker; the others wait for the marker. */
+const CONFIG = "app_config";
+const MARKER = "demo_seed_v1";
+const LOCK = "demo_seed_v1_lock";
+const LOCK_STALE_MS = 2 * 60_000;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function seedOnce(): Promise<void> {
+  const store = records();
+  const deadline = Date.now() + 45_000;
+  while (Date.now() < deadline) {
+    if (await store.get(CONFIG, MARKER)) return;
+    const acquired = await store.insertIfAbsent(CONFIG, { id: LOCK, at: Date.now() }, { organizationId: "global" });
+    if (acquired) {
+      try {
+        await seed();
+        await store.put(CONFIG, { id: MARKER, completed_at: nowIso() }, { organizationId: "global" });
+        return;
+      } finally {
+        await store.remove(CONFIG, LOCK);
+      }
+    }
+    const lock = await store.get<{ id: string; at: number }>(CONFIG, LOCK);
+    if (lock && Date.now() - lock.at > LOCK_STALE_MS) await store.remove(CONFIG, LOCK);
+    await sleep(400);
+  }
+  throw new Error("Timed out waiting for the demo organization to be prepared");
+}
+
 const daysAgo = (n: number, h = 0) => new Date(Date.now() - n * 86_400_000 - h * 3_600_000).toISOString();
 
 async function seed() {
-  if (demoIdentity.getUser(DEMO_USER_ID)) return;
-  const user: UserProfile = await demoIdentity.createUser({ id: DEMO_USER_ID, email: DEMO_CREDENTIALS.email, password: DEMO_CREDENTIALS.password, first_name: "Valen", last_name: "Demo", verified: true });
-  demoIdentity.updateProfile(user.id, { onboarding_completed: true });
+  // A previous, interrupted attempt may have created the account and organization already.
+  const user: UserProfile =
+    (await demoIdentity.getUser(DEMO_USER_ID)) ??
+    (await demoIdentity.createUser({ id: DEMO_USER_ID, email: DEMO_CREDENTIALS.email, password: DEMO_CREDENTIALS.password, first_name: "Valen", last_name: "Demo", verified: true }));
+  if (await demoIdentity.getOrganization(DEMO_ORG_ID)) return;
+  await demoIdentity.updateProfile(user.id, { onboarding_completed: true });
   const org = await createOrganization({ id: DEMO_ORG_ID, name: "Thought Authorities Demo", industry: "Professional services & leadership advisory", owner: user, title: "Founder & CEO", isDemo: true });
   const orgId = org.id;
   const d = db();

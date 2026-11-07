@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { dataMode, env } from "@/lib/env";
 import { supabaseServer } from "@/server/db/supabase";
 import { audit } from "@/server/audit";
-import { ensureDemoSeeded, DEMO_CREDENTIALS } from "@/server/db/demo-seed";
+import { ensureDemoSeeded, DEMO_CREDENTIALS, DEMO_USER_ID } from "@/server/db/demo-seed";
 import { demoIdentity } from "./identity";
 import { rateLimit } from "./rate-limit";
 import { createDemoSession, destroySession, getCurrentUser } from "./session";
@@ -42,7 +42,8 @@ function formValues(fd: FormData, keys: string[]) {
 
 async function postAuthRedirect(userId: string, next?: string): Promise<never> {
   const memberships = await listMembershipsForUser(userId);
-  const user = await getCurrentUser();
+  // The session cookie was set during this request, so resolve the profile directly.
+  const user = dataMode() === "supabase" ? await getCurrentUser() : await demoIdentity.getUser(userId);
   if (!memberships.length || (user && !user.onboarding_completed && memberships[0]?.member.role === "OWNER" && !memberships[0].organization.is_demo)) {
     redirect("/onboarding");
   }
@@ -70,10 +71,14 @@ export async function signupAction(_: FormState, fd: FormData): Promise<FormStat
     await audit(null, data.user?.id ?? null, "auth.signup", "user", data.user?.id ?? null, {});
     if (!data.session) return { ok: true, message: "Check your inbox to verify your email, then log in to continue onboarding." };
   } else {
-    await ensureDemoSeeded();
-    if (demoIdentity.findByEmail(d.email)) return { error: "We couldn't create that account. If you already have one, log in instead.", values };
-    const user = await demoIdentity.createUser({ email: d.email, password: d.password, first_name: d.first_name, last_name: d.last_name });
-    demoIdentity.issueToken(user.id, "VERIFY_EMAIL", 24 * 60 * 60_000);
+    if (d.email.trim().toLowerCase() === DEMO_CREDENTIALS.email || (await demoIdentity.findByEmail(d.email))) return { error: "We couldn't create that account. If you already have one, log in instead.", values };
+    let user;
+    try {
+      user = await demoIdentity.createUser({ email: d.email, password: d.password, first_name: d.first_name, last_name: d.last_name });
+    } catch {
+      return { error: "We couldn't create that account. If you already have one, log in instead.", values };
+    }
+    await demoIdentity.issueToken(user.id, "VERIFY_EMAIL", 24 * 60 * 60_000);
     await createDemoSession(user.id, false);
     await audit(null, user.id, "auth.signup", "user", user.id, {});
   }
@@ -102,7 +107,14 @@ export async function loginAction(_: FormState, fd: FormData): Promise<FormState
     return postAuthRedirect(data.user.id, next);
   }
 
-  await ensureDemoSeeded();
+  if (email.trim().toLowerCase() === DEMO_CREDENTIALS.email) {
+    try {
+      await ensureDemoSeeded();
+    } catch (err) {
+      console.error("Demo organization could not be prepared", err);
+      return { error: "The demo organization is being prepared. Please try again in a moment.", values };
+    }
+  }
   const res = await demoIdentity.checkPassword(email, password);
   if (!res.ok) {
     await audit(null, null, "auth.login_failed", "user", null, {});
@@ -116,10 +128,18 @@ export async function loginAction(_: FormState, fd: FormData): Promise<FormState
 /** One-click entry into the clearly-labelled demo organization (demo mode only). */
 export async function demoLoginAction(): Promise<void> {
   if (dataMode() !== "demo") redirect("/login");
-  await ensureDemoSeeded();
-  const res = await demoIdentity.checkPassword(DEMO_CREDENTIALS.email, DEMO_CREDENTIALS.password);
-  if (!res.ok) redirect("/login");
-  await createDemoSession(res.user.id, false);
+  try {
+    await ensureDemoSeeded();
+  } catch (err) {
+    console.error("Demo organization could not be prepared", err);
+    redirect("/login?demo=unavailable");
+  }
+  // No password check: the shared demo account must stay usable even if someone
+  // mistyped its password repeatedly on the login form.
+  const user = await demoIdentity.getUser(DEMO_USER_ID);
+  if (!user) redirect("/login?demo=unavailable");
+  await createDemoSession(user.id, false);
+  await audit(null, user.id, "auth.login", "user", user.id, { demo: true });
   redirect("/hq");
 }
 
@@ -145,10 +165,9 @@ export async function forgotPasswordAction(_: FormState, fd: FormData): Promise<
     await sb.auth.resetPasswordForEmail(parsed.data.email, { redirectTo: `${env.appUrl}/reset-password` });
     return { ok: true, message: RESET_MESSAGE };
   }
-  await ensureDemoSeeded();
-  const u = demoIdentity.findByEmail(parsed.data.email);
-  if (!u) return { ok: true, message: RESET_MESSAGE };
-  const token = demoIdentity.issueToken(u.profile.id, "RESET_PASSWORD", 30 * 60_000);
+  const u = await demoIdentity.findByEmail(parsed.data.email);
+  if (!u || u.id === DEMO_USER_ID) return { ok: true, message: RESET_MESSAGE }; // the shared demo account cannot be reset
+  const token = await demoIdentity.issueToken(u.profile.id, "RESET_PASSWORD", 30 * 60_000);
   return { ok: true, message: RESET_MESSAGE, devLink: `/reset-password?token=${token}` };
 }
 
@@ -167,7 +186,7 @@ export async function resetPasswordAction(_: FormState, fd: FormData): Promise<F
   }
   const parsed = resetSchema.safeParse(Object.fromEntries(fd));
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error.issues) };
-  const userId = demoIdentity.consumeToken(parsed.data.token, "RESET_PASSWORD");
+  const userId = await demoIdentity.consumeToken(parsed.data.token, "RESET_PASSWORD");
   if (!userId) return { error: "This reset link is invalid or has expired. Request a new one." };
   await demoIdentity.setPassword(userId, parsed.data.password, true); // revokes existing sessions
   await audit(null, userId, "auth.password_reset", "user", userId, {});
@@ -187,7 +206,7 @@ export async function resendVerificationAction(): Promise<FormState> {
     await sb.auth.resend({ type: "signup", email: user.email, options: { emailRedirectTo: `${env.appUrl}/verify-email` } });
     return { ok: true, message: "Verification email sent." };
   }
-  const token = demoIdentity.issueToken(user.id, "VERIFY_EMAIL", 24 * 60 * 60_000);
+  const token = await demoIdentity.issueToken(user.id, "VERIFY_EMAIL", 24 * 60 * 60_000);
   return { ok: true, message: "Verification email sent.", devLink: `/verify-email?token=${token}` };
 }
 
@@ -195,8 +214,8 @@ export async function resendVerificationAction(): Promise<FormState> {
 export async function verifyEmailAction(_: FormState, fd: FormData): Promise<FormState> {
   if (dataMode() === "supabase") return { ok: true, message: "Your email has been verified." }; // Supabase verifies via its own link
   const token = String(fd.get("token") ?? "");
-  const userId = token ? demoIdentity.consumeToken(token, "VERIFY_EMAIL") : null;
+  const userId = token ? await demoIdentity.consumeToken(token, "VERIFY_EMAIL") : null;
   if (!userId) return { error: "This verification link is invalid or has expired. Request a new one below." };
-  demoIdentity.updateProfile(userId, { email_verified: true });
+  await demoIdentity.updateProfile(userId, { email_verified: true });
   return { ok: true, message: "Your email has been verified." };
 }

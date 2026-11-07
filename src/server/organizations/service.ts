@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { dataMode } from "@/lib/env";
 import { slugify } from "@/lib/utils";
-import { db, memoryTables, newId, nowIso } from "@/server/db/store";
+import { db, findRowsGlobally, newId, nowIso } from "@/server/db/store";
 import { supabaseServer } from "@/server/db/supabase";
 import { demoIdentity } from "@/server/auth/identity";
 import { ORG_COOKIE, requireUser } from "@/server/auth/session";
@@ -28,11 +28,14 @@ export async function listMembershipsForUser(userId: string): Promise<Membership
       return { organization, member };
     });
   }
-  const rows = [...(memoryTables.get("organization_members")?.values() ?? [])] as unknown as OrganizationMember[];
-  return rows
-    .filter((m) => m.user_id === userId && m.status === "ACTIVE")
-    .map((member) => ({ member: structuredClone(member), organization: demoIdentity.getOrganization(member.organization_id)! }))
-    .filter((m) => m.organization);
+  const rows = await findRowsGlobally<OrganizationMember>("organization_members", { user_id: userId, status: "ACTIVE" });
+  rows.sort((a, b) => (a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0));
+  const out: Membership[] = [];
+  for (const member of rows) {
+    const organization = await demoIdentity.getOrganization(member.organization_id);
+    if (organization) out.push({ member, organization });
+  }
+  return out;
 }
 
 export interface RequestContext {
@@ -99,9 +102,15 @@ export async function createOrganization(input: { name: string; industry?: strin
     org.id = data as string;
     org.slug = `${slug}-${org.id.slice(0, 6)}`;
   } else {
-    if (demoIdentity.slugTaken(slug)) slug = `${slug}-${org.id.slice(0, 6)}`;
+    if (await demoIdentity.slugTaken(slug)) slug = `${slug}-${org.id.slice(0, 6)}`;
     org.slug = slug;
-    demoIdentity.putOrganization(org);
+    if (!(await demoIdentity.insertOrganizationIfAbsent(org))) {
+      // Another request created it first (e.g. concurrent demo seeding) — reuse it.
+      const existing = await demoIdentity.getOrganization(org.id);
+      if (existing) return existing;
+      org.slug = `${slugify(input.name) || "organization"}-${org.id.slice(0, 6)}`;
+      if (!(await demoIdentity.insertOrganizationIfAbsent(org))) throw new Error("Organization could not be created");
+    }
     await db().members.insert(member);
   }
   await db().constitutions.insert(blankConstitution(org.id));
@@ -122,7 +131,7 @@ export async function updateOrganizationRecord(orgId: string, patch: Partial<Org
     if (error) throw new Error(error.message);
     return;
   }
-  demoIdentity.updateOrganization(orgId, patch);
+  await demoIdentity.updateOrganization(orgId, patch);
 }
 
 export async function listTeam(orgId: string): Promise<(OrganizationMember & { profile: UserProfile | null })[]> {
@@ -133,5 +142,6 @@ export async function listTeam(orgId: string): Promise<(OrganizationMember & { p
     const byId = new Map((data ?? []).map((p) => [p.id as string, p as UserProfile]));
     return members.map((m) => ({ ...m, profile: byId.get(m.user_id) ?? null }));
   }
-  return members.map((m) => ({ ...m, profile: demoIdentity.getUser(m.user_id) }));
+  const profiles = await demoIdentity.getUsers(members.map((m) => m.user_id));
+  return members.map((m) => ({ ...m, profile: profiles.get(m.user_id) ?? null }));
 }

@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Choose a new password" };
 export default async function ResetPasswordPage({ searchParams }: PageProps<"/reset-password">) {
   const sp = await searchParams;
   const token = typeof sp.token === "string" ? sp.token : "";
-  const valid = dataMode() === "supabase" || (token && demoIdentity.peekToken(token, "RESET_PASSWORD"));
+  const valid = dataMode() === "supabase" || (token && (await demoIdentity.peekToken(token, "RESET_PASSWORD")));
   return (
     <div className="animate-fade-up">
       <p className="eyebrow">Account recovery</p>
