@@ -70,3 +70,11 @@ export function invitationEmail(p: { inviterName: string; organizationName: stri
   const foot = "This invitation expires in 7 days and can only be accepted with this email address. If you weren't expecting it, you can ignore this email.";
   return { subject: `${p.inviterName} invited you to ${p.organizationName} — A.I. C-Suite`, html: layout({ preheader: `Join ${p.organizationName} on Thought Authorities A.I. C-Suite.`, heading, body, cta, footnote: foot, origin: p.origin }), text: text(heading, body, cta, foot) };
 }
+
+export function testEmail(p: { firstName: string; url: string; origin: string }): EmailContent {
+  const heading = "Email delivery is working";
+  const body = [`Hi ${p.firstName || "there"},`, "This is a test message from your A.I. C-Suite. Verification, password-reset and invitation emails will be delivered the same way."];
+  const cta = { label: "Open C-Suite HQ", url: p.url };
+  const foot = "You received this because an administrator clicked “Send test email” in Settings → Email delivery.";
+  return { subject: "Test email — Thought Authorities A.I. C-Suite", html: layout({ preheader: "Your A.I. C-Suite can send email.", heading, body, cta, footnote: foot, origin: p.origin }), text: text(heading, body, cta, foot) };
+}

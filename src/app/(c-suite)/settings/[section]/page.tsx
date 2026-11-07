@@ -18,8 +18,9 @@ import { getConstitution, listTeam, requireContext, type RequestContext } from "
 import { assignableRoles, can } from "@/server/auth/permissions";
 import {
   addCeoIntelligenceAction, ceoIntelligenceOpAction, changePasswordAction, changeRoleAction, inviteMemberAction, removeMemberAction,
-  revokeOtherSessionsAction, updateConstitutionAction, updateOrganizationAction, updateProfileAction,
+  revokeOtherSessionsAction, sendTestEmailAction, updateConstitutionAction, updateOrganizationAction, updateProfileAction,
 } from "@/server/settings/actions";
+import { emailDiagnostics } from "@/server/email/diagnostics";
 
 export async function generateMetadata({ params }: PageProps<"/settings/[section]">): Promise<Metadata> {
   const { section } = await params;
@@ -47,6 +48,7 @@ export default async function SettingsSectionPage({ params }: PageProps<"/settin
       {s === "billing" && <Billing ctx={ctx} />}
       {s === "voice" && <Voice ctx={ctx} />}
       {s === "integrations" && <Integrations />}
+      {s === "email" && <EmailDelivery ctx={ctx} />}
       {s === "api-connections" && <ApiConnections />}
       {s === "memory" && <Info title="Memory governance" points={["AI-generated conclusions are stored as PROPOSED and never become organizational truth automatically.", "Executives only retrieve memory in categories they are permitted to read (configure per executive in A.I. C-Suite).", "Visibility levels: Organization, Leadership only, Owner only.", "Every record keeps its provenance: source, creator, date, verification state and confidence."]} link={["/memory", "Open C-Suite Memory"]} />}
       {s === "files-storage" && <Info title="Files & storage" points={["Files are stored privately per organization (Supabase Storage bucket `organization-files`, path-prefixed by organization id with RLS).", "Downloads use authorized requests and 60-second signed URLs — never permanent public links.", "Supported: PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, PNG, JPG, WEBP, common audio and video up to 20 MB.", "Plain-text formats are indexed immediately; binary formats are queued for the document-processing worker."]} link={["/files", "Open Files"]} />}
@@ -343,6 +345,52 @@ async function Voice({ ctx }: C) {
       <p className="mb-4 text-sm text-ivory-muted">Executive conversations support voice input and read-aloud today using your browser&apos;s speech engine. Executive-specific premium voices (e.g. ElevenLabs) and hands-free C-Suite Sessions are architected for Phase 11.</p>
       <ul className="divide-y divide-line">{execs.map((e) => <li key={e.id} id={e.slug} className="flex items-center gap-3 py-3"><ExecutiveAvatar src={e.avatar_url} shortTitle={e.short_title} accent={e.accent} size={32} ring={false} /><span className="flex-1 text-sm">{e.title}</span><span className="text-xs text-ivory-muted">{v.get(e.id)?.voice_name} · {v.get(e.id)?.provider} · {v.get(e.id)?.settings_json.playback_speed}×</span></li>)}</ul>
     </Card>
+  );
+}
+
+async function EmailDelivery({ ctx }: C) {
+  if (!can(ctx.role, "integrations.manage")) return <Alert tone="info">Owners and Admins can view and test email delivery.</Alert>;
+  const d = await emailDiagnostics();
+  const row = (label: string, ok: boolean, detail: React.ReactNode) => (
+    <li className="flex flex-wrap items-start justify-between gap-3 py-3">
+      <div className="min-w-0">
+        <p className="font-mono text-xs text-ivory">{label}</p>
+        <p className="mt-0.5 text-xs text-ivory-muted">{detail}</p>
+      </div>
+      <Badge tone={ok ? "ok" : "risk"}>{ok ? "Found" : "Not found"}</Badge>
+    </li>
+  );
+  return (
+    <>
+      <Alert tone={d.ready ? "ok" : "warn"}>
+        {d.ready ? "Email delivery is configured. Send a test email to confirm Resend accepts your sending domain." : "Email delivery is not configured on the running site, so verification, password-reset and invitation emails cannot be sent."}
+      </Alert>
+      <Card>
+        <SectionTitle>What this server can see</SectionTitle>
+        <ul className="divide-y divide-line">
+          {row("RESEND_API_KEY", d.apiKey !== "missing", d.apiKey === "missing" ? "Not set for this deploy." : d.apiKey === "unexpected_format" ? "Set, but it doesn't start with “re_” — check you copied a Resend API key." : "Set (value hidden).")}
+          {row("EMAIL_FROM", d.from.status === "ok", d.from.status === "missing" ? "Not set for this deploy." : d.from.status === "invalid" ? <>Set to “{d.from.value}”, which isn&apos;t a valid sender. Use the form Name &lt;address@yourdomain.com&gt;.</> : <>Sending as “{d.from.value}”.</>)}
+        </ul>
+        <p className="mt-3 text-xs text-ivory-faint">Links in emails point to {d.linkOrigin} (from {d.linkOriginSource}).</p>
+      </Card>
+      <Card>
+        <SectionTitle>Send a test email</SectionTitle>
+        <p className="mb-4 text-sm text-ivory-muted">Sends a test message to {ctx.user.email} and shows Resend&apos;s answer.</p>
+        <ActionForm action={sendTestEmailAction} submit="Send test email">{null}</ActionForm>
+      </Card>
+      {!d.ready && (
+        <Card>
+          <SectionTitle>Checklist for Netlify</SectionTitle>
+          <ol className="list-decimal space-y-2 pl-5 text-sm text-ivory-muted">
+            <li>In <span className="text-ivory">Netlify → Site configuration → Environment variables</span>, add <code className="text-gold-200">RESEND_API_KEY</code> and <code className="text-gold-200">EMAIL_FROM</code> exactly as written (capital letters, underscores).</li>
+            <li>For each variable, make sure its <span className="text-ivory">scopes include “Functions”</span> (or “All scopes”), and that it has a value for the <span className="text-ivory">Production</span> deploy context. A variable that is only available to Builds is invisible to the running site.</li>
+            <li>Add them in the Netlify dashboard, not in <code>netlify.toml</code> — Netlify doesn&apos;t pass <code>netlify.toml</code> variables to the running site.</li>
+            <li>Go to <span className="text-ivory">Deploys → Trigger deploy → Deploy site</span>. Changes only take effect after a new deploy.</li>
+            <li>Reload this page. Both rows should say “Found”, then send a test email.</li>
+          </ol>
+        </Card>
+      )}
+    </>
   );
 }
 

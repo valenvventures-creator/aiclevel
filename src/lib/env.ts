@@ -7,6 +7,10 @@ import { randomBytes } from "node:crypto";
  */
 const g = globalThis as unknown as { __taEphemeralSecret?: string };
 
+function clean(v: string | undefined): string {
+  return (v ?? "").trim().replace(/^(["'])(.*)\1$/, "$2").trim();
+}
+
 export const env = {
   appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
@@ -14,10 +18,11 @@ export const env = {
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
   openaiApiKey: process.env.OPENAI_API_KEY ?? "",
-  resendApiKey: process.env.RESEND_API_KEY ?? "",
+  // Trimmed (and unquoted) because values pasted into hosting dashboards often carry stray spaces or quotes.
+  resendApiKey: clean(process.env.RESEND_API_KEY),
   /** e.g. "Thought Authorities <no-reply@yourdomain.com>" — the domain must be verified with the email provider. */
-  emailFrom: process.env.EMAIL_FROM ?? "",
-  emailReplyTo: process.env.EMAIL_REPLY_TO ?? "",
+  emailFrom: clean(process.env.EMAIL_FROM),
+  emailReplyTo: clean(process.env.EMAIL_REPLY_TO),
   isProduction: process.env.NODE_ENV === "production",
 };
 

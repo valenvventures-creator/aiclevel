@@ -221,3 +221,20 @@ export async function testProviderAction(provider: "anthropic" | "openai"): Prom
     return { ok: false, message: "Could not reach the provider from the server." };
   }
 }
+
+/** Sends a test email to the signed-in administrator and reports the provider's answer (admins only). */
+export async function sendTestEmailAction(): Promise<SettingsState> {
+  try {
+    const ctx = await authorize("integrations.manage");
+    const { sendEmail } = await import("@/server/email/mailer");
+    const { testEmail } = await import("@/server/email/templates");
+    const { absoluteUrl, appOrigin } = await import("@/server/email/links");
+    const r = await sendEmail(ctx.user.email, testEmail({ firstName: ctx.user.first_name, url: await absoluteUrl("/hq"), origin: await appOrigin() }));
+    if (r.ok) return { ok: true, message: `Test email sent to ${ctx.user.email}. It usually arrives within a minute — check spam if it doesn't.` };
+    if (r.reason === "not_configured") return { error: "The server doesn't see RESEND_API_KEY and EMAIL_FROM yet. See the checklist below." };
+    if (r.reason === "unreachable") return { error: "The server couldn't reach Resend. Try again in a minute." };
+    return { error: `Resend refused the message: ${r.detail ?? "unknown reason"}. This usually means the sending domain in EMAIL_FROM isn't verified in Resend, or the API key is wrong.` };
+  } catch (e) {
+    return fail(e);
+  }
+}
