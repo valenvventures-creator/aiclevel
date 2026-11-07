@@ -1,7 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { env } from "@/lib/env";
-import { ProviderError, type GenerateRequest, type ProviderAdapter, type StreamChunk } from "../gateway/types";
+import { ProviderError, providerErrorFromStatus, type GenerateRequest, type ProviderAdapter, type StreamChunk } from "../gateway/types";
 
 let client: Anthropic | null = null;
 const getClient = () => (client ??= new Anthropic({ apiKey: env.anthropicApiKey, maxRetries: 2 }));
@@ -42,11 +42,12 @@ export const AnthropicAdapter: ProviderAdapter = {
       yield { type: "done", stopReason: final.stop_reason ?? undefined, model: final.model, usage: { input_tokens: final.usage.input_tokens, output_tokens: final.usage.output_tokens } };
     } catch (err) {
       if (err instanceof Anthropic.APIUserAbortError) throw err;
-      if (err instanceof Anthropic.AuthenticationError) throw new ProviderError("anthropic", "Anthropic credentials were rejected.", false);
-      if (err instanceof Anthropic.BadRequestError) throw new ProviderError("anthropic", `Anthropic rejected the request: ${err.message}`, false);
-      if (err instanceof Anthropic.RateLimitError) throw new ProviderError("anthropic", "Anthropic rate limit reached.", true);
-      if (err instanceof Anthropic.APIError) throw new ProviderError("anthropic", `Anthropic API error ${err.status ?? ""}`.trim(), true);
-      throw new ProviderError("anthropic", err instanceof Error ? err.message : "Unknown Anthropic error", true);
+      if (err instanceof Anthropic.APIConnectionError) throw new ProviderError("anthropic", "Claude (Anthropic) could not be reached from the server.", true, "network");
+      if (err instanceof Anthropic.APIError && typeof err.status === "number") {
+        const typed = (err.error as { error?: { message?: string } } | undefined)?.error?.message;
+        throw providerErrorFromStatus("anthropic", err.status, req.model, err.status === 400 ? typed : undefined);
+      }
+      throw new ProviderError("anthropic", err instanceof Error ? err.message : "Unknown Claude (Anthropic) error", true, "unknown");
     }
   },
 };

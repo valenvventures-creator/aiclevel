@@ -5,7 +5,7 @@ import { AnthropicAdapter } from "../providers/anthropic";
 import { OpenAIAdapter } from "../providers/openai";
 import { SimulatedAdapter } from "../providers/simulated";
 import { estimateCost, routeTask } from "./routing";
-import { ProviderError, type GenerateRequest, type ProviderAdapter, type StreamChunk } from "./types";
+import { type GenerateRequest, type ProviderAdapter, type StreamChunk } from "./types";
 import type { ProviderId } from "@/types/domain";
 
 const ADAPTERS: Record<ProviderId, ProviderAdapter> = {
@@ -54,7 +54,7 @@ export const aiGateway = {
       }
     }
 
-    let lastError: string | null = null;
+    const failures: string[] = [];
     for (const [i, attempt] of attempts.entries()) {
       const started = Date.now();
       let emitted = false;
@@ -72,16 +72,17 @@ export const aiGateway = {
         return;
       } catch (err) {
         if (req.signal?.aborted) return;
-        lastError = err instanceof Error ? err.message : String(err);
-        console.error(`[ai-gateway] ${attempt.provider}/${attempt.model} failed (correlation ${correlationId}):`, lastError);
+        const message = err instanceof Error ? err.message : String(err);
+        failures.push(message);
+        console.error(`[ai-gateway] ${attempt.provider}/${attempt.model} failed (correlation ${correlationId}):`, message);
         await recordUsage(req, attempt.provider, attempt.model, usage, Date.now() - started, correlationId, false);
-        const retryable = err instanceof ProviderError ? err.retryable : true;
-        // Never splice a fallback onto a partially-streamed answer.
-        if (emitted || (!retryable && i === attempts.length - 1)) break;
-        if (i < attempts.length - 1) yield { type: "meta", text: `Primary provider unavailable — switching to ${attempts[i + 1].provider}.` };
+        // Never splice a fallback onto a partially-streamed answer. Otherwise always try the
+        // next configured provider: a bad key or missing model on one must not block the other.
+        if (emitted) break;
+        if (i < attempts.length - 1) yield { type: "meta", text: `${message} Switching to ${attempts[i + 1].provider === "openai" ? "OpenAI" : "Claude"}.` };
       }
     }
-    yield { type: "error", error: lastError ?? "No A.I. provider could complete the request." };
+    yield { type: "error", error: summarizeFailures(failures) };
   },
 
   /** Non-streaming convenience: collect full text. */
@@ -102,6 +103,13 @@ export const aiGateway = {
     return { text, provider, model, simulated, error };
   },
 };
+
+/** One readable sentence covering every provider that was tried. */
+export function summarizeFailures(failures: string[]): string {
+  if (!failures.length) return "No A.I. provider could complete the request.";
+  if (failures.length === 1) return failures[0];
+  return `No A.I. provider could complete the request. ${failures.join(" ")}`;
+}
 
 async function recordUsage(req: GenerateRequest, provider: ProviderId, model: string, usage: { input_tokens: number; output_tokens: number }, latency: number, correlationId: string, success: boolean) {
   try {

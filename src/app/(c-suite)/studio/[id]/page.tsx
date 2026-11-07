@@ -51,6 +51,12 @@ export default async function StudioJobPage({ params, searchParams }: PageProps<
           {job.status === "FAILED" && (
             <Alert tone="risk">
               The lead executive could not complete this work{typeof job.metadata?.error === "string" ? `: ${job.metadata.error}` : "."}
+              {typeof job.metadata?.error === "string" && /API key|denied access|could not find model/i.test(job.metadata.error) && (
+                <p className="mt-2 text-xs text-ivory-muted">
+                  This is a provider configuration problem, not a problem with your request. An administrator can check each provider with “Test connection” in{" "}
+                  <Link href="/settings/ai-models" className="text-gold-300 underline underline-offset-2">Settings → AI Models</Link>.
+                </p>
+              )}
               <form action={retryJobAction} className="mt-2"><input type="hidden" name="id" value={job.id} /><button className="inline-flex items-center gap-1 underline"><RotateCcw className="size-3" /> Retry</button></form>
             </Alert>
           )}
