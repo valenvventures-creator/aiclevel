@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { apiError, ndjson } from "@/lib/http";
+import { apiError } from "@/lib/http";
 import { authorize } from "@/server/organizations/service";
-import { runCSuiteSession } from "@/server/ai/orchestration/csuite-orchestrator";
+import { cancelSessionRun, startSessionRun } from "@/server/ai/orchestration/csuite-orchestrator";
 import { rateLimit } from "@/server/auth/rate-limit";
 import { db } from "@/server/db/store";
 import { SESSION_MODES } from "@/types/domain";
@@ -15,7 +15,11 @@ const Body = z.object({
   voteOptions: z.array(z.object({ id: z.string().max(8), label: z.string().max(200) })).max(6).optional(),
 });
 
-export const maxDuration = 300;
+/**
+ * Starts a session round: records the question and the round's settings.
+ * The executives then speak through bounded steps — POST /api/sessions/[id]/step.
+ */
+export const maxDuration = 60;
 
 export async function POST(req: Request, { params }: RouteContext<"/api/sessions/[id]/run">) {
   try {
@@ -25,34 +29,34 @@ export async function POST(req: Request, { params }: RouteContext<"/api/sessions
     if (!rateLimit(`session:${ctx.user.id}`, 10, 60_000).ok) return NextResponse.json({ error: "Too many session runs. Please wait a moment." }, { status: 429 });
     const session = await db().sessions.get(ctx.organization.id, id);
     if (!session) return NextResponse.json({ error: "Session not found." }, { status: 404 });
-    if (session.status === "RUNNING") return NextResponse.json({ error: "This session is already running." }, { status: 409 });
     const convened = await db().sessionMessages.list(ctx.organization.id, { where: { session_id: id, stage: "CONVENED" }, limit: 1 });
     const attachmentIds = (convened[0]?.metadata?.attachment_ids as string[] | undefined) ?? [];
-    const abort = new AbortController();
-    req.signal.addEventListener("abort", () => abort.abort());
-    const gen = runCSuiteSession({
+    const result = await startSessionRun({
       organization: ctx.organization,
       userId: ctx.user.id,
-      viewerRole: ctx.role,
       sessionId: id,
       userMessage: body.message,
       mode: body.mode,
-      participantExecutiveIds: body.participantIds?.filter((p) => session.participant_executive_ids.includes(p)),
+      participantExecutiveIds: body.participantIds,
       attachmentIds,
       options: { voteOptions: body.voteOptions, onlyExecutiveId: body.onlyExecutiveId },
-      signal: abort.signal,
     });
-    async function* guarded() {
-      try {
-        yield* gen;
-      } finally {
-        const s = await db().sessions.get(ctx.organization.id, id);
-        if (s?.status === "RUNNING") await db().sessions.update(ctx.organization.id, id, { status: "ACTIVE" });
-      }
-    }
-    return ndjson(guarded(), () => abort.abort());
+    if (result.state === "busy") return NextResponse.json({ error: result.error ?? "The executives are still answering the previous question. It will finish in a moment." }, { status: 409 });
+    return NextResponse.json(result, { headers: { "cache-control": "no-store" } });
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+    return apiError(err);
+  }
+}
+
+/** Stops the current round. */
+export async function DELETE(_: Request, { params }: RouteContext<"/api/sessions/[id]/run">) {
+  try {
+    const ctx = await authorize("sessions.create");
+    const { id } = await params;
+    const stopped = await cancelSessionRun({ organization: ctx.organization, userId: ctx.user.id, sessionId: id });
+    return NextResponse.json({ stopped }, { headers: { "cache-control": "no-store" } });
+  } catch (err) {
     return apiError(err);
   }
 }

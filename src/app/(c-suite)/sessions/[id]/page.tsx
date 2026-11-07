@@ -34,6 +34,9 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
   const participants = session.participant_executive_ids.map((pid) => map.get(pid)).filter((e): e is NonNullable<typeof e> => Boolean(e));
   const mode = SESSION_MODES[session.mode];
   const canRun = can(ctx.role, "sessions.create");
+  // A round in progress has saved state; "RUNNING" without it is a round an older version left behind.
+  const inProgress = Boolean(session.run_state);
+  const status = session.status === "RUNNING" && !inProgress ? "ACTIVE" : session.status === "RUNNING" ? "IN SESSION" : session.status;
 
   return (
     <div className="grid gap-8 xl:grid-cols-[1fr_320px]">
@@ -42,7 +45,7 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
           <Link href="/sessions" className="text-xs text-ivory-muted hover:text-ivory">← C-Suite Sessions</Link>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Badge tone="gold">{mode.label}</Badge>
-            <Badge tone={session.status === "RUNNING" ? "warn" : session.status === "FAILED" ? "risk" : "neutral"}>{session.status}</Badge>
+            <Badge tone={inProgress ? "warn" : session.status === "FAILED" ? "risk" : "neutral"}>{status}</Badge>
           </div>
           <h1 className="mt-3 font-heading text-3xl font-semibold sm:text-4xl">{session.title}</h1>
           <p className="mt-2 max-w-3xl text-sm text-ivory-muted">{session.objective}</p>
@@ -107,6 +110,7 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
             defaultMode={session.mode}
             objective={session.objective}
             autostart={sp.autostart === "1" && messages.filter((m) => m.speaker_type === "USER").length === 0}
+            resume={inProgress}
             canRun={canRun}
           />
         </div>

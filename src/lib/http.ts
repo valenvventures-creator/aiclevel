@@ -15,18 +15,25 @@ export function apiError(err: unknown) {
 /** NDJSON streaming response helper. */
 export function ndjson(gen: AsyncIterable<unknown>, onAbort?: () => void): Response {
   const enc = new TextEncoder();
+  let cancelled = false;
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const ev of gen) controller.enqueue(enc.encode(`${JSON.stringify(ev)}\n`));
+        for await (const ev of gen) {
+          if (cancelled) break; // the reader left (tab closed / reload); leaving the loop lets the generator clean up
+          controller.enqueue(enc.encode(`${JSON.stringify(ev)}\n`));
+        }
       } catch (err) {
-        console.error("[stream]", err);
-        controller.enqueue(enc.encode(`${JSON.stringify({ type: "error", error: "The stream was interrupted." })}\n`));
+        if (!cancelled) {
+          console.error("[stream]", err);
+          controller.enqueue(enc.encode(`${JSON.stringify({ type: "error", error: "The stream was interrupted." })}\n`));
+        }
       } finally {
-        controller.close();
+        if (!cancelled) controller.close();
       }
     },
     cancel() {
+      cancelled = true;
       onAbort?.();
     },
   });

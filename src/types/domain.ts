@@ -263,6 +263,24 @@ export type SessionMode = (typeof SESSION_MODES)[number];
 
 export type SessionStatus = "DRAFT" | "ACTIVE" | "RUNNING" | "ADJOURNED" | "FAILED";
 
+/** Progress of one round of a C-Suite Session, which runs in bounded steps across requests. */
+export interface SessionRunState {
+  run_id: string;
+  question: string;
+  mode: SessionMode;
+  participant_ids: string[];
+  only_executive_id: string | null;
+  vote_options: { id: string; label: string }[] | null;
+  attachment_ids: string[];
+  /** Index into the bounded stage plan. */
+  stage_index: number;
+  /** Per-executive progress in the current stage. */
+  turns: Record<string, { text: string; done: boolean; attempts: number; empty_steps: number }>;
+  steps: number;
+  lease_until: string | null;
+  started_at: string;
+}
+
 export interface CSuiteSession {
   id: UUID;
   organization_id: UUID;
@@ -277,6 +295,8 @@ export interface CSuiteSession {
   created_at: ISODate;
   started_at: ISODate | null;
   ended_at: ISODate | null;
+  /** Present while a round is in progress or was interrupted (resumable). */
+  run_state?: SessionRunState | null;
 }
 
 export interface CSuiteSessionMessage {
