@@ -42,11 +42,17 @@ Effort is `medium` for the first part of an answer and `low` for continuations, 
 | FINANCIAL_REVIEW / RISK_REVIEW / OPERATING_REVIEW / MARKET_REVIEW / IMPACT_REVIEW | Independent → CFO / CLO / CHRO / CCO / Chief Impact Officer review → synthesis |
 | CONSENSUS | Independent → convergence → synthesis |
 | DISSENT | Independent → dissent round (disagreement preserved) → synthesis |
-| EXECUTIVE_VOTE | Each executive scores options (`VOTE: <id> | CONFIDENCE: <n>`) → synthesis |
+| EXECUTIVE_VOTE | Each executive scores options (`VOTE: <id> \| CONFIDENCE: <n>`) → vote synthesis (`RECOMMENDED OPTION: <id>`) |
 | DEEP_DIVE | Independent → financial → risk → red team → synthesis |
 | RAPID_SESSION | Short positions → synthesis |
 
 If a review's lead is not at the table, that stage is skipped (never silently substituted). "Call on" runs a single executive.
+
+## Executive Vote
+- **Ballot:** the options entered (2–6, lettered A–F). With fewer than two filled in, the ballot is `DEFAULT_VOTE_OPTIONS` — A: Proceed, B: Do not proceed — and the round is flagged `defaulted_options`. The ballot is stored on the round's QUESTION message (`metadata.vote_options`) and on the decision (`options_json`).
+- **Votes:** only votes for an option on the ballot are counted (`executive_session_votes`).
+- **Recommendation:** the `vote_synthesis` prompt asks the chair to end with `RECOMMENDED OPTION: <id>` (`parseRecommendedOption`). If that line is missing or names an option not on the ballot, the vote leader is used (`voteLeader`: most votes, ties broken on average confidence, a true tie gives none). Stored as `decisions.recommended_option`; approving the decision sets `chosen_option` from it if none was chosen.
+- **UI:** the session's right-hand panel shows the latest vote round — each option's wording, a vote count bar with average confidence, the CEO's recommended option and how each executive voted.
 
 ## Bounds (`SESSION_LIMITS`)
 `maxParticipants = 7`, `maxRounds = 5`, `maxRetries = 1`, `maxTokensPerTurn`, `costBudgetUsd` (budget enforcement hook in the gateway usage stream — Phase 6 hardening). Stage count and turn count are finite by construction; there is no "continue until agreement" loop.

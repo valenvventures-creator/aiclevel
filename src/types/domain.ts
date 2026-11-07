@@ -341,6 +341,8 @@ export interface Decision {
   question: string;
   options_json: { id: string; label: string }[];
   chosen_option: string | null;
+  /** The option the chair recommended after an Executive Vote (null for other modes). */
+  recommended_option?: string | null;
   recommendation: string;
   rationale: string;
   risks_json: { risk: string; severity: "LOW" | "MEDIUM" | "HIGH" }[];

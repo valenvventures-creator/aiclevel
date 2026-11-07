@@ -38,7 +38,20 @@ export default async function DecisionsPage() {
                 <div><p className="font-mono text-[10px] tracking-[0.18em] text-gold-300">RECOMMENDATION</p><p className="mt-1 text-sm">{d.recommendation}</p></div>
                 {d.rationale && <div><p className="font-mono text-[10px] tracking-[0.18em] text-gold-300">RATIONALE</p><p className="mt-1 text-sm text-ivory-muted">{d.rationale}</p></div>}
               </div>
-              {d.options_json.length > 0 && <p className="mt-3 text-xs text-ivory-muted">Options: {d.options_json.map((o) => `${o.id} — ${o.label}${d.chosen_option === o.id ? " (chosen)" : ""}`).join(" · ")}</p>}
+              {d.options_json.length > 0 && (
+                <div className="mt-4">
+                  <p className="font-mono text-[10px] tracking-[0.18em] text-gold-300">OPTIONS</p>
+                  <ul className="mt-1.5 space-y-1">
+                    {d.options_json.map((o) => (
+                      <li key={o.id} className="flex flex-wrap items-center gap-2 text-sm">
+                        <span className="w-5 font-mono text-xs text-gold-300">{o.id}</span>
+                        <span className={d.chosen_option === o.id || d.recommended_option === o.id ? "text-ivory" : "text-ivory-muted"}>{o.label}</span>
+                        {d.chosen_option === o.id ? <Badge tone="ok">Chosen</Badge> : d.recommended_option === o.id && <Badge tone="gold">CEO recommends</Badge>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {d.risks_json.length > 0 && <ul className="mt-3 flex flex-wrap gap-2">{d.risks_json.map((r, i) => <li key={i}><Badge tone={r.severity === "HIGH" ? "risk" : r.severity === "MEDIUM" ? "warn" : "neutral"}>{r.risk}</Badge></li>)}</ul>}
               <div className="mt-5 flex flex-wrap gap-2 border-t border-line pt-4">
                 {canApprove && d.status !== "APPROVED" && ["APPROVED", "DEFERRED", "REJECTED"].map((s) => (
