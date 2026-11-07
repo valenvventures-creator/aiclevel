@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { Download, Loader2, RotateCcw } from "lucide-react";
+import { Download, RotateCcw } from "lucide-react";
 import { ExecChip } from "@/components/hq/widgets";
 import { AutoRefresh } from "@/components/ui/auto-refresh";
 import { Markdown } from "@/components/ui/markdown";
@@ -12,6 +12,8 @@ import { db } from "@/server/db/store";
 import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { requireContext } from "@/server/organizations/service";
 import { approveJobAction, requestRevisionAction, retryJobAction, saveAsReportAction } from "@/server/studio/actions";
+import { WORKING_STATUSES } from "@/server/studio/service";
+import { StudioRunner } from "@/components/studio/studio-runner";
 
 export const metadata: Metadata = { title: "Finished Work" };
 
@@ -26,7 +28,8 @@ export default async function StudioJobPage({ params, searchParams }: PageProps<
   const map = new Map(execs.map((e) => [e.id, e]));
   const v = typeof sp.v === "string" ? Number(sp.v) : null;
   const current = artifacts.find((a) => a.version === v) ?? artifacts[0];
-  const working = ["QUEUED", "ROUTING", "IN_PROGRESS", "REVISION_REQUESTED"].includes(job.status);
+  const working = WORKING_STATUSES.includes(job.status);
+  const draft = typeof job.metadata?.draft === "string" ? job.metadata.draft : "";
 
   return (
     <div className="grid gap-8 xl:grid-cols-[1fr_320px]">
@@ -43,10 +46,15 @@ export default async function StudioJobPage({ params, searchParams }: PageProps<
 
         <div className="mt-8">
           {working && (
-            <div className="plate flex items-center gap-4 p-6">
-              <Loader2 className="size-5 animate-spin text-gold-300" />
-              <div><p className="text-sm font-medium">{map.get(job.lead_executive_id)?.title} is leading this work{job.status === "REVISION_REQUESTED" ? " — revising" : ""}.</p><p className="text-xs text-ivory-muted">This page updates automatically.</p></div>
-            </div>
+            <>
+              <StudioRunner key={`${job.id}-${job.status}`} jobId={job.id} leadTitle={map.get(job.lead_executive_id)?.title ?? "The lead executive"} draftChars={draft.length} />
+              {draft && (
+                <article className="surface mt-4 p-6 opacity-90 sm:p-8" aria-label="Draft in progress">
+                  <p className="mb-4 border-b border-line pb-4 font-mono text-[10px] tracking-[0.2em] text-gold-300">DRAFT IN PROGRESS — NOT YET FINISHED WORK</p>
+                  <Markdown>{draft}</Markdown>
+                </article>
+              )}
+            </>
           )}
           {job.status === "FAILED" && (
             <Alert tone="risk">
