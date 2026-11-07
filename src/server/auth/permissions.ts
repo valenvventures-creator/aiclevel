@@ -34,6 +34,7 @@ export const CAPABILITIES = [
   "files.delete",
   "reports.read",
   "reports.create",
+  "reports.delete",
   "projects.read",
   "projects.manage",
   "studio.request",
@@ -46,7 +47,7 @@ export type Capability = (typeof CAPABILITIES)[number];
 
 const READ: Capability[] = ["org.read", "team.read", "sessions.read", "memory.read", "files.read", "reports.read", "projects.read"];
 const COLLABORATE: Capability[] = [...READ, "executives.use", "conversations.create", "comms.send", "sessions.create", "memory.write", "files.upload", "reports.create", "studio.request"];
-const OPERATE: Capability[] = [...COLLABORATE, "memory.verify", "projects.manage", "decisions.approve", "approvals.review", "files.delete", "memory.delete"];
+const OPERATE: Capability[] = [...COLLABORATE, "memory.verify", "projects.manage", "decisions.approve", "approvals.review", "files.delete", "memory.delete", "reports.delete"];
 const ADMINISTER: Capability[] = [
   ...OPERATE,
   "org.update",
@@ -91,4 +92,12 @@ export class AuthorizationError extends Error {
 
 export function assertCan(role: Role, capability: Capability): void {
   if (!can(role, capability)) throw new AuthorizationError(capability);
+}
+
+/**
+ * Reports: operators (Owner, Admin, Executive) may delete any report in the
+ * organization; anyone who can create reports may delete the ones they created.
+ */
+export function canDeleteReport(role: Role, userId: string, report: { created_by: string }): boolean {
+  return can(role, "reports.delete") || (can(role, "reports.create") && report.created_by === userId);
 }

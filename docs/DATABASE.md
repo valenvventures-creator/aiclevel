@@ -7,6 +7,7 @@ PostgreSQL on Supabase, defined entirely by migrations in `supabase/migrations/`
 | `…0001_foundation.sql` | extensions (pgcrypto, vector), `profiles` + auth trigger, `organizations`, `organization_members`, `invitations`, `organization_constitutions`, RLS helper functions, `create_organization()` and `accept_invitation()` RPCs |
 | `…0002_csuite.sql` | executives (+ personas, skills, model configs, voices), `prompt_templates`, `human_ceo_intelligence`, `projects`, `conversations`, `messages`, `communications`, `executive_sessions` (+ messages, votes), `decisions` |
 | `…0003_intelligence.sql` | `memory_records` (pgvector + tsvector), `match_memory_records()`, `files`, `reports`, `production_jobs`, `production_artifacts`, `approval_requests`, `notifications`, `ai_usage_records`, `provider_credentials`, `audit_logs` |
+| `…0005_report_delete.sql` | delete policy for reports: Owner/Admin/Executive any report, other writers their own |
 | `…0004_rls.sql` | RLS on every tenant table, privacy overrides (private conversations, participant-only comms, memory visibility, owner-only CEO intelligence, write-only credentials, append-only audit), private storage bucket and policies |
 
 Apply locally: `supabase start && supabase db reset`. Production: `supabase db push`.
