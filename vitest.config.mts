@@ -8,5 +8,7 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx", "tests/unit/**/*.test.ts"],
     setupFiles: ["./tests/setup.ts"],
+    // Unit tests never touch a real database.
+    env: { TA_STORE: "memory" },
   },
 });

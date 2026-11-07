@@ -26,12 +26,18 @@ export function dataMode(): DataMode {
   return isSupabaseConfigured() ? "supabase" : "demo";
 }
 
-/** Session-signing secret. Falls back to an ephemeral per-process secret (sessions reset on restart). */
-export function sessionSecret(): Uint8Array {
-  let s = process.env.SESSION_SECRET;
-  if (!s || s.length < 32) {
-    g.__taEphemeralSecret ??= randomBytes(48).toString("hex");
-    s = g.__taEphemeralSecret;
-  }
-  return new TextEncoder().encode(s);
+/**
+ * Session-signing secret from the environment, or null when it is not set
+ * (or too short). The session module then falls back to a secret generated
+ * once and persisted in the platform database, so every serverless instance
+ * signs and verifies sessions with the same key.
+ */
+export function configuredSessionSecret(): string | null {
+  const s = process.env.SESSION_SECRET;
+  return s && s.length >= 32 ? s : null;
+}
+
+/** Last-resort per-process secret (only when no database is reachable). */
+export function ephemeralSessionSecret(): string {
+  return (g.__taEphemeralSecret ??= randomBytes(48).toString("hex"));
 }

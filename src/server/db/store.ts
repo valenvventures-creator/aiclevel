@@ -2,6 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { dataMode } from "@/lib/env";
 import { supabaseServer } from "./supabase";
+import { records, sortAndLimit, type StoredRow } from "./records";
 import type * as D from "@/types/domain";
 
 /**
@@ -11,7 +12,8 @@ import type * as D from "@/types/domain";
  * all require the organization id. Callers obtain that id from
  * `requireContext()` (server-verified membership) — never from the browser.
  *
- *  - demo mode:     in-process memory store, seeded with "Thought Authorities Demo".
+ *  - demo mode:     shared record store (Netlify Database; in-process memory only
+ *                   when no database is reachable), seeded with "Thought Authorities Demo".
  *  - supabase mode: PostgreSQL via the user-scoped client, so RLS is enforced
  *                   *in addition to* the explicit organization_id filter.
  */
@@ -32,66 +34,49 @@ export interface TenantRepo<T extends { id: string; organization_id: string }> {
   remove(orgId: string, id: string): Promise<boolean>;
 }
 
-/* ---------------------------- memory backend ---------------------------- */
+/* ----------------------------- record backend ----------------------------- */
 
 type Row = { id: string; organization_id: string };
-const g = globalThis as unknown as { __taMem?: Map<string, Map<string, Row>> };
-export const memoryTables = (g.__taMem ??= new Map());
 
-function memTable(name: string): Map<string, Row> {
-  let t = memoryTables.get(name);
-  if (!t) memoryTables.set(name, (t = new Map()));
-  return t;
-}
-
-function matches<T>(row: T, where?: Partial<T>): boolean {
-  if (!where) return true;
-  return Object.entries(where).every(([k, v]) => (row as Record<string, unknown>)[k] === v);
-}
-
-const clone = <T>(v: T): T => structuredClone(v);
-
-class MemoryRepo<T extends Row> implements TenantRepo<T> {
+/**
+ * Non-Supabase backend: rows live in the shared record store (Netlify Database
+ * when available, otherwise in-process memory). Every method filters on the
+ * organization id, so cross-tenant reads/writes are impossible.
+ */
+class RecordRepo<T extends Row> implements TenantRepo<T> {
   constructor(private readonly name: string) {}
-  private get t() {
-    return memTable(this.name) as unknown as Map<string, T>;
-  }
   async list(orgId: string, opts: ListOptions<T> = {}) {
-    let rows = [...this.t.values()].filter((r) => r.organization_id === orgId && matches(r, opts.where));
-    if (opts.orderBy) {
-      const k = opts.orderBy;
-      rows.sort((a, b) => {
-        const av = a[k] as unknown as string | number;
-        const bv = b[k] as unknown as string | number;
-        return (av < bv ? -1 : av > bv ? 1 : 0) * (opts.desc ? -1 : 1);
-      });
-    }
-    if (opts.limit) rows = rows.slice(0, opts.limit);
-    return rows.map(clone);
+    const rows = await records().find<T & StoredRow>(this.name, { organizationId: orgId, where: opts.where as Record<string, unknown> | undefined });
+    return sortAndLimit(rows.filter((r) => r.organization_id === orgId), opts.orderBy, opts.desc, opts.limit) as T[];
   }
   async get(orgId: string, id: string) {
-    const r = this.t.get(id);
-    return r && r.organization_id === orgId ? clone(r) : null;
+    const r = await records().get<T & StoredRow>(this.name, id);
+    return r && r.organization_id === orgId ? (r as T) : null;
   }
   async insert(row: T) {
-    this.t.set(row.id, clone(row));
-    return clone(row);
+    await records().put(this.name, row as unknown as StoredRow, { organizationId: row.organization_id });
+    return structuredClone(row);
   }
   async insertMany(rows: T[]) {
-    for (const r of rows) this.t.set(r.id, clone(r));
+    await records().putMany(this.name, rows.map((row) => ({ row: row as unknown as StoredRow, meta: { organizationId: row.organization_id } })));
   }
   async update(orgId: string, id: string, patch: Partial<T>) {
-    const r = this.t.get(id);
-    if (!r || r.organization_id !== orgId) return null;
-    const next = { ...r, ...patch, id: r.id, organization_id: r.organization_id };
-    this.t.set(id, next);
-    return clone(next);
+    const r = await this.get(orgId, id);
+    if (!r) return null;
+    const next = { ...r, ...patch, id: r.id, organization_id: r.organization_id } as T;
+    await records().put(this.name, next as unknown as StoredRow, { organizationId: orgId });
+    return structuredClone(next);
   }
   async remove(orgId: string, id: string) {
-    const r = this.t.get(id);
-    if (!r || r.organization_id !== orgId) return false;
-    return this.t.delete(id);
+    const r = await this.get(orgId, id);
+    if (!r) return false;
+    return records().remove(this.name, id);
   }
+}
+
+/** Cross-organization lookup used only by server-verified flows (membership resolution, invitation tokens). */
+export async function findRowsGlobally<T>(table: string, where: Record<string, unknown>): Promise<T[]> {
+  return (await records().find<StoredRow>(table, { where })) as unknown as T[];
 }
 
 /* --------------------------- supabase backend --------------------------- */
@@ -232,7 +217,7 @@ let cached: { mode: string; db: Database } | null = null;
 export function db(): Database {
   const mode = dataMode();
   if (cached?.mode === mode) return cached.db;
-  const make = mode === "supabase" ? (t: string) => new SupabaseRepo(t) : (t: string) => new MemoryRepo(t);
+  const make = mode === "supabase" ? (t: string) => new SupabaseRepo(t) : (t: string) => new RecordRepo(t);
   const out = Object.fromEntries(Object.entries(TABLES).map(([k, t]) => [k, make(t)])) as unknown as Database;
   cached = { mode, db: out };
   return out;

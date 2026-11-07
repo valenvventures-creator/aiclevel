@@ -2,6 +2,7 @@ import "server-only";
 import { dataMode } from "@/lib/env";
 import { supabaseServer } from "@/server/db/supabase";
 import { db, newId, nowIso } from "@/server/db/store";
+import { hasPersistentStore } from "@/server/db/records";
 import { lexicalEmbedding } from "@/server/memory/embeddings";
 import { audit } from "@/server/audit";
 import type { FileRecord, Organization } from "@/types/domain";
@@ -46,8 +47,31 @@ export function safeFilename(name: string) {
   return name.replace(/[^\w.\- ]+/g, "_").replace(/\s+/g, " ").trim().slice(0, 140) || "file";
 }
 
+/**
+ * Non-Supabase file bytes: Netlify Blobs on Netlify (shared by every instance),
+ * an in-process Map only for offline development and tests.
+ */
 const g = globalThis as unknown as { __taBlobs?: Map<string, Uint8Array> };
-const blobs = (g.__taBlobs ??= new Map());
+const memBlobs = (g.__taBlobs ??= new Map());
+const blobs = {
+  async store() {
+    const { getStore } = await import("@netlify/blobs");
+    return getStore({ name: "organization-files", consistency: "strong" });
+  },
+  async set(key: string, bytes: Uint8Array) {
+    if (!hasPersistentStore()) return void memBlobs.set(key, bytes);
+    await (await this.store()).set(key, new Blob([new Uint8Array(bytes)]));
+  },
+  async get(key: string): Promise<Uint8Array | undefined> {
+    if (!hasPersistentStore()) return memBlobs.get(key);
+    const buf = await (await this.store()).get(key, { type: "arrayBuffer" });
+    return buf ? new Uint8Array(buf) : undefined;
+  },
+  async delete(key: string) {
+    if (!hasPersistentStore()) return void memBlobs.delete(key);
+    await (await this.store()).delete(key);
+  },
+};
 
 export async function storeFile(args: { organization: Organization; userId: string; filename: string; bytes: Uint8Array; projectId?: string | null }): Promise<FileRecord> {
   const v = validateUpload(args.filename, args.bytes);
@@ -59,7 +83,7 @@ export async function storeFile(args: { organization: Organization; userId: stri
     const sb = await supabaseServer();
     const { error } = await sb.storage.from(BUCKET).upload(storage_path, args.bytes, { contentType: v.mime, upsert: false });
     if (error) throw new Error(`Storage upload failed: ${error.message}`);
-  } else blobs.set(storage_path, args.bytes);
+  } else await blobs.set(storage_path, args.bytes);
 
   // Text extraction: plain-text formats inline; binary formats are queued for the document-processing worker.
   const textual = ["txt", "md", "csv"].includes(v.ext);
@@ -84,7 +108,7 @@ export async function readFile(rec: FileRecord): Promise<{ bytes: Uint8Array } |
     const { data } = await sb.storage.from(BUCKET).createSignedUrl(rec.storage_path, 60);
     return data?.signedUrl ? { signedUrl: data.signedUrl } : null;
   }
-  const b = blobs.get(rec.storage_path);
+  const b = await blobs.get(rec.storage_path);
   return b ? { bytes: b } : null;
 }
 
@@ -92,7 +116,7 @@ export async function deleteFile(rec: FileRecord) {
   if (dataMode() === "supabase") {
     const sb = await supabaseServer();
     await sb.storage.from(BUCKET).remove([rec.storage_path]);
-  } else blobs.delete(rec.storage_path);
+  } else await blobs.delete(rec.storage_path);
   await db().files.remove(rec.organization_id, rec.id);
 }
 

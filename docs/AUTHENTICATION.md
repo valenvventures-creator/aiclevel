@@ -2,9 +2,10 @@
 
 ## Providers
 - **Production:** Supabase Auth (email/password, email verification, password recovery; magic link and Google/Microsoft/Apple OAuth can be enabled without code changes to the session model). Sessions are httpOnly cookies managed by `@supabase/ssr`; `src/proxy.ts` refreshes them.
-- **Demo mode:** in-process identity store (`src/server/auth/identity.ts`) with scrypt password hashing and an HS256 JWT in an httpOnly, `SameSite=Lax`, `Secure`-in-production cookie (`ta_session`). Email delivery is simulated: links are shown on screen and labelled.
+- **Demo mode (no Supabase):** identity store (`src/server/auth/identity.ts`) persisted in **Netlify Database** through the shared record store (`src/server/db/records.ts`, table `app_records`, schema in `db/schema.ts`), with scrypt password hashing and an HS256 JWT in an httpOnly, `SameSite=Lax`, `Secure`-in-production cookie (`ta_session`). Because serverless instances share the database, accounts, sessions and the demo organization survive across requests and deploys. Email delivery is simulated: links are shown on screen and labelled. Without `NETLIFY_DB_URL` (unit tests, offline dev, or `TA_STORE=memory`) the store falls back to process memory.
+- **Demo organization:** seeded once per database (lock row + completion marker in `app_config`). "Enter the demo C-Suite" signs in without a password check so the shared account cannot be locked out; its password cannot be changed or reset and its sessions cannot be revoked.
 
-Secrets are never stored in localStorage. `SESSION_SECRET` must be ≥ 32 chars in deployments (an ephemeral secret is generated otherwise and sessions reset on restart).
+Secrets are never stored in localStorage. If `SESSION_SECRET` (≥ 32 chars) is not set, a random signing secret is generated once and stored in the database so every instance verifies the same sessions.
 
 ## Flows
 | Flow | Implementation |

@@ -1,11 +1,11 @@
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { AppShell } from "@/components/shell/app-shell";
 import { dataMode } from "@/lib/env";
 import { logoutAction } from "@/server/auth/actions";
 import { ORG_COOKIE } from "@/server/auth/session";
-import { ensureDemoSeeded } from "@/server/db/demo-seed";
 import { db, nowIso } from "@/server/db/store";
 import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { listMembershipsForUser, requireContext } from "@/server/organizations/service";
@@ -31,7 +31,8 @@ async function markNotificationsReadAction() {
 }
 
 export default async function CSuiteLayout({ children }: { children: React.ReactNode }) {
-  await ensureDemoSeeded();
+  // Authenticated, per-request surface: never prerender (and never query the database) at build time.
+  await connection();
   const ctx = await requireContext();
   if (!ctx.user.onboarding_completed && ctx.role === "OWNER" && !ctx.organization.is_demo) redirect("/onboarding");
   const [executives, notifications] = await Promise.all([

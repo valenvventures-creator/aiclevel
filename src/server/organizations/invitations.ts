@@ -1,6 +1,6 @@
 import "server-only";
 import { dataMode } from "@/lib/env";
-import { db, memoryTables, newId, nowIso } from "@/server/db/store";
+import { db, findRowsGlobally, newId, nowIso } from "@/server/db/store";
 import { supabaseAdmin } from "@/server/db/supabase";
 import { generateToken, hashToken } from "@/server/auth/password";
 import { assignableRoles } from "@/server/auth/permissions";
@@ -39,14 +39,14 @@ export async function findInvitation(token: string): Promise<(Invitation & { org
     const { data } = await supabaseAdmin().from("invitations").select("*").eq("token_hash", hash).maybeSingle();
     inv = (data as Invitation) ?? null;
   } else {
-    inv = ([...(memoryTables.get("invitations")?.values() ?? [])] as unknown as Invitation[]).find((i) => i.token_hash === hash) ?? null;
+    inv = (await findRowsGlobally<Invitation>("invitations", { token_hash: hash }))[0] ?? null;
   }
   if (!inv) return null;
   let orgName = "an organization";
   if (dataMode() === "supabase") {
     const { data } = await supabaseAdmin().from("organizations").select("name").eq("id", inv.organization_id).maybeSingle();
     orgName = (data?.name as string) ?? orgName;
-  } else orgName = demoIdentity.getOrganization(inv.organization_id)?.name ?? orgName;
+  } else orgName = (await demoIdentity.getOrganization(inv.organization_id))?.name ?? orgName;
   return { ...inv, organization_name: orgName };
 }
 
@@ -69,7 +69,7 @@ export async function acceptInvitation(token: string, user: UserProfile): Promis
     const existing = await db().members.list(inv.organization_id, { where: { user_id: user.id } });
     if (!existing.length) await db().members.insert(member);
     await db().invitations.update(inv.organization_id, inv.id, { accepted_at: nowIso() });
-    demoIdentity.updateProfile(user.id, { onboarding_completed: true });
+    await demoIdentity.updateProfile(user.id, { onboarding_completed: true });
   }
   await audit(inv.organization_id, user.id, "team.invite_accepted", "invitation", inv.id, { role: inv.role });
   return { ok: true, organizationId: inv.organization_id };

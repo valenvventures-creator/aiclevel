@@ -16,7 +16,7 @@ Durable rules for any Claude Code session in this repository. Detailed architect
 - Next.js 16 (App Router, `proxy.ts` not middleware, Cache Components **off** — see ADR-0003), React 19, TypeScript strict, Tailwind v4 (tokens in `src/app/globals.css`), Supabase (Postgres + RLS + Storage + Auth + pgvector), Zod, Vitest, Playwright. Package manager: **pnpm**.
 - `pnpm dev` · `pnpm build` · `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm test:e2e` (`PW_CHROMIUM_PATH=/opt/pw-browsers/chromium` in sandboxed containers) · `pnpm check` (lint+types+unit).
 - Run `pnpm check` after every significant change; fix failures before moving on.
-- Without `NEXT_PUBLIC_SUPABASE_URL` the app runs in **demo mode** (in-memory store, seeded "Thought Authorities Demo"). Without provider keys, A.I. output is **simulated and labelled**.
+- Without `NEXT_PUBLIC_SUPABASE_URL` the app runs in **demo mode** (data persisted in Netlify Database via `src/server/db/records.ts`; process memory only when no database is reachable; seeded "Thought Authorities Demo"). Without provider keys, A.I. output is **simulated and labelled**.
 
 ## Architecture constraints (non-negotiable)
 1. **Tenant boundary:** server code gets the organization only from `requireContext()` / `authorize(capability)` in `src/server/organizations/service.ts`. Never trust an organization id from the browser.
