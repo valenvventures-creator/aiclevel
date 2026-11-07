@@ -14,8 +14,17 @@ export const env = {
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
   openaiApiKey: process.env.OPENAI_API_KEY ?? "",
+  resendApiKey: process.env.RESEND_API_KEY ?? "",
+  /** e.g. "Thought Authorities <no-reply@yourdomain.com>" — the domain must be verified with the email provider. */
+  emailFrom: process.env.EMAIL_FROM ?? "",
+  emailReplyTo: process.env.EMAIL_REPLY_TO ?? "",
   isProduction: process.env.NODE_ENV === "production",
 };
+
+/** True when transactional email (verification, password reset, invitations) can be sent. */
+export function emailDeliveryConfigured(): boolean {
+  return Boolean(env.resendApiKey && env.emailFrom);
+}
 
 export function isSupabaseConfigured(): boolean {
   return Boolean(env.supabaseUrl && env.supabaseAnonKey);

@@ -6,6 +6,7 @@ import { dataMode, env } from "@/lib/env";
 import { supabaseServer } from "@/server/db/supabase";
 import { audit } from "@/server/audit";
 import { ensureDemoSeeded, DEMO_CREDENTIALS, DEMO_USER_ID } from "@/server/db/demo-seed";
+import { EMAIL_FAILED, EMAIL_NOT_CONFIGURED, sendPasswordResetEmail, sendVerificationEmail } from "@/server/email/flows";
 import { demoIdentity } from "./identity";
 import { rateLimit } from "./rate-limit";
 import { createDemoSession, destroySession, getCurrentUser } from "./session";
@@ -17,7 +18,7 @@ export interface FormState {
   error?: string;
   fieldErrors?: Record<string, string>;
   message?: string;
-  /** Demo mode only: emails are not delivered, so the link is shown on screen. */
+  /** Local development only (no email provider configured): the secure link is shown on screen. Never set in production. */
   devLink?: string;
   values?: Record<string, string>;
 }
@@ -78,8 +79,10 @@ export async function signupAction(_: FormState, fd: FormData): Promise<FormStat
     } catch {
       return { error: "We couldn't create that account. If you already have one, log in instead.", values };
     }
-    await demoIdentity.issueToken(user.id, "VERIFY_EMAIL", 24 * 60 * 60_000);
     await createDemoSession(user.id, false);
+    // Send the verification email now; a failure here is recoverable with "Resend verification email".
+    const sent = await sendVerificationEmail(user);
+    if (!sent.delivery.ok) console.error(`[auth] verification email not sent at sign-up: ${sent.delivery.reason}`);
     await audit(null, user.id, "auth.signup", "user", user.id, {});
   }
   redirect(d.invite_token ? `/invite/${encodeURIComponent(d.invite_token)}` : "/onboarding");
@@ -167,8 +170,11 @@ export async function forgotPasswordAction(_: FormState, fd: FormData): Promise<
   }
   const u = await demoIdentity.findByEmail(parsed.data.email);
   if (!u || u.id === DEMO_USER_ID) return { ok: true, message: RESET_MESSAGE }; // the shared demo account cannot be reset
-  const token = await demoIdentity.issueToken(u.profile.id, "RESET_PASSWORD", 30 * 60_000);
-  return { ok: true, message: RESET_MESSAGE, devLink: `/reset-password?token=${token}` };
+  const sent = await sendPasswordResetEmail(u.profile);
+  if (!sent.delivery.ok) console.error(`[auth] password reset email not sent: ${sent.delivery.reason}`);
+  // Same response whether or not the account exists or the email was sent (no account enumeration).
+  // The link itself is only ever shown in local development.
+  return { ok: true, message: RESET_MESSAGE, devLink: sent.localLink };
 }
 
 export async function resetPasswordAction(_: FormState, fd: FormData): Promise<FormState> {
@@ -206,8 +212,10 @@ export async function resendVerificationAction(): Promise<FormState> {
     await sb.auth.resend({ type: "signup", email: user.email, options: { emailRedirectTo: `${env.appUrl}/verify-email` } });
     return { ok: true, message: "Verification email sent." };
   }
-  const token = await demoIdentity.issueToken(user.id, "VERIFY_EMAIL", 24 * 60 * 60_000);
-  return { ok: true, message: "Verification email sent.", devLink: `/verify-email?token=${token}` };
+  const sent = await sendVerificationEmail(user);
+  if (sent.delivery.ok) return { ok: true, message: `Verification email sent to ${user.email}. Check your inbox — and your spam folder — for a message from Thought Authorities.` };
+  if (sent.localLink) return { ok: true, message: "Email delivery isn't set up in this local environment.", devLink: sent.localLink };
+  return { error: sent.delivery.reason === "not_configured" ? EMAIL_NOT_CONFIGURED : EMAIL_FAILED };
 }
 
 /** Token confirmation is a POST (button), so link scanners and prefetchers cannot consume it. */

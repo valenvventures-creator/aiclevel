@@ -131,7 +131,7 @@ export function AppShell(props: ShellProps) {
           <main id="main" className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-10">
             {!props.user.email_verified && (
               <div className="mx-auto mb-6 max-w-7xl rounded-xl border border-info/25 bg-info/[0.05] px-4 py-2.5 text-sm text-info">
-                Verify your email to invite team members and connect integrations.{" "}
+                Verify your email to invite team members.{" "}
                 <Link href="/verify-email" className="underline underline-offset-2">Verify now</Link>
               </div>
             )}

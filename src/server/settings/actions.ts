@@ -5,6 +5,7 @@ import { z } from "zod";
 import { dataMode, env } from "@/lib/env";
 import { authorize, getConstitution, requireContext, updateOrganizationRecord } from "@/server/organizations/service";
 import { createInvitation } from "@/server/organizations/invitations";
+import { sendInvitationEmail } from "@/server/email/flows";
 import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { assignableRoles } from "@/server/auth/permissions";
 import { demoIdentity } from "@/server/auth/identity";
@@ -21,6 +22,8 @@ export interface SettingsState {
   error?: string;
   message?: string;
   devLink?: string;
+  /** Invitation link the inviting admin can share by hand when email can't be sent. */
+  shareLink?: string;
 }
 
 const fail = (e: unknown): SettingsState => ({ error: e instanceof z.ZodError ? (e.issues[0]?.message ?? "Invalid input.") : e instanceof Error ? e.message : "Something went wrong." });
@@ -111,7 +114,13 @@ export async function inviteMemberAction(_: SettingsState, fd: FormData): Promis
     const p = z.object({ email: z.string().trim().toLowerCase().email("Enter a valid email."), role: z.enum(ROLES) }).parse(Object.fromEntries(fd));
     const { token } = await createInvitation({ organization: ctx.organization, actor: ctx.user, actorRole: ctx.role, email: p.email, role: p.role });
     revalidatePath("/settings/team");
-    return { ok: true, message: `Invitation created for ${p.email}. It expires in 7 days.`, devLink: dataMode() === "demo" ? `/invite/${token}` : undefined };
+    const sent = await sendInvitationEmail({ email: p.email, token, inviterName: `${ctx.user.first_name} ${ctx.user.last_name}`.trim() || "A colleague", organizationName: ctx.organization.name, role: p.role });
+    if (sent.delivery.ok) return { ok: true, message: `Invitation emailed to ${p.email}. It expires in 7 days.` };
+    return {
+      ok: true,
+      message: `Invitation created for ${p.email}, but ${sent.delivery.reason === "not_configured" ? "email delivery isn't set up yet" : "the email couldn't be sent"}. Share this link with them directly — it expires in 7 days and only works for ${p.email}.`,
+      shareLink: sent.shareLink,
+    };
   } catch (e) { return fail(e); }
 }
 
