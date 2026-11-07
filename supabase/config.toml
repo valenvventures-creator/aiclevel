@@ -1,0 +1,18 @@
+# Supabase CLI local development config (supabase start).
+project_id = "thought-authorities"
+
+[api]
+port = 54321
+schemas = ["public", "storage"]
+
+[db]
+port = 54322
+major_version = 16
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/verify-email", "http://localhost:3000/reset-password"]
+enable_signup = true
+
+[auth.email]
+enable_confirmations = true

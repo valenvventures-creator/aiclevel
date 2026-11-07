@@ -1,16 +1,33 @@
 import type { NextConfig } from "next";
 
+/**
+ * ADR-0003: Cache Components is intentionally disabled.
+ * Nearly every A.I. C-Suite surface is authenticated, tenant-scoped and
+ * request-dependent, so the classic dynamic rendering model is simpler and
+ * safer. Revisit once public, cacheable surfaces grow (see docs/ARCHITECTURE.md).
+ */
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  poweredByHeader: false,
   turbopack: {
     rules: {
-      "*.css": {
-        loaders: ["@tailwindcss/turbopack"],
-        as: "*.css",
-      },
+      "*.css": { loaders: ["@tailwindcss/turbopack"], as: "*.css" },
     },
+  },
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "thoughtauthorities.com" }],
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=(self)" },
+        ],
+      },
+    ];
   },
 };
 

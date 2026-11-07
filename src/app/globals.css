@@ -1,26 +1,310 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   THOUGHT AUTHORITIES — DESIGN TOKENS
+   "Calm intelligence. Executive authority."
+   Derived from the Thought Authorities crest: heraldic gold on deep ink.
+   ========================================================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Ink — layered near-blacks with a cool undertone */
+  --ink-1000: #020309;
+  --ink-950: #04060c;
+  --ink-900: #080b15;
+  --ink-850: #0c101d;
+  --ink-800: #121827;
+  --ink-750: #182032;
+  --ink-700: #222b40;
+
+  /* Heraldic gold — sampled from the crest (#EFBA11) */
+  --gold-100: #fbf1d0;
+  --gold-200: #f6e1a1;
+  --gold-300: #f2cf68;
+  --gold-400: #efba11;
+  --gold-500: #d4a10c;
+  --gold-600: #a77d0a;
+  --gold-700: #6f5408;
+
+  /* Ivory text */
+  --ivory: rgba(255, 255, 255, 0.96);
+  --ivory-muted: rgba(255, 255, 255, 0.64);
+  --ivory-faint: rgba(255, 255, 255, 0.4);
+
+  /* Lines */
+  --line: rgba(255, 255, 255, 0.07);
+  --line-strong: rgba(255, 255, 255, 0.12);
+  --line-gold: rgba(239, 186, 17, 0.28);
+
+  /* Signals (desaturated so nothing shouts) */
+  --signal-ok: #6fbf8e;
+  --signal-warn: #e2a64a;
+  --signal-risk: #e07a6b;
+  --signal-info: #7aa7e0;
+
+  /* Executive accent hues — used sparingly for avatars and session speakers */
+  --exec-ceo: #efba11;
+  --exec-cfo: #6fbf8e;
+  --exec-cco: #e58fb1;
+  --exec-chro: #8fb4e5;
+  --exec-cto: #7fd6d0;
+  --exec-clo: #b7a0ea;
+  --exec-impact: #9fd27a;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+
+  --shadow-card: 0 1px 0 0 rgba(255, 255, 255, 0.03) inset, 0 20px 40px -24px rgba(0, 0, 0, 0.8);
+  --shadow-gold: 0 0 0 1px rgba(239, 186, 17, 0.35), 0 10px 40px -10px rgba(239, 186, 17, 0.35);
+
+  /* Motion — expo-out easing used for every reveal and hover */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Panels — translucent navy glass */
+  --panel: rgba(31, 38, 55, 0.45);
+  --panel-strong: rgba(31, 38, 55, 0.7);
+  --glow-without: 0 0 0 1px rgba(255, 107, 107, 0.55), 0 0 60px -10px rgba(255, 90, 90, 0.45);
+  --glow-with: 0 0 0 1px rgba(242, 207, 104, 0.55), 0 0 70px -10px rgba(239, 186, 17, 0.45);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink-1000: var(--ink-1000);
+  --color-ink-950: var(--ink-950);
+  --color-ink-900: var(--ink-900);
+  --color-ink-850: var(--ink-850);
+  --color-ink-800: var(--ink-800);
+  --color-ink-750: var(--ink-750);
+  --color-ink-700: var(--ink-700);
+  --color-gold-100: var(--gold-100);
+  --color-gold-200: var(--gold-200);
+  --color-gold-300: var(--gold-300);
+  --color-gold-400: var(--gold-400);
+  --color-gold-500: var(--gold-500);
+  --color-gold-600: var(--gold-600);
+  --color-gold-700: var(--gold-700);
+  --color-ivory: var(--ivory);
+  --color-ivory-muted: var(--ivory-muted);
+  --color-ivory-faint: var(--ivory-faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-line-gold: var(--line-gold);
+  --color-ok: var(--signal-ok);
+  --color-warn: var(--signal-warn);
+  --color-risk: var(--signal-risk);
+  --color-info: var(--signal-info);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-cinzel), "Trajan Pro", Georgia, serif;
+  --font-heading: var(--font-grotesk), system-ui, sans-serif;
+  --font-accent: var(--font-instrument), Georgia, serif;
+  --font-mono: var(--font-mono-jb), ui-monospace, monospace;
+
+  --animate-fade-up: fade-up 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-pulse-soft: pulse-soft 2.4s ease-in-out infinite;
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-orbit: orbit 60s linear infinite;
+  --animate-flow: flow 1.6s linear infinite;
+  --animate-ring: ring 2.4s var(--ease-out) infinite;
+  --animate-blink: blink 1.6s ease infinite;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes flow {
+  from { stroke-dashoffset: 40; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -4%); }
+  60% { transform: translate(-4%, -1%); }
+  80% { transform: translate(3%, 3%); }
+}
+@keyframes rise {
+  0% { transform: translateY(0) scale(1); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translateY(-260px) scale(0.6); opacity: 0; }
+}
+@keyframes ring {
+  0% { transform: scale(0.9); opacity: 1; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+@keyframes blink {
+  50% { opacity: 0.3; }
+}
+@keyframes orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
+html { color-scheme: dark; }
+html:focus-within { scroll-behavior: smooth; }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ink-950);
+  color: var(--ivory);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: rgba(239, 186, 17, 0.3); color: var(--ivory); }
+
+:focus-visible {
+  outline: 2px solid var(--gold-400);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+}
+
+/* ---------- Reusable surface utilities ---------- */
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold-300);
+}
+
+@utility text-gold-gradient {
+  background: linear-gradient(180deg, var(--gold-100) 0%, var(--gold-300) 45%, var(--gold-500) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Apex-style display headline: heavy grotesk, tight tracking */
+@utility headline {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+/* Italic serif accent phrase inside a headline */
+@utility accent {
+  font-family: var(--font-accent);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  background: linear-gradient(180deg, var(--gold-100) 0%, var(--gold-300) 55%, var(--gold-500) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-right: 0.08em;
+}
+
+@utility glass {
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(14px);
+}
+
+@utility surface {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.008));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+/* Gradient hairline border — the "engraved plate" card */
+@utility plate {
+  position: relative;
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(rgba(12, 16, 29, 0.92), rgba(8, 11, 21, 0.92)) padding-box,
+    linear-gradient(160deg, rgba(239, 186, 17, 0.35), rgba(239, 235, 226, 0.06) 35%, rgba(239, 235, 226, 0.04) 70%, rgba(239, 186, 17, 0.18)) border-box;
+  border: 1px solid transparent;
+}
+
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(239, 235, 226, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(239, 235, 226, 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+@utility mask-radial {
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-700) transparent;
+}
+
+/* Markdown rendering for executive output */
+.prose-exec { line-height: 1.7; color: var(--ivory); font-size: 0.95rem; }
+.prose-exec h1, .prose-exec h2, .prose-exec h3 { font-family: var(--font-heading); color: var(--gold-200); font-weight: 600; letter-spacing: -0.02em; margin: 1.1em 0 0.4em; line-height: 1.25; }
+.prose-exec h1 { font-size: 1.5rem; }
+.prose-exec h2 { font-size: 1.3rem; }
+.prose-exec h3 { font-size: 1.1rem; }
+.prose-exec p { margin: 0.6em 0; }
+.prose-exec ul, .prose-exec ol { margin: 0.5em 0 0.5em 1.3em; }
+.prose-exec ul { list-style: disc; }
+.prose-exec ol { list-style: decimal; }
+.prose-exec li { margin: 0.2em 0; }
+.prose-exec li::marker { color: var(--gold-500); }
+.prose-exec strong { color: #fff; font-weight: 600; }
+.prose-exec code { font-family: var(--font-mono); font-size: 0.85em; background: var(--ink-800); padding: 0.1em 0.35em; border-radius: 4px; }
+.prose-exec pre { background: var(--ink-1000); border: 1px solid var(--line); border-radius: 10px; padding: 0.9em; overflow-x: auto; }
+.prose-exec blockquote { border-left: 2px solid var(--gold-500); padding-left: 0.9em; color: var(--ivory-muted); }
+.prose-exec table { width: 100%; border-collapse: collapse; margin: 0.8em 0; font-size: 0.88rem; display: block; overflow-x: auto; }
+.prose-exec th, .prose-exec td { border: 1px solid var(--line-strong); padding: 0.45em 0.7em; text-align: left; }
+.prose-exec th { background: var(--ink-800); color: var(--gold-200); font-weight: 600; }
+.prose-exec hr { border: 0; border-top: 1px solid var(--line); margin: 1.2em 0; }
+.prose-exec a { color: var(--gold-300); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- Scroll reveal (driven by <Reveal/>) ---------- */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  filter: blur(4px);
+  transition: opacity 0.9s var(--ease-out), transform 1.1s var(--ease-out), filter 0.9s var(--ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+[data-reveal][data-in="true"] { opacity: 1; transform: none; filter: none; }
+
+/* Self-drawing underline under an accent phrase */
+.draw-underline path {
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: draw 1.3s var(--ease-out) 0.6s forwards;
+}
+
+/* Film grain overlay */
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  z-index: 70;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 8s steps(10) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] { opacity: 1; transform: none; filter: none; }
+  .draw-underline path { stroke-dashoffset: 0; animation: none; }
+  .grain::after { animation: none; }
 }

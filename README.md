@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Thought Authorities — A.I. C-Suite
 
-## Getting Started
+**Seven Executives. One Organization. Shared Intelligence.**
 
-First, run the development server:
+A multi-tenant SaaS platform that gives an organization a persistent team of seven A.I. C-Suite Executives — CEO, CFO, CCO, CHRO, CTO, CLO and Chief Impact Officer — who work one-on-one, correspond through Executive Comms, convene in bounded C-Suite Sessions, produce Finished Work in C-Suite Studio, and share one organizational memory.
+
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+```bash
+pnpm dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Open http://localhost:3000 and choose **Explore the live demo** (or sign up to run onboarding).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+With no environment variables the app runs in **demo mode**: an in-memory data store seeded with the clearly-labelled *Thought Authorities Demo* organization, and simulated executive output (always marked **Simulated**). Data resets on restart.
 
-## Learn More
+## Going live
 
-To learn more about Next.js, take a look at the following resources:
+1. Copy `.env.example` to `.env.local`.
+2. Create a Supabase project, then apply the schema:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+supabase link --project-ref <ref>
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+supabase db push
+```
 
-## Deploy on Vercel
+3. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SESSION_SECRET`.
+4. Set `ANTHROPIC_API_KEY` (primary reasoning, `claude-opus-5-5`) and optionally `OPENAI_API_KEY` (fallback).
+5. Configure Supabase Auth SMTP and redirect URLs (`/verify-email`, `/reset-password`).
+6. Deploy to Vercel.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Command | Purpose |
+|---|---|
+| `pnpm dev` / `pnpm build` / `pnpm start` | Develop / build / serve |
+| `pnpm lint` · `pnpm typecheck` · `pnpm test` | Lint, types, unit tests (Vitest) |
+| `pnpm check` | All three |
+| `pnpm test:e2e` | Playwright critical path, desktop + mobile (set `PW_CHROMIUM_PATH` to use a pre-installed Chromium) |
+
+## Documentation
+Start with [`CLAUDE.md`](CLAUDE.md) and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Everything else: [`docs/`](docs) (product requirements, database & ERD, authentication, onboarding, executive architecture, orchestration, memory, MCP & tools, routes, components, design system, roadmap & milestones).

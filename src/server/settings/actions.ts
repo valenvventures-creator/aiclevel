@@ -1,0 +1,211 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { dataMode, env } from "@/lib/env";
+import { authorize, getConstitution, requireContext, updateOrganizationRecord } from "@/server/organizations/service";
+import { createInvitation } from "@/server/organizations/invitations";
+import { AIExecutiveRegistry } from "@/server/executives/registry";
+import { assignableRoles } from "@/server/auth/permissions";
+import { demoIdentity } from "@/server/auth/identity";
+import { passwordSchema } from "@/server/auth/schemas";
+import { supabaseServer } from "@/server/db/supabase";
+import { db, newId, nowIso } from "@/server/db/store";
+import { audit } from "@/server/audit";
+import { TOOL_REGISTRY } from "@/config/tools/registry";
+import { ROLES, type OrganizationConstitution, type Role } from "@/types/domain";
+
+export interface SettingsState {
+  ok?: boolean;
+  error?: string;
+  message?: string;
+  devLink?: string;
+}
+
+const fail = (e: unknown): SettingsState => ({ error: e instanceof z.ZodError ? (e.issues[0]?.message ?? "Invalid input.") : e instanceof Error ? e.message : "Something went wrong." });
+
+export async function updateProfileAction(_: SettingsState, fd: FormData): Promise<SettingsState> {
+  try {
+    const ctx = await requireContext();
+    const p = z.object({ first_name: z.string().trim().min(1).max(60), last_name: z.string().trim().min(1).max(60), display_name: z.string().trim().max(80).optional(), timezone: z.string().trim().max(60) }).parse(Object.fromEntries(fd));
+    try { new Intl.DateTimeFormat("en-US", { timeZone: p.timezone }); } catch { return { error: "Unknown timezone." }; }
+    if (dataMode() === "supabase") {
+      const sb = await supabaseServer();
+      await sb.from("profiles").update({ ...p, display_name: p.display_name || null }).eq("id", ctx.user.id);
+    } else demoIdentity.updateProfile(ctx.user.id, { ...p, display_name: p.display_name || null });
+    revalidatePath("/", "layout");
+    return { ok: true, message: "Profile saved." };
+  } catch (e) { return fail(e); }
+}
+
+export async function changePasswordAction(_: SettingsState, fd: FormData): Promise<SettingsState> {
+  try {
+    const ctx = await requireContext();
+    const p = z.object({ current: z.string().min(1), password: passwordSchema, confirm: z.string() }).refine((d) => d.password === d.confirm, { message: "Passwords do not match." }).parse(Object.fromEntries(fd));
+    if (dataMode() === "supabase") {
+      const sb = await supabaseServer();
+      const { error: e1 } = await sb.auth.signInWithPassword({ email: ctx.user.email, password: p.current });
+      if (e1) return { error: "Your current password is incorrect." };
+      const { error } = await sb.auth.updateUser({ password: p.password });
+      if (error) return { error: "Could not update password." };
+    } else {
+      const ok = await demoIdentity.checkPassword(ctx.user.email, p.current);
+      if (!ok.ok) return { error: "Your current password is incorrect." };
+      await demoIdentity.setPassword(ctx.user.id, p.password, false);
+    }
+    await audit(ctx.organization.id, ctx.user.id, "auth.password_change", "user", ctx.user.id, {});
+    return { ok: true, message: "Password updated." };
+  } catch (e) { return fail(e); }
+}
+
+export async function revokeOtherSessionsAction() {
+  const ctx = await requireContext();
+  if (dataMode() === "supabase") {
+    const sb = await supabaseServer();
+    await sb.auth.signOut({ scope: "others" });
+  } else {
+    demoIdentity.revokeSessions(ctx.user.id);
+    // Re-issue the current session so this device stays signed in.
+    const { createDemoSession } = await import("@/server/auth/session");
+    await createDemoSession(ctx.user.id, false);
+  }
+  revalidatePath("/settings/security");
+}
+
+export async function updateOrganizationAction(_: SettingsState, fd: FormData): Promise<SettingsState> {
+  try {
+    const ctx = await authorize("org.update");
+    const p = z.object({ name: z.string().trim().min(2).max(120), industry: z.string().trim().max(120).optional() }).parse(Object.fromEntries(fd));
+    await updateOrganizationRecord(ctx.organization.id, { name: p.name, industry: p.industry || null });
+    await audit(ctx.organization.id, ctx.user.id, "org.update", "organization", ctx.organization.id, {});
+    revalidatePath("/", "layout");
+    return { ok: true, message: "Organization updated." };
+  } catch (e) { return fail(e); }
+}
+
+const CONSTITUTION_FIELDS = ["mission", "vision", "values", "business_model", "leadership_philosophy", "strategic_priorities", "current_priorities", "brand_voice", "primary_audiences", "financial_objectives", "technology_objectives", "impact_objectives", "key_relationships", "important_restrictions", "decision_principles", "operating_philosophy"] as const;
+
+export async function updateConstitutionAction(_: SettingsState, fd: FormData): Promise<SettingsState> {
+  try {
+    const ctx = await authorize("org.update");
+    const c = await getConstitution(ctx.organization.id);
+    const patch: Partial<OrganizationConstitution> = { updated_at: nowIso() };
+    for (const f of CONSTITUTION_FIELDS) {
+      const v = fd.get(f);
+      if (typeof v === "string") patch[f] = v.trim().slice(0, 4000);
+    }
+    const rt = fd.get("risk_tolerance");
+    if (rt === "CONSERVATIVE" || rt === "BALANCED" || rt === "AGGRESSIVE") patch.risk_tolerance = rt;
+    await db().constitutions.update(ctx.organization.id, c.id, patch);
+    await audit(ctx.organization.id, ctx.user.id, "constitution.update", "organization_constitution", c.id, {});
+    return { ok: true, message: "Organization Constitution saved. All seven executives will use it from their next request." };
+  } catch (e) { return fail(e); }
+}
+
+export async function inviteMemberAction(_: SettingsState, fd: FormData): Promise<SettingsState> {
+  try {
+    const ctx = await authorize("team.invite");
+    const p = z.object({ email: z.string().trim().toLowerCase().email("Enter a valid email."), role: z.enum(ROLES) }).parse(Object.fromEntries(fd));
+    const { token } = await createInvitation({ organization: ctx.organization, actor: ctx.user, actorRole: ctx.role, email: p.email, role: p.role });
+    revalidatePath("/settings/team");
+    return { ok: true, message: `Invitation created for ${p.email}. It expires in 7 days.`, devLink: dataMode() === "demo" ? `/invite/${token}` : undefined };
+  } catch (e) { return fail(e); }
+}
+
+export async function changeRoleAction(fd: FormData) {
+  const ctx = await authorize("team.change_role");
+  const memberId = String(fd.get("member_id"));
+  const role = String(fd.get("role")) as Role;
+  const m = await db().members.get(ctx.organization.id, memberId);
+  if (!m || m.role === "OWNER" || m.user_id === ctx.user.id) return; // protected owner actions
+  if (!assignableRoles(ctx.role).includes(role)) return;
+  await db().members.update(ctx.organization.id, memberId, { role });
+  await audit(ctx.organization.id, ctx.user.id, "team.role_change", "organization_member", memberId, { role });
+  revalidatePath("/settings/team");
+}
+
+export async function removeMemberAction(fd: FormData) {
+  const ctx = await authorize("team.remove");
+  const memberId = String(fd.get("member_id"));
+  const m = await db().members.get(ctx.organization.id, memberId);
+  if (!m || m.role === "OWNER" || m.user_id === ctx.user.id) return;
+  if (ctx.role === "ADMIN" && m.role === "ADMIN") return;
+  // Shared organization data is never deleted when a member leaves.
+  await db().members.update(ctx.organization.id, memberId, { status: "SUSPENDED" });
+  await audit(ctx.organization.id, ctx.user.id, "team.remove", "organization_member", memberId, {});
+  revalidatePath("/settings/team");
+}
+
+const ExecPatch = z.object({
+  executive_id: z.string().uuid(),
+  display_name: z.string().trim().max(80).optional(),
+  title: z.string().trim().min(2).max(80),
+  functional_mandate: z.string().trim().min(2).max(120),
+  description: z.string().trim().max(600),
+  avatar_url: z.string().trim().url().max(500).or(z.literal("")),
+  north_star: z.string().max(400), core_belief: z.string().max(400), leadership_promise: z.string().max(400), biography: z.string().max(2000),
+  personality: z.string().max(400), communication_style: z.string().max(600), decision_style: z.string().max(600), primary_question: z.string().max(300),
+  system_instructions: z.string().max(6000), reasoning_guidelines: z.string().max(2000), output_preferences: z.string().max(1000), risk_constraints: z.string().max(1000),
+  primary_provider: z.enum(["anthropic", "openai"]), primary_model: z.string().trim().min(2).max(80),
+  fallback_provider: z.enum(["anthropic", "openai", ""]), fallback_model: z.string().trim().max(80),
+  effort: z.enum(["low", "medium", "high", "xhigh", "max"]), token_budget: z.coerce.number().int().min(1000).max(128000),
+});
+
+export async function updateExecutiveConfigAction(_: SettingsState, fd: FormData): Promise<SettingsState> {
+  try {
+    const ctx = await authorize("executives.configure");
+    const p = ExecPatch.parse(Object.fromEntries(fd));
+    const tools = fd.getAll("tools").map(String).filter((t) => t in TOOL_REGISTRY);
+    const exec = await AIExecutiveRegistry.getExecutive(ctx.organization.id, p.executive_id);
+    if (!exec) return { error: "Executive not found." };
+    await AIExecutiveRegistry.updateExecutive(ctx.organization.id, ctx.user.id, exec.id, {
+      executive: { display_name: p.display_name || null, title: p.title, functional_mandate: p.functional_mandate, description: p.description, avatar_url: p.avatar_url || null },
+      persona: { north_star: p.north_star, core_belief: p.core_belief, leadership_promise: p.leadership_promise, biography: p.biography, personality: p.personality, communication_style: p.communication_style, decision_style: p.decision_style, primary_question: p.primary_question, system_instructions: p.system_instructions, reasoning_guidelines: p.reasoning_guidelines, output_preferences: p.output_preferences, risk_constraints: p.risk_constraints },
+      model: { primary_provider: p.primary_provider, primary_model: p.primary_model, fallback_provider: p.fallback_provider || null, fallback_model: p.fallback_model || null, effort: p.effort, token_budget: p.token_budget, tool_permissions: tools },
+    });
+    revalidatePath("/executives", "layout");
+    return { ok: true, message: `${p.title} updated.` };
+  } catch (e) { return fail(e); }
+}
+
+export async function addCeoIntelligenceAction(_: SettingsState, fd: FormData): Promise<SettingsState> {
+  try {
+    const ctx = await authorize("ceo_intelligence.manage");
+    const p = z.object({ kind: z.enum(["PRINCIPLE", "DECISION", "WRITING", "SPEECH", "INTERVIEW", "PREFERENCE", "HISTORY"]), title: z.string().trim().min(2).max(160), content: z.string().trim().min(2).max(8000) }).parse(Object.fromEntries(fd));
+    const id = newId();
+    await db().ceoIntelligence.insert({ id, organization_id: ctx.organization.id, owner_user_id: ctx.user.id, ...p, included: true, created_at: nowIso() });
+    await audit(ctx.organization.id, ctx.user.id, "ceo_intelligence.change", "human_ceo_intelligence", id, { op: "add" });
+    revalidatePath("/settings/ceo-intelligence");
+    return { ok: true, message: "Added to your leadership intelligence profile." };
+  } catch (e) { return fail(e); }
+}
+
+export async function ceoIntelligenceOpAction(fd: FormData) {
+  const ctx = await authorize("ceo_intelligence.manage");
+  const id = String(fd.get("id"));
+  const op = String(fd.get("op"));
+  const row = await db().ceoIntelligence.get(ctx.organization.id, id);
+  if (!row) return;
+  if (op === "toggle") await db().ceoIntelligence.update(ctx.organization.id, id, { included: !row.included });
+  if (op === "delete") await db().ceoIntelligence.remove(ctx.organization.id, id);
+  await audit(ctx.organization.id, ctx.user.id, "ceo_intelligence.change", "human_ceo_intelligence", id, { op });
+  revalidatePath("/settings/ceo-intelligence");
+}
+
+/** Provider connectivity test — server-side only; never echoes the key. */
+export async function testProviderAction(provider: "anthropic" | "openai"): Promise<{ ok: boolean; message: string }> {
+  await authorize("models.configure");
+  const key = provider === "anthropic" ? env.anthropicApiKey : env.openaiApiKey;
+  if (!key) return { ok: false, message: "No credential configured on the server." };
+  try {
+    if (provider === "anthropic") {
+      const { default: Anthropic } = await import("@anthropic-ai/sdk");
+      await new Anthropic({ apiKey: key, maxRetries: 0 }).models.list({ limit: 1 });
+      return { ok: true, message: "Connection verified." };
+    }
+    const res = await fetch("https://api.openai.com/v1/models", { headers: { authorization: `Bearer ${key}` } });
+    return res.ok ? { ok: true, message: "Connection verified." } : { ok: false, message: `Provider responded with ${res.status}.` };
+  } catch {
+    return { ok: false, message: "Could not reach the provider from the server." };
+  }
+}

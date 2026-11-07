@@ -1,0 +1,21 @@
+export const SETTINGS_SECTIONS = [
+  ["profile", "Profile"],
+  ["organization", "Organization"],
+  ["team", "Team"],
+  ["c-suite", "A.I. C-Suite"],
+  ["ceo-intelligence", "CEO Leadership Intelligence"],
+  ["ai-models", "AI Models"],
+  ["tools", "Tools & MCP"],
+  ["api-connections", "API Connections"],
+  ["voice", "Voice"],
+  ["memory", "Memory"],
+  ["files-storage", "Files & Storage"],
+  ["data-privacy", "Data & Privacy"],
+  ["notifications", "Notifications"],
+  ["appearance", "Appearance"],
+  ["security", "Security"],
+  ["integrations", "Integrations"],
+  ["billing", "Billing"],
+  ["developer", "Developer"],
+] as const;
+export type SettingsSection = (typeof SETTINGS_SECTIONS)[number][0];
