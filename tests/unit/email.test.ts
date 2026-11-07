@@ -112,3 +112,37 @@ describe("password reset link exposure", () => {
     expect((await sendPasswordResetEmail(user)).localLink).toMatch(/^\/reset-password\?token=/);
   });
 });
+
+describe("email configuration diagnostics", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("tolerates stray spaces and quotes pasted into the dashboard", async () => {
+    vi.resetModules();
+    vi.stubEnv("RESEND_API_KEY", "  re_abc123  ");
+    vi.stubEnv("EMAIL_FROM", ' "Thought Authorities <no-reply@valenvergara.com>" ');
+    const { env, emailDeliveryConfigured } = await import("@/lib/env");
+    expect(env.resendApiKey).toBe("re_abc123");
+    expect(env.emailFrom).toBe("Thought Authorities <no-reply@valenvergara.com>");
+    expect(emailDeliveryConfigured()).toBe(true);
+  });
+
+  it("reports which setting is missing or malformed without revealing the key", async () => {
+    vi.resetModules();
+    vi.stubEnv("RESEND_API_KEY", "sk-not-a-resend-key");
+    vi.stubEnv("EMAIL_FROM", "valenvergara.com");
+    vi.stubEnv("URL", "https://thoughtauthorities.netlify.app");
+    const { emailDiagnostics } = await import("@/server/email/diagnostics");
+    const d = await emailDiagnostics();
+    expect(d.apiKey).toBe("unexpected_format");
+    expect(d.from.status).toBe("invalid");
+    expect(d.ready).toBe(false);
+    expect(JSON.stringify(d)).not.toContain("sk-not-a-resend-key");
+
+    vi.resetModules();
+    vi.stubEnv("RESEND_API_KEY", "");
+    vi.stubEnv("EMAIL_FROM", "");
+    const d2 = await (await import("@/server/email/diagnostics")).emailDiagnostics();
+    expect(d2.apiKey).toBe("missing");
+    expect(d2.from.status).toBe("missing");
+  });
+});

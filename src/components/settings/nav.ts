@@ -2,6 +2,7 @@ export const SETTINGS_SECTIONS = [
   ["profile", "Profile"],
   ["organization", "Organization"],
   ["team", "Team"],
+  ["email", "Email delivery"],
   ["c-suite", "A.I. C-Suite"],
   ["ceo-intelligence", "CEO Leadership Intelligence"],
   ["ai-models", "AI Models"],
