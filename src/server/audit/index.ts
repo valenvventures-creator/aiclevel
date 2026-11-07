@@ -10,7 +10,7 @@ export type AuditEvent =
   | "executive.config_change" | "prompt.publish" | "provider.change" | "credential.change"
   | "memory.create" | "memory.edit" | "memory.verify" | "memory.delete" | "memory.archive"
   | "file.upload" | "file.delete"
-  | "session.create" | "session.run" | "report.create" | "studio.job_create" | "studio.revision"
+  | "session.create" | "session.run" | "report.create" | "report.export" | "studio.job_create" | "studio.revision"
   | "approval.action" | "ceo_intelligence.change" | "comms.send";
 
 /** Append-only audit trail. Failures are logged loudly but never block the user action. */

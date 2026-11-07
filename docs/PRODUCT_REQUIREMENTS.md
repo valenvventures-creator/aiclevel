@@ -35,4 +35,4 @@ Founders, CEOs and leadership teams of 10–500 person companies, family offices
 Multi-tenant isolation (server + RLS), WCAG-oriented accessibility, responsive (desktop primary, tablet collapsible, mobile drawer), streaming UX, every async view has loading/empty/success/error/retry, observability (usage, audit, correlation ids), no secrets client-side, demo content always labelled.
 
 ## Out of scope for MVP (planned)
-Billing (Stripe), premium voices, hands-free sessions, external integrations/MCP adapters, scheduled executive briefs, model-invoked tool use, DOCX/PDF export, document text extraction worker, semantic embedding worker.
+Billing (Stripe), premium voices, hands-free sessions, external integrations/MCP adapters, scheduled executive briefs, model-invoked tool use, document text extraction worker, semantic embedding worker.

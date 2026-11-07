@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { Printer } from "lucide-react";
 import { ExecChip } from "@/components/hq/widgets";
 import { Markdown } from "@/components/ui/markdown";
+import { ExportButtons } from "@/components/reports/export-buttons";
 import { Badge, Card, SectionTitle, SimulatedBadge } from "@/components/ui/primitives";
 import { db } from "@/server/db/store";
 import { AIExecutiveRegistry } from "@/server/executives/registry";
@@ -40,8 +40,8 @@ export default async function ReportPage({ params }: PageProps<"/reports/[id]">)
         </Card>
         <Card>
           <SectionTitle>Export</SectionTitle>
-          <a href={`/api/reports/${r.id}/export`} className="block text-sm text-gold-300 hover:text-gold-200">Download Markdown</a>
-          <p className="mt-2 flex items-center gap-1.5 text-xs text-ivory-faint"><Printer className="size-3" /> Use your browser&apos;s Print → Save as PDF. DOCX export is on the roadmap.</p>
+          <ExportButtons href={`/api/reports/${r.id}/export`} />
+          <p className="mt-3 text-xs text-ivory-faint">PDF and Word include Thought Authorities branding, the lead executive and page numbers.</p>
         </Card>
       </aside>
     </div>

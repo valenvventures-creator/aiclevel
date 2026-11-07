@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { Download, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
+import { ExportButtons } from "@/components/reports/export-buttons";
 import { ExecChip } from "@/components/hq/widgets";
 import { AutoRefresh } from "@/components/ui/auto-refresh";
 import { Markdown } from "@/components/ui/markdown";
@@ -72,7 +73,7 @@ export default async function StudioJobPage({ params, searchParams }: PageProps<
             <article className="surface mt-4 p-6 sm:p-8">
               <div className="mb-4 flex items-center justify-between border-b border-line pb-4">
                 <span className="font-mono text-[10px] tracking-[0.2em] text-ivory-faint">VERSION {current.version} · {formatRelative(current.created_at).toUpperCase()}</span>
-                <a href={`/api/studio/${job.id}/export?v=${current.version}`} className="inline-flex items-center gap-1.5 text-xs text-gold-300 hover:text-gold-200"><Download className="size-3.5" /> Export .md</a>
+                <ExportButtons href={`/api/studio/${job.id}/export?v=${current.version}`} compact />
               </div>
               {current.revision_note && <p className="mb-4 rounded-xl border border-line bg-white/[0.02] px-3 py-2 text-xs text-ivory-muted">Revision requested: {current.revision_note}</p>}
               <Markdown>{current.content}</Markdown>

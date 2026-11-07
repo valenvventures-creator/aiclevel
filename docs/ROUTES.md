@@ -32,7 +32,8 @@
 | `POST /api/sessions/[id]/run` | Streaming C-Suite Session orchestration (NDJSON) |
 | `POST /api/files` · `GET /api/files/[id]` | Validated upload · authorized download / signed URL |
 | `GET /api/search?q=` | Global search |
-| `GET /api/studio/[id]/export?v=` · `GET /api/reports/[id]/export` | Markdown export |
+| `GET /api/reports/[id]/export?format=pdf\|docx\|md` · `GET /api/studio/[id]/export?v=&format=pdf\|docx\|md` | Branded PDF / Word / Markdown export (audited as `report.export`) |
+| `POST /api/studio/[id]/advance` | Runs one bounded Studio production step |
 | `GET /api/health` | Liveness |
 
 Server actions (forms) live beside their domains in `src/server/**/actions.ts`.
