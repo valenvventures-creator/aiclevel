@@ -9,6 +9,8 @@ import type { ExecLite } from "./chapters";
 
 /* ------------------------------------------------------------------ */
 /* Everything your organization knows → one hub → seven executives     */
+/* Vertical: sources at the top zap lightning down into C-Suite Memory, */
+/* which absorbs it and electrifies each executive below.             */
 /* ------------------------------------------------------------------ */
 
 const SOURCES = [
@@ -18,46 +20,128 @@ const SOURCES = [
   { icon: FileText, label: "Documents" },
   { icon: Users, label: "CRM" },
   { icon: Landmark, label: "Accounting" },
-  { icon: MessagesSquare, label: "Team chat" },
+  { icon: MessagesSquare, label: "Chats" },
 ];
 
-export function SourcesHub({ execs }: { execs: ExecLite[] }) {
-  const rows = 7;
-  const yOf = (i: number) => 60 + i * (480 / (rows - 1));
+const W = 1000;
+const H = 760;
+const HUB = { x: 500, y: 380, r: 84 };
+const TOP_Y = 64;
+const BOTTOM_Y = 696;
+/** One full cycle: sources strike, the memory absorbs, then discharges to the executives. */
+const CYCLE = 4.8;
+
+const colX = (i: number, n: number) => (W * (i + 0.5)) / n;
+
+/** Deterministic pseudo-random numbers (identical on server and client). */
+const rnd = (i: number, salt: number) => {
+  const x = Math.sin(i * 91.17 + salt * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+};
+
+/** A jagged lightning path from a to b: midpoints pushed sideways, most in the middle. */
+function bolt(ax: number, ay: number, bx: number, by: number, seed: number): string {
+  const n = 10;
+  const dx = bx - ax;
+  const dy = by - ay;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len;
+  const ny = dx / len;
+  const pts = [`M${ax.toFixed(1)} ${ay.toFixed(1)}`];
+  for (let k = 1; k < n; k++) {
+    const t = k / n;
+    const off = (rnd(k, seed) - 0.5) * 2 * 20 * Math.sin(Math.PI * t);
+    pts.push(`L${(ax + dx * t + nx * off).toFixed(1)} ${(ay + dy * t + ny * off).toFixed(1)}`);
+  }
+  pts.push(`L${bx.toFixed(1)} ${by.toFixed(1)}`);
+  return pts.join(" ");
+}
+
+/** Point on the memory hub's edge facing (x, y). */
+function edge(x: number, y: number) {
+  const dx = x - HUB.x;
+  const dy = y - HUB.y;
+  const d = Math.hypot(dx, dy) || 1;
+  return { x: HUB.x + (dx / d) * HUB.r, y: HUB.y + (dy / d) * HUB.r };
+}
+
+function Lightning({ from, to, seed, delay, tone }: { from: { x: number; y: number }; to: { x: number; y: number }; seed: number; delay: number; tone: "in" | "out" }) {
+  const paths = [bolt(from.x, from.y, to.x, to.y, seed), bolt(from.x, from.y, to.x, to.y, seed + 37)];
+  const color = tone === "in" ? "#dfe6ff" : "#fbf1d0";
   return (
-    <div className="relative mx-auto aspect-[1000/600] w-full max-w-6xl">
-      <svg viewBox="0 0 1000 600" className="absolute inset-0 size-full" aria-hidden>
+    <g>
+      {/* the channel, always faintly visible */}
+      <path d={paths[0]} fill="none" stroke={tone === "in" ? "rgba(170,190,255,0.16)" : "rgba(242,207,104,0.16)"} strokeWidth="1" strokeDasharray="2 6" />
+      {/* the strike: drawn downwards, crackling between two shapes, then fading */}
+      <g className="motion-safe:animate-[zap-flash_var(--cycle)_linear_infinite] opacity-0" style={{ ["--cycle" as string]: `${CYCLE}s`, animationDelay: `${delay}s` }} filter="url(#zap-glow)">
+        {paths.map((d, v) => (
+          <path
+            key={v}
+            d={d}
+            pathLength={1}
+            fill="none"
+            stroke={color}
+            strokeWidth={v === 0 ? 2.2 : 1.4}
+            strokeLinejoin="bevel"
+            strokeDasharray="1 1"
+            style={{ animation: `zap-draw ${CYCLE}s linear ${delay}s infinite, crackle 0.14s steps(1) ${v * 0.07}s infinite` }}
+          />
+        ))}
+      </g>
+    </g>
+  );
+}
+
+export function SourcesHub({ execs }: { execs: ExecLite[] }) {
+  const sources = SOURCES.map((s, i) => ({ ...s, x: colX(i, SOURCES.length) }));
+  const people = execs.map((e, i) => ({ ...e, x: colX(i, execs.length) }));
+  const dischargeAt = CYCLE * 0.5;
+  return (
+    <div className="relative mx-auto aspect-[1000/760] w-full max-w-5xl">
+      <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 size-full overflow-visible" aria-hidden>
         <defs>
-          <linearGradient id="in" x1="0" x2="1"><stop offset="0" stopColor="rgba(170,190,255,0.05)" /><stop offset="1" stopColor="rgba(242,207,104,0.7)" /></linearGradient>
-          <linearGradient id="out" x1="0" x2="1"><stop offset="0" stopColor="rgba(242,207,104,0.7)" /><stop offset="1" stopColor="rgba(242,207,104,0.08)" /></linearGradient>
-          <radialGradient id="hubglow"><stop offset="0" stopColor="rgba(239,186,17,0.35)" /><stop offset="1" stopColor="rgba(239,186,17,0)" /></radialGradient>
+          <radialGradient id="hubglow"><stop offset="0" stopColor="rgba(239,186,17,0.38)" /><stop offset="1" stopColor="rgba(239,186,17,0)" /></radialGradient>
+          <filter id="zap-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
         </defs>
-        <circle cx="500" cy="300" r="170" fill="url(#hubglow)" />
-        {Array.from({ length: rows }, (_, i) => (
-          <g key={i}>
-            <path d={`M 90 ${yOf(i)} C 300 ${yOf(i)}, 330 300, 455 300`} fill="none" stroke="url(#in)" strokeWidth="1.2" strokeDasharray="3 7" className="animate-flow" style={{ animationDelay: `${i * 0.15}s` }} />
-            <path d={`M 545 300 C 670 300, 700 ${yOf(i)}, 910 ${yOf(i)}`} fill="none" stroke="url(#out)" strokeWidth="1.2" strokeDasharray="3 7" className="animate-flow" style={{ animationDelay: `${i * 0.15 + 0.4}s` }} />
-          </g>
+        <circle cx={HUB.x} cy={HUB.y} r={HUB.r * 2.2} fill="url(#hubglow)" />
+        {/* sources → memory */}
+        {sources.map((s, i) => (
+          <Lightning key={s.label} from={{ x: s.x, y: TOP_Y + 36 }} to={edge(s.x, TOP_Y)} seed={i + 1} delay={i * 0.11} tone="in" />
+        ))}
+        {/* memory → executives */}
+        {people.map((p, i) => (
+          <Lightning key={p.role_code} from={edge(p.x, BOTTOM_Y)} to={{ x: p.x, y: BOTTOM_Y - 34 }} seed={i + 50} delay={dischargeAt + i * 0.1} tone="out" />
         ))}
       </svg>
 
-      {SOURCES.map((s, i) => (
-        <div key={s.label} className="absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-2" style={{ left: "6%", top: `${(yOf(i) / 600) * 100}%` }}>
-          <span className="grid size-9 place-items-center rounded-xl border border-white/10 bg-[rgba(31,38,55,0.7)] text-white/80 shadow-[0_8px_24px_-8px_rgba(0,0,0,.8)] sm:size-11"><s.icon className="size-4 sm:size-5" /></span>
-          <span className="hidden whitespace-nowrap text-[11px] text-white/45 lg:inline">{s.label}</span>
+      {sources.map((s) => (
+        <div key={s.label} className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5" style={{ left: `${(s.x / W) * 100}%`, top: `${(TOP_Y / H) * 100}%` }}>
+          <span className="grid size-8 place-items-center rounded-xl border border-white/10 bg-[rgba(31,38,55,0.7)] text-white/80 shadow-[0_8px_24px_-8px_rgba(0,0,0,.8)] sm:size-11"><s.icon className="size-4 sm:size-5" /></span>
+          <span className="hidden whitespace-nowrap text-[11px] text-white/50 sm:inline">{s.label}</span>
         </div>
       ))}
 
-      <div className="absolute left-1/2 top-1/2 grid aspect-square w-[17%] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-line-gold bg-[radial-gradient(circle,#141b2e,#070a14)] shadow-[0_0_80px_-10px_rgba(239,186,17,.6)]">
+      <div
+        className="absolute grid aspect-square w-[17%] min-w-[64px] place-items-center rounded-full border border-line-gold bg-[radial-gradient(circle,#141b2e,#070a14)] motion-safe:animate-[absorb_var(--cycle)_ease-in-out_infinite]"
+        style={{ left: `${(HUB.x / W) * 100}%`, top: `${(HUB.y / H) * 100}%`, transform: "translate(-50%, -50%)", boxShadow: "0 0 60px -14px rgba(239,186,17,.45)", ["--cycle" as string]: `${CYCLE}s` }}
+      >
         <span aria-hidden className="absolute inset-0 animate-ring rounded-full border border-gold-400/40" />
         <Image src="/brand/crest-256.png" alt="" width={256} height={149} className="w-[70%]" />
       </div>
-      <p className="absolute left-1/2 top-[66%] -translate-x-1/2 whitespace-nowrap font-mono text-[10px] tracking-[0.3em] text-gold-300/80">C-SUITE MEMORY</p>
+      {/* label beside the hub, clear of the lightning above and below */}
+      <p className="absolute -translate-y-1/2 whitespace-nowrap font-mono text-[9px] tracking-[0.3em] text-gold-300/80 sm:text-[10px]" style={{ left: `${((HUB.x + HUB.r * 1.45) / W) * 100}%`, top: `${(HUB.y / H) * 100}%` }}>C-SUITE<br />MEMORY</p>
 
-      {execs.map((e, i) => (
-        <div key={e.role_code} className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-row-reverse items-center gap-2" style={{ left: "94%", top: `${(yOf(i) / 600) * 100}%` }}>
-          <ExecutiveAvatar src={e.avatar_url} shortTitle={e.short_title} accent={e.accent} size={40} ring={false} />
-          <span className="hidden whitespace-nowrap font-mono text-[10px] tracking-[0.18em] lg:inline" style={{ color: e.accent }}>{e.short_title}</span>
+      {people.map((p, i) => (
+        <div
+          key={p.role_code}
+          className="absolute flex flex-col items-center gap-1.5 motion-safe:animate-[jolt_var(--cycle)_ease-out_infinite]"
+          style={{ left: `${(p.x / W) * 100}%`, top: `${(BOTTOM_Y / H) * 100}%`, transform: "translate(-50%, -50%)", ["--cycle" as string]: `${CYCLE}s`, animationDelay: `${i * 0.1}s` }}
+        >
+          <span className="origin-center scale-[0.8] sm:scale-100"><ExecutiveAvatar src={p.avatar_url} shortTitle={p.short_title} accent={p.accent} size={44} ring={false} /></span>
+          <span className="hidden whitespace-nowrap font-mono text-[10px] tracking-[0.18em] sm:inline" style={{ color: p.accent }}>{p.short_title}</span>
         </div>
       ))}
     </div>
