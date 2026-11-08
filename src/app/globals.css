@@ -183,6 +183,13 @@
   78%, 100% { filter: drop-shadow(0 0 0 rgba(239, 186, 17, 0)); transform: translate(-50%, -50%) scale(1); }
 }
 
+/*
+ * Grid items may shrink below their content's natural width. Without this, a
+ * long single-line (truncated) title inside a grid cell stretches the whole
+ * column past the screen on phones.
+ */
+.grid > * { min-width: 0; }
+
 html { color-scheme: dark; }
 html:focus-within { scroll-behavior: smooth; }
 body {

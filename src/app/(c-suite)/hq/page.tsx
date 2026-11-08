@@ -56,7 +56,7 @@ export default async function HQPage() {
             )}
           </p>
         </div>
-        <ul className="flex items-center gap-2" aria-label="C-Suite status">
+        <ul className="flex flex-wrap items-center gap-1.5 sm:gap-2" aria-label="C-Suite status">
           {execs.map((e) => (
             <li key={e.id}>
               <Link href={`/executives/${e.slug}`} title={`${e.title} — ${e.status.toLowerCase().replace("_", " ")}`}>
