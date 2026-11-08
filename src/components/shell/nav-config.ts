@@ -5,6 +5,7 @@ import {
   FileText,
   FolderKanban,
   Gavel,
+  GraduationCap,
   LayoutDashboard,
   Mail,
   Settings,
@@ -44,7 +45,10 @@ export const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
   },
   {
     label: "Organization",
-    items: [{ href: "/settings", label: "Settings", icon: Settings }],
+    items: [
+      { href: "/settings", label: "Settings", icon: Settings },
+      { href: "/tutorials", label: "Tutorials", icon: GraduationCap },
+    ],
   },
 ];
 

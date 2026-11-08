@@ -39,3 +39,11 @@
 | `GET /api/health` | Liveness |
 
 Server actions (forms) live beside their domains in `src/server/**/actions.ts`.
+
+## Tutorials (signed-in only)
+| Route | Purpose |
+|---|---|
+| `/tutorials` | Tutorials home: start-here tour, a map of every area, and searchable guides by topic |
+| `/tutorials/[slug]` | One tutorial: overview, at-a-glance flow, numbered steps with screenshots, symbol guide, tips, related guides |
+
+Content lives in `src/config/tutorials.ts`. Screenshots (`public/tutorials/media/*.webp`, from the demo organization) are listed in `src/config/tutorial-media.ts`. `/tutorials` is in the proxy's protected list, so the pages and their images require sign-in. `tests/unit/tutorials.test.ts` checks the slugs, related links, images and coverage of every menu area. To refresh a screenshot, capture the same region from the demo organization, convert it to WebP and update its size in `tutorial-media.ts`.
