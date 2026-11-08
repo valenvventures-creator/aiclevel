@@ -6,7 +6,7 @@ RootLayout (fonts, skip link)
 ├─ AuthLayout (brand panel) ─ LoginForm · SignupForm · ForgotForm · ResetForm · VerifyEmailForms
 ├─ OnboardingPage ─ OnboardingWizard ─ Uploader
 └─ CSuiteLayout ─ AppShell
-   ├─ Sidebar (SidebarContent · OrganizationSwitcher · nav sections · YOUR C-SUITE avatars · UserMenu · collapse)
+   ├─ Sidebar (SidebarContent · OrganizationSwitcher · nav sections · YOUR C-LEVEL avatars · UserMenu · collapse)
    ├─ Mobile drawer
    ├─ TopHeader (GlobalSearch trigger · ProviderStatus · NotificationCenter)
    ├─ CommandPalette (⌘K / Ctrl+K: actions, ask-executive, navigation, /api/search)

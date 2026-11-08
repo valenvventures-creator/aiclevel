@@ -1,5 +1,5 @@
 /**
- * Embeddings for C-Suite Memory.
+ * Embeddings for C-Level Memory.
  *
  * Production: provider embeddings (OpenAI text-embedding-3-small, 1536 dims)
  * stored in pgvector `memory_records.embedding`, searched with the

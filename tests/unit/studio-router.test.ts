@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveTitle, routeStudioRequest } from "@/server/studio/router";
 
-describe("C-Suite Studio routing — route to the right executive", () => {
+describe("C-Level Studio routing — route to the right executive", () => {
   const cases: [string, string][] = [
     ["Create a three-year financial model.", "CFO"],
     ["Develop a fundraising strategy for our seed extension.", "CFO"],

@@ -13,7 +13,7 @@ import { canView } from "@/server/memory/retrieval";
 import { reviewApprovalAction } from "@/server/approvals/actions";
 import { can } from "@/server/auth/permissions";
 
-export const metadata: Metadata = { title: "C-Suite HQ" };
+export const metadata: Metadata = { title: "C-Level HQ" };
 
 export default async function HQPage() {
   const ctx = await requireContext();
@@ -44,7 +44,7 @@ export default async function HQPage() {
     <div className="space-y-8">
       <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="eyebrow">C-Suite HQ · {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
+          <p className="eyebrow">C-Level HQ · {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
           <h1 className="mt-2 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">{greeting(ctx.user.first_name, ctx.user.timezone)}</h1>
           <p className="mt-2 text-sm text-ivory-muted">
             {attention.length + approvals.length > 0 ? (
@@ -52,11 +52,11 @@ export default async function HQPage() {
                 <span className="text-gold-300">{attention.length + approvals.length} items</span> need leadership attention · {unread} unread Executive Comms
               </>
             ) : (
-              "Nothing urgent requires leadership attention. Your C-Suite is standing by."
+              "Nothing urgent requires leadership attention. Your C-Level is standing by."
             )}
           </p>
         </div>
-        <ul className="flex flex-wrap items-center gap-1.5 sm:gap-2" aria-label="C-Suite status">
+        <ul className="flex flex-wrap items-center gap-1.5 sm:gap-2" aria-label="C-Level status">
           {execs.map((e) => (
             <li key={e.id}>
               <Link href={`/executives/${e.slug}`} title={`${e.title} — ${e.status.toLowerCase().replace("_", " ")}`}>
@@ -68,9 +68,9 @@ export default async function HQPage() {
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <QuickActionCard href="/sessions/new" icon={Users} title="Convene a C-Suite Session" body="Bring one question to the table." />
+        <QuickActionCard href="/sessions/new" icon={Users} title="Convene a C-Level Session" body="Bring one question to the table." />
         <QuickActionCard href={ceo ? `/executives/${ceo.slug}?tab=conversation` : "/executives"} icon={Brain} title="Ask the CEO" body="Strategic direction, fast." />
-        <QuickActionCard href="/comms?compose=1" icon={Mail} title="Message the C-Suite" body="One, several or all seven." />
+        <QuickActionCard href="/comms?compose=1" icon={Mail} title="Message the C-Level" body="One, several or all seven." />
         <QuickActionCard href="/studio" icon={Workflow} title="Request Finished Work" body="The right executive leads it." />
       </div>
 
@@ -91,7 +91,7 @@ export default async function HQPage() {
             </div>
           ) : (
             <div className="relative mt-4 text-sm text-ivory-muted">
-              <p>No brief yet today. Ask your CEO to prepare one from your C-Suite Memory and recent activity.</p>
+              <p>No brief yet today. Ask your CEO to prepare one from your C-Level Memory and recent activity.</p>
               <Link href="/studio?preset=executive_report" className="mt-3 inline-block text-gold-300 hover:text-gold-200">Request today&apos;s brief →</Link>
             </div>
           )}
@@ -140,7 +140,7 @@ export default async function HQPage() {
                 <p className="text-sm font-medium">{m.title}</p>
                 <p className="text-xs text-ivory-muted">{m.content}</p>
               </li>
-            )) : <Empty>Add financial facts to C-Suite Memory.</Empty>}
+            )) : <Empty>Add financial facts to C-Level Memory.</Empty>}
           </ul>
         </Widget>
         <Widget title="Risk & technology alerts" href="/memory">
@@ -153,8 +153,8 @@ export default async function HQPage() {
             )) : <Empty>No high-importance risks recorded.</Empty>}
           </ul>
         </Widget>
-        <Widget title="Active C-Suite Sessions" href="/sessions">
-          <div className="space-y-2.5">{sessions.length ? sessions.slice(0, 2).map((s) => <SessionPreview key={s.id} s={s} execs={execMap} />) : <Empty>No C-Suite Sessions yet.</Empty>}</div>
+        <Widget title="Active C-Level Sessions" href="/sessions">
+          <div className="space-y-2.5">{sessions.length ? sessions.slice(0, 2).map((s) => <SessionPreview key={s.id} s={s} execs={execMap} />) : <Empty>No C-Level Sessions yet.</Empty>}</div>
         </Widget>
         <Widget title="Memory needs confirmation" href="/memory?status=PROPOSED">
           <ul className="space-y-3">
@@ -169,7 +169,7 @@ export default async function HQPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Widget title="C-Suite Studio" href="/studio">
+        <Widget title="C-Level Studio" href="/studio">
           <div className="space-y-1">{jobs.length ? jobs.map((j) => <ProductionJobCard key={j.id} j={j} execs={execMap} />) : <Empty>No Finished Work yet.</Empty>}</div>
         </Widget>
         <Widget title="Recent decisions" href="/decisions">

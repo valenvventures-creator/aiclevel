@@ -24,11 +24,11 @@ export default async function ExecutivesPage() {
       <PageHeader
         eyebrow="Executive Offices"
         title="Your A.I. C-Level"
-        description="Seven executives, one organization, shared intelligence. Open an office to work one-on-one, or convene several in a C-Suite Session."
+        description="Seven executives, one organization, shared intelligence. Open an office to work one-on-one, or convene several in a C-Level Session."
         actions={<ButtonLink href="/sessions/new"><Users className="size-4" /> Convene a session</ButtonLink>}
       />
       {execs.length === 0 ? (
-        <EmptyState title="No executives configured" body="Your C-Suite has not been initialized for this organization." />
+        <EmptyState title="No executives configured" body="Your C-Level has not been initialized for this organization." />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {execs.map((e) => {

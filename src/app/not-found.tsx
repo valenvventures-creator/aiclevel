@@ -8,7 +8,7 @@ export default function NotFound() {
       <p className="eyebrow mt-8">404</p>
       <h1 className="mt-3 font-heading text-4xl font-semibold">This office doesn&apos;t exist.</h1>
       <p className="mt-2 text-sm text-ivory-muted">The page may have moved, or you may not have access to it.</p>
-      <ButtonLink href="/hq" className="mt-8">Return to C-Suite HQ</ButtonLink>
+      <ButtonLink href="/hq" className="mt-8">Return to C-Level HQ</ButtonLink>
     </main>
   );
 }

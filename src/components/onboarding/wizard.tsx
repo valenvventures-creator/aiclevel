@@ -20,7 +20,7 @@ const SCREENS = [
   { title: "Risk & priorities", steps: "Steps 12–15 · Risk, finance, technology, impact", spec: [12, 13, 14, 15] },
   { title: "Foundational documents", steps: "Step 16", spec: [16] },
   { title: "Plan", steps: "Step 17", spec: [17] },
-  { title: "Enter C-Suite HQ", steps: "Step 18", spec: [18] },
+  { title: "Enter C-Level HQ", steps: "Step 18", spec: [18] },
 ] as const;
 
 export interface WizardDefaults {
@@ -161,7 +161,7 @@ export function OnboardingWizard({ defaults }: { defaults: WizardDefaults }) {
           <div className="plate space-y-5 p-6 sm:p-8">
             <div className="rounded-2xl border border-line-gold bg-gold-400/[0.05] p-5">
               <p className="font-heading text-xl">Trial organization</p>
-              <p className="mt-1 text-sm text-ivory-muted">Your organization starts on a trial with the full seven-executive C-Suite. Billing is not yet enabled — no payment details are required.</p>
+              <p className="mt-1 text-sm text-ivory-muted">Your organization starts on a trial with the full seven-executive C-Level. Billing is not yet enabled — no payment details are required.</p>
             </div>
             <div className="flex justify-between">
               <Button variant="ghost" onClick={() => setScreen(6)} type="button"><ArrowLeft className="size-4" /> Back</Button>
@@ -172,10 +172,10 @@ export function OnboardingWizard({ defaults }: { defaults: WizardDefaults }) {
 
         {screen === 8 && (
           <form action={async () => { setCompleting(true); await completeOnboarding(); }} className="plate space-y-5 p-6 text-center sm:p-10">
-            <p className="font-heading text-2xl">Your C-Suite is ready to convene.</p>
-            <p className="mx-auto max-w-lg text-sm text-ivory-muted">We&apos;ll write your Organization Constitution into C-Suite Memory so all seven executives share the same context, then open C-Suite HQ.</p>
+            <p className="font-heading text-2xl">Your C-Level is ready to convene.</p>
+            <p className="mx-auto max-w-lg text-sm text-ivory-muted">We&apos;ll write your Organization Constitution into C-Level Memory so all seven executives share the same context, then open C-Level HQ.</p>
             <Button type="submit" size="lg" disabled={completing}>
-              {completing && <Loader2 className="size-4 animate-spin" />} Enter C-Suite HQ <ArrowRight className="size-4" />
+              {completing && <Loader2 className="size-4 animate-spin" />} Enter C-Level HQ <ArrowRight className="size-4" />
             </Button>
           </form>
         )}

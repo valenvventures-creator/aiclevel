@@ -55,7 +55,7 @@ async function step(sessionId: string, budgetMs: number) {
   return { events, state: events.at(-1)?.state };
 }
 
-describe("stepwise C-Suite Sessions", () => {
+describe("stepwise C-Level Sessions", () => {
   beforeEach(async () => {
     script.calls = [];
     script.byTask = {};
@@ -233,7 +233,7 @@ describe("stepwise C-Suite Sessions", () => {
     expect(decision.recommended_option).toBe("A");
   });
 
-  it("saves an approved decision to C-Suite Memory as verified, once", async () => {
+  it("saves an approved decision to C-Level Memory as verified, once", async () => {
     const decision = { id: newId(), organization_id: org.id, project_id: null, session_id: null, title: "UK expansion", question: "Expand to the UK?", options_json: [{ id: "A", label: "Proceed" }, { id: "B", label: "Wait" }], chosen_option: "B", recommended_option: "A", recommendation: "Pilot first.", rationale: "Reversible.", risks_json: [], financial_implications_json: null, technology_implications_json: null, people_implications_json: null, impact_implications_json: null, confidence: 0.6, status: "APPROVED" as const, created_by: "u1", created_at: nowIso() };
     await rememberApprovedDecision(decision, "u1");
     await rememberApprovedDecision(decision, "u1");

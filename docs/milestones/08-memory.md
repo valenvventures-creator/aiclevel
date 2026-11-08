@@ -1,4 +1,4 @@
-# Milestone 08 — C-Suite Memory
+# Milestone 08 — C-Level Memory
 
 **Status:** DONE (lexical retrieval)
 

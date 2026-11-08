@@ -119,7 +119,7 @@ export async function LearningTab({ orgId, exec, canConfigure }: { orgId: string
                     <div className="min-w-0 flex-1">
                       <p className={f.comment ? "" : "text-ivory-faint"}>{f.comment || "Rated without a comment."}</p>
                       <p className="mt-0.5 font-mono text-[10px] text-ivory-faint">
-                        {f.source_type === "SESSION" ? "C-SUITE SESSION" : "CONVERSATION"} · {formatRelative(f.created_at).toUpperCase()}
+                        {f.source_type === "SESSION" ? "C-LEVEL SESSION" : "CONVERSATION"} · {formatRelative(f.created_at).toUpperCase()}
                         {lesson && ` · LESSON ${lesson.status === "APPROVED" ? "ACTIVE" : lesson.status === "PROPOSED" ? "WAITING" : "DISMISSED"}`}
                       </p>
                     </div>

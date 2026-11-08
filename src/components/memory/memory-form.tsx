@@ -16,7 +16,7 @@ export function MemoryForm({ record, projects, canOwnerOnly }: { record?: Memory
   return (
     <form ref={ref} action={action} className="space-y-4">
       {state.error && <Alert tone="risk">{state.error}</Alert>}
-      {state.ok && <Alert tone="ok">Saved to C-Suite Memory.</Alert>}
+      {state.ok && <Alert tone="ok">Saved to C-Level Memory.</Alert>}
       {record && <input type="hidden" name="id" value={record.id} />}
       <div>
         <Label htmlFor="m-title">Title</Label>

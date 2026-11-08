@@ -27,7 +27,7 @@ export async function GET(req: Request) {
       ...execs.filter((e) => has(e.title, e.functional_mandate, e.short_title)).map((e) => ({ type: "Executive", id: e.id, title: e.title, snippet: e.functional_mandate, href: `/executives/${e.slug}` })),
       ...convs.filter((c) => has(c.title)).map((c) => ({ type: "Conversation", id: c.id, title: c.title, snippet: "Executive conversation", href: `/executives/${execs.find((e) => e.id === c.executive_id)?.slug}?tab=conversation&c=${c.id}` })),
       ...comms.filter((c) => (c.sender_id === ctx.user.id || c.recipient_user_ids.includes(ctx.user.id)) && has(c.subject, c.body)).map((c) => ({ type: "Executive Comms", id: c.id, title: c.subject, snippet: truncate(c.body, 80), href: `/comms?thread=${c.thread_id}` })),
-      ...sessions.filter((s) => has(s.title, s.objective)).map((s) => ({ type: "C-Suite Session", id: s.id, title: s.title, snippet: truncate(s.objective, 80), href: `/sessions/${s.id}` })),
+      ...sessions.filter((s) => has(s.title, s.objective)).map((s) => ({ type: "C-Level Session", id: s.id, title: s.title, snippet: truncate(s.objective, 80), href: `/sessions/${s.id}` })),
       ...memory.filter((m) => canView(m, ctx.role) && m.status !== "ARCHIVED" && has(m.title, m.content)).map((m) => ({ type: "Memory", id: m.id, title: m.title, snippet: truncate(m.content, 80), href: `/memory?id=${m.id}` })),
       ...files.filter((f) => has(f.filename, f.extracted_text)).map((f) => ({ type: "File", id: f.id, title: f.filename, snippet: f.category, href: `/files#${f.id}` })),
       ...reports.filter((r) => has(r.title, r.summary)).map((r) => ({ type: "Report", id: r.id, title: r.title, snippet: r.report_type, href: `/reports/${r.id}` })),

@@ -173,7 +173,7 @@ export function VerifyEmailForms({ token, signedIn, verified }: { token?: string
         </form>
       )}
       <Link href={signedIn ? "/hq" : "/login"} className="block text-center text-sm text-gold-300 hover:text-gold-200">
-        Continue {signedIn ? "to C-Suite HQ" : "to log in"}
+        Continue {signedIn ? "to C-Level HQ" : "to log in"}
       </Link>
     </div>
   );

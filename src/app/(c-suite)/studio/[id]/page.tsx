@@ -36,7 +36,7 @@ export default async function StudioJobPage({ params, searchParams }: PageProps<
     <div className="grid gap-8 xl:grid-cols-[1fr_320px]">
       <AutoRefresh active={working} />
       <div className="min-w-0">
-        <Link href="/studio" className="text-xs text-ivory-muted hover:text-ivory">← C-Suite Studio</Link>
+        <Link href="/studio" className="text-xs text-ivory-muted hover:text-ivory">← C-Level Studio</Link>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Badge tone="gold">{job.artifact_type}</Badge>
           <Badge tone={job.status === "FAILED" ? "risk" : job.status === "COMPLETED" ? "ok" : "warn"}>{job.status.replace(/_/g, " ")}</Badge>
@@ -114,7 +114,7 @@ export default async function StudioJobPage({ params, searchParams }: PageProps<
             </form>
             {job.status !== "COMPLETED" && <form action={approveJobAction}><input type="hidden" name="id" value={job.id} /><Button size="sm" className="w-full">Approve as Finished Work</Button></form>}
             <form action={saveAsReportAction}><input type="hidden" name="id" value={job.id} /><Button size="sm" variant="outline" className="w-full">Save as Report</Button></form>
-            <ButtonLink href={`/sessions/new?objective=${encodeURIComponent(`Review: ${job.title}`)}`} size="sm" variant="ghost" className="w-full">Bring to C-Suite Session</ButtonLink>
+            <ButtonLink href={`/sessions/new?objective=${encodeURIComponent(`Review: ${job.title}`)}`} size="sm" variant="ghost" className="w-full">Bring to C-Level Session</ButtonLink>
             <ButtonLink href={`/comms?compose=1`} size="sm" variant="ghost" className="w-full">Attach to Executive Comms</ButtonLink>
           </Card>
         )}

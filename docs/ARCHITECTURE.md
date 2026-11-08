@@ -8,19 +8,19 @@
                          THOUGHT AUTHORITIES · A.I. C-LEVEL
                                        │
       ┌──────────────┬─────────────────┼─────────────────┬──────────────┐
-  C-Suite HQ   Executive Offices  Executive Comms   C-Suite Session  C-Suite Studio
+  C-Level HQ   Executive Offices  Executive Comms   C-Level Session  C-Level Studio
       │              │                 │                 │              │
       └──────────────┴────── Next.js App Router (RSC + server actions + NDJSON streams)
                                        │
                       Tenant boundary: requireContext() / authorize(capability)
                                        │
             ┌──────────────────────────┼───────────────────────────┐
-     AIExecutiveRegistry        C-Suite Orchestrator          Studio Router
+     AIExecutiveRegistry        C-Level Orchestrator          Studio Router
      (DB-driven executives)     (bounded stage plans)         (capability registry)
             └──────────────┬───────────┴───────────┬───────────────┘
                  Context assembly (prompt builders, versioned Prompt Registry)
                            │                       │
-                    C-Suite Memory retrieval   Tools registry (+ MCP adapters)
+                    C-Level Memory retrieval   Tools registry (+ MCP adapters)
                            │
                        AI GATEWAY ── routing · fallback · usage/cost · correlation ids
                  ┌─────────┼──────────┬──────────────┐

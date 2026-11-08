@@ -10,7 +10,7 @@ import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { requireContext } from "@/server/organizations/service";
 import { can } from "@/server/auth/permissions";
 
-export const metadata: Metadata = { title: "C-Suite Studio" };
+export const metadata: Metadata = { title: "C-Level Studio" };
 
 export default async function StudioPage({ searchParams }: PageProps<"/studio">) {
   const sp = await searchParams;

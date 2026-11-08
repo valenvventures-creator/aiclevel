@@ -32,7 +32,7 @@ function compose(req: GenerateRequest): string {
     case "vote_options":
       return "A: Proceed as proposed\nB: Run a limited pilot first\nC: Do not proceed for now";
     case "session_synthesis":
-      return `${SIMULATED_BANNER}\n\n## Recommendation\nProceed in a staged, reversible way with a defined pilot before full commitment.\n\n## Rationale\nThe executive positions converge on value, but each seat raised a condition that a pilot can test cheaply.\n\n## Where the C-Suite agrees\n- The opportunity is aligned with current priorities.\n- A named owner and explicit success metrics are required.\n\n## Preserved dissent\n- Template output cannot represent genuine dissent; a live model will preserve real disagreement here.\n\n## Key risks\n| Risk | Severity | Owner |\n|---|---|---|\n| Unvalidated assumptions | MEDIUM | CEO |\n| Unreviewed obligations | MEDIUM | CLO |\n\n## Next steps\n| Action | Owner | When |\n|---|---|---|\n| Define pilot scope and metrics | CHRO | 1 week |\n| Build base/upside/downside model | CFO | 2 weeks |\n\n## Confidence\n55% — simulated; connect a provider for a real synthesis.`;
+      return `${SIMULATED_BANNER}\n\n## Recommendation\nProceed in a staged, reversible way with a defined pilot before full commitment.\n\n## Rationale\nThe executive positions converge on value, but each seat raised a condition that a pilot can test cheaply.\n\n## Where the C-Level agrees\n- The opportunity is aligned with current priorities.\n- A named owner and explicit success metrics are required.\n\n## Preserved dissent\n- Template output cannot represent genuine dissent; a live model will preserve real disagreement here.\n\n## Key risks\n| Risk | Severity | Owner |\n|---|---|---|\n| Unvalidated assumptions | MEDIUM | CEO |\n| Unreviewed obligations | MEDIUM | CLO |\n\n## Next steps\n| Action | Owner | When |\n|---|---|---|\n| Define pilot scope and metrics | CHRO | 1 week |\n| Build base/upside/downside model | CFO | 2 weeks |\n\n## Confidence\n55% — simulated; connect a provider for a real synthesis.`;
     case "studio_production":
       return `${SIMULATED_BANNER}\n\n# ${ask}\n\n## Executive summary\nThis is a structural draft produced in demo mode. It shows the shape of the Finished Work the lead executive will deliver once a provider is connected.\n\n## Analysis through the lens of ${lens.lens}\n- Situation and objective\n- Options considered\n- Recommended approach\n\n## Assumptions\n- No live organizational analysis was performed.\n\n## Human review checklist\n- [ ] Validate figures and facts\n- [ ] Confirm brand voice\n- [ ] Approve before any external use`;
     default:
@@ -47,7 +47,7 @@ export const SimulatedAdapter: ProviderAdapter = {
   async *stream(req): AsyncIterable<StreamChunk> {
     yield { type: "meta", provider: "simulated", model: "demo-template", simulated: true };
     let text = compose(req);
-    // A continuation request (Studio or C-Suite Session step) resumes after what was already written.
+    // A continuation request (Studio or C-Level Session step) resumes after what was already written.
     const soFar = /<(?:draft_so_far|your_answer_so_far)>\n([\s\S]*)\n<\/(?:draft_so_far|your_answer_so_far)>/.exec(lastUser(req))?.[1];
     if (soFar && text.startsWith(soFar)) text = text.slice(soFar.length);
     const words = text.split(/(\s+)/);

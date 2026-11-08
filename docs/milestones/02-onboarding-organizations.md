@@ -6,7 +6,7 @@
 - 18-step resumable onboarding
 - Organization Constitution
 - Foundational uploads
-- Initial C-Suite Memory + welcome
+- Initial C-Level Memory + welcome
 
 ## Remaining
 - [ ] Constitution version history

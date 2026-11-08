@@ -40,7 +40,7 @@ export default async function SettingsSectionPage({ params }: PageProps<"/settin
       {s === "profile" && <Profile ctx={ctx} />}
       {s === "organization" && <Organization ctx={ctx} />}
       {s === "team" && <Team ctx={ctx} />}
-      {s === "c-suite" && <CSuite ctx={ctx} />}
+      {s === "c-level" && <CSuite ctx={ctx} />}
       {s === "ceo-intelligence" && <CeoIntelligence ctx={ctx} />}
       {s === "ai-models" && <AiModels ctx={ctx} />}
       {s === "tools" && <Tools ctx={ctx} />}
@@ -51,10 +51,10 @@ export default async function SettingsSectionPage({ params }: PageProps<"/settin
       {s === "integrations" && <Integrations />}
       {s === "email" && <EmailDelivery ctx={ctx} />}
       {s === "api-connections" && <ApiConnections />}
-      {s === "memory" && <Info title="Memory governance" points={["AI-generated conclusions are stored as PROPOSED and never become organizational truth automatically.", "Executives only retrieve memory in categories they are permitted to read (configure per executive in A.I. C-Level).", "Visibility levels: Organization, Leadership only, Owner only.", "Every record keeps its provenance: source, creator, date, verification state and confidence."]} link={["/memory", "Open C-Suite Memory"]} />}
+      {s === "memory" && <Info title="Memory governance" points={["AI-generated conclusions are stored as PROPOSED and never become organizational truth automatically.", "Executives only retrieve memory in categories they are permitted to read (configure per executive in A.I. C-Level).", "Visibility levels: Organization, Leadership only, Owner only.", "Every record keeps its provenance: source, creator, date, verification state and confidence."]} link={["/memory", "Open C-Level Memory"]} />}
       {s === "files-storage" && <Info title="Files & storage" points={["Files are stored privately per organization (Supabase Storage bucket `organization-files`, path-prefixed by organization id with RLS).", "Downloads use authorized requests and 60-second signed URLs — never permanent public links.", "Supported: PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, PNG, JPG, WEBP, common audio and video up to 20 MB.", "Plain-text formats are indexed immediately; binary formats are queued for the document-processing worker."]} link={["/files", "Open Files"]} />}
       {s === "data-privacy" && <Info title="Data & privacy" points={["Your organization's data is isolated server-side and by Row Level Security in the database.", "Data export: Owners can request a full organization export (JSON + files) — export job architecture is documented in docs/ARCHITECTURE.md.", "Deleting your individual account never deletes shared organization data.", "Organization deletion and ownership transfer are protected Owner actions and are audited."]} />}
-      {s === "notifications" && <Info title="Notifications" points={["Executive response ready", "C-Suite Session report ready", "Finished Work ready", "Memory needs confirmation", "File processing complete", "Invitation accepted"]} />}
+      {s === "notifications" && <Info title="Notifications" points={["Executive response ready", "C-Level Session report ready", "Finished Work ready", "Memory needs confirmation", "File processing complete", "Invitation accepted"]} />}
       {s === "appearance" && <Info title="Appearance" points={["Thought Authorities uses a single, calibrated dark theme designed for long executive sessions.", "Reduced-motion preferences from your operating system are respected automatically.", "Sidebar collapse state is remembered on this device."]} />}
     </div>
   );
@@ -169,7 +169,7 @@ async function CSuite({ ctx }: C) {
             <ExecutiveAvatar src={e.avatar_url} shortTitle={e.short_title} accent={e.accent} size={40} ring={false} />
             <div className="min-w-0 flex-1"><p className="text-sm font-medium">{e.display_name ?? e.title}</p><p className="text-xs text-ivory-muted">{e.functional_mandate}</p></div>
             {e.is_core && <Badge tone="gold">Core</Badge>}
-            {can(ctx.role, "executives.configure") ? <Link href={`/settings/c-suite/${e.slug}`} className="text-sm text-gold-300 hover:text-gold-200">Configure →</Link> : <Link href={`/executives/${e.slug}?tab=profile`} className="text-sm text-ivory-muted">View</Link>}
+            {can(ctx.role, "executives.configure") ? <Link href={`/settings/c-level/${e.slug}`} className="text-sm text-gold-300 hover:text-gold-200">Configure →</Link> : <Link href={`/executives/${e.slug}?tab=profile`} className="text-sm text-ivory-muted">View</Link>}
           </li>
         ))}
       </ul>
@@ -364,7 +364,7 @@ async function Voice({ ctx }: C) {
   const v = new Map(voices.map((x) => [x.executive_id, x]));
   return (
     <Card>
-      <p className="mb-4 text-sm text-ivory-muted">Executive conversations support voice input and read-aloud today using your browser&apos;s speech engine. Executive-specific premium voices (e.g. ElevenLabs) and hands-free C-Suite Sessions are architected for Phase 11.</p>
+      <p className="mb-4 text-sm text-ivory-muted">Executive conversations support voice input and read-aloud today using your browser&apos;s speech engine. Executive-specific premium voices (e.g. ElevenLabs) and hands-free C-Level Sessions are architected for Phase 11.</p>
       <ul className="divide-y divide-line">{execs.map((e) => <li key={e.id} id={e.slug} className="flex items-center gap-3 py-3"><ExecutiveAvatar src={e.avatar_url} shortTitle={e.short_title} accent={e.accent} size={32} ring={false} /><span className="flex-1 text-sm">{e.title}</span><span className="text-xs text-ivory-muted">{v.get(e.id)?.voice_name} · {v.get(e.id)?.provider} · {v.get(e.id)?.settings_json.playback_speed}×</span></li>)}</ul>
     </Card>
   );

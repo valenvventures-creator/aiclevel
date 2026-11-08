@@ -3,7 +3,7 @@
 Two ways to make each A.I. Executive better at its job over time without retraining the model: **lessons** (from feedback) and the **Executive Library** (reference knowledge). Both are per executive and per organization, and both are bounded when they reach the model.
 
 ## Feedback → lessons (`src/server/executives/learning.ts`)
-1. Anyone who can use the executives (`executives.use`) rates an answer 👍/👎. Ratings work in executive conversations (on the person's own messages) and on executive messages in C-Suite Sessions (`FeedbackButtons`). Each person gets one rating per answer; rating again replaces it. Votes and failures are recorded in `executive_feedback`.
+1. Anyone who can use the executives (`executives.use`) rates an answer 👍/👎. Ratings work in executive conversations (on the person's own messages) and on executive messages in C-Level Sessions (`FeedbackButtons`). Each person gets one rating per answer; rating again replaces it. Votes and failures are recorded in `executive_feedback`.
 2. If the person writes what the answer should have said or done (or what worked), the note is distilled into a short, general lesson. This uses the `lesson_from_feedback` prompt and the `lesson_drafting` utility task through the gateway. The question, answer and feedback are wrapped as data. If drafting fails, the person's own words are used.
 3. A.I.-drafted lessons are **PROPOSED**. Owners and Admins are notified, and they review lessons on the executive's **Learning** tab (`executives.configure`): edit, then **Approve** or **Dismiss**.
 4. Only **APPROVED** lessons are applied, as the `leadership_lessons` prompt layer right after the executive profile. At most 20 lessons and 5,000 characters, newest first. Platform rules still take precedence.

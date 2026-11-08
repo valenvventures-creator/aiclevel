@@ -19,7 +19,7 @@ import { requireContext } from "@/server/organizations/service";
 import { can } from "@/server/auth/permissions";
 import { createDecisionMemoAction, createMinutesAction } from "@/server/sessions/actions";
 
-export const metadata: Metadata = { title: "C-Suite Session" };
+export const metadata: Metadata = { title: "C-Level Session" };
 
 export default async function SessionPage({ params, searchParams }: PageProps<"/sessions/[id]">) {
   const { id } = await params;
@@ -57,7 +57,7 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
     <div className="grid gap-8 xl:grid-cols-[1fr_320px]">
       <div className="min-w-0">
         <header className="mb-6">
-          <Link href="/sessions" className="text-xs text-ivory-muted hover:text-ivory">← C-Suite Sessions</Link>
+          <Link href="/sessions" className="text-xs text-ivory-muted hover:text-ivory">← C-Level Sessions</Link>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Badge tone="gold">{mode.label}</Badge>
             <Badge tone={inProgress ? "warn" : session.status === "FAILED" ? "risk" : "neutral"}>{status}</Badge>

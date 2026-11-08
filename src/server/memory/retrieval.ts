@@ -2,7 +2,7 @@ import type { ExecutiveRoleCode, MemoryCategory, MemoryRecord, MemoryStatus, Rol
 import { cosine, lexicalEmbedding } from "./embeddings";
 
 /**
- * C-Suite Memory retrieval scoring. Combines semantic similarity, recency,
+ * C-Level Memory retrieval scoring. Combines semantic similarity, recency,
  * importance, category permissions, executive relevance, project relevance,
  * verification status, visibility and organization ownership.
  * NEVER returns the whole memory — only the top-k relevant records.

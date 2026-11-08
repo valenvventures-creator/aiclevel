@@ -29,7 +29,7 @@ export default async function OnboardingPage() {
       </header>
       <main id="main" className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <p className="eyebrow">Welcome, {user.first_name}</p>
-        <p className="mt-2 max-w-2xl text-sm text-ivory-muted">Brief your C-Suite. What you share here becomes your Organization Constitution — the shared context every A.I. Executive reads before advising you.</p>
+        <p className="mt-2 max-w-2xl text-sm text-ivory-muted">Brief your C-Level. What you share here becomes your Organization Constitution — the shared context every A.I. Executive reads before advising you.</p>
         <div className="mt-10">
           <OnboardingWizard
             defaults={{

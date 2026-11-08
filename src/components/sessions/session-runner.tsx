@@ -239,7 +239,7 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
               <p className="text-center text-xs text-ivory-muted">
                 {progress
                   ? <>Stage {progress.index} of {progress.count} · {progress.label} · {progress.finished} of {progress.total} {progress.total === 1 ? "executive" : "executives"} finished</>
-                  : "Convening the C-Suite…"}
+                  : "Convening the C-Level…"}
               </p>
               {progress && (
                 <div className="mx-auto h-1 max-w-xs overflow-hidden rounded-full bg-ink-800" aria-hidden>
@@ -320,8 +320,8 @@ export function SessionRunner({ sessionId, participants, modes, defaultMode, obj
           )}
           <div className="grid gap-3 sm:grid-cols-[1fr_220px]">
             <div>
-              <Label htmlFor="session-msg">Your question to the C-Suite</Label>
-              <Textarea id="session-msg" value={message} onChange={(e) => setMessage(e.target.value)} rows={3} placeholder="What should the C-Suite consider?" onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !voteBlocked) run(); }} />
+              <Label htmlFor="session-msg">Your question to the C-Level</Label>
+              <Textarea id="session-msg" value={message} onChange={(e) => setMessage(e.target.value)} rows={3} placeholder="What should the C-Level consider?" onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !voteBlocked) run(); }} />
             </div>
             <div>
               <Label htmlFor="session-only">Call on</Label>

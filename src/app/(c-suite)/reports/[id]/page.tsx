@@ -40,7 +40,7 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/r
           <ExecChip exec={map.get(r.lead_executive_id)} size={32} />
           {r.contributing_executive_ids.length > 0 && <div className="mt-4 flex flex-wrap gap-3">{r.contributing_executive_ids.map((c) => <ExecChip key={c} exec={map.get(c)} />)}</div>}
           <p className="mt-4 font-mono text-[10px] text-ivory-faint">{new Date(r.created_at).toLocaleString()}</p>
-          {r.source_session_id && <Link href={`/sessions/${r.source_session_id}`} className="mt-2 block text-xs text-gold-300">Source C-Suite Session →</Link>}
+          {r.source_session_id && <Link href={`/sessions/${r.source_session_id}`} className="mt-2 block text-xs text-gold-300">Source C-Level Session →</Link>}
         </Card>
         <Card>
           <SectionTitle>Sources</SectionTitle>

@@ -5,7 +5,7 @@ import { lexicalEmbedding } from "@/server/memory/embeddings";
 import type { Decision } from "@/types/domain";
 
 /**
- * An approved decision becomes verified C-Suite Memory, so the executives
+ * An approved decision becomes verified C-Level Memory, so the executives
  * remember it in later sessions. A person approved it, so it is VERIFIED
  * (not an A.I. conclusion); provenance points back to the decision.
  */

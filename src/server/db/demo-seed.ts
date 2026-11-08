@@ -75,7 +75,7 @@ async function seed() {
 
   const c = await getConstitution(orgId);
   await d.constitutions.update(orgId, c.id, {
-    mission: "Equip leaders with an intelligent C-Suite so every consequential decision is better informed.",
+    mission: "Equip leaders with an intelligent C-Level so every consequential decision is better informed.",
     vision: "Every organization, regardless of size, operates with executive-grade intelligence.",
     values: "Integrity · Clarity · Stewardship · Courage · Service",
     business_model: "B2B subscription (per-organization seats) with premium advisory engagements.",
@@ -90,7 +90,7 @@ async function seed() {
     impact_objectives: "Donate 1% of revenue to leadership-development programs for underserved founders.",
     key_relationships: "Northwind Capital (lead seed investor); Meridian Partners (channel partner).",
     important_restrictions: "Never share client data across organizations. No public client names without written consent.",
-    decision_principles: "Prefer reversible decisions fast; irreversible decisions with full C-Suite review.",
+    decision_principles: "Prefer reversible decisions fast; irreversible decisions with full C-Level review.",
     operating_philosophy: "Small senior team, written decisions, weekly operating cadence.",
   });
 
@@ -113,7 +113,7 @@ async function seed() {
     mem("Current ARR", "Annual recurring revenue is $640K across 58 paying organizations (as of last month-end close).", "FINANCE", 5, "VERIFIED", ["CFO", "CEO"], 6, { pinned: true }),
     mem("Runway", "Cash on hand supports approximately 14 months of runway at current burn of $68K/month.", "FINANCE", 5, "VERIFIED", ["CFO", "CEO"], 6),
     mem("Northwind Capital relationship", "Northwind led the seed round and has indicated interest in leading a $1.5M extension contingent on Enterprise pipeline evidence.", "RELATIONSHIPS", 4, "USER_CONFIRMED", ["CFO", "CEO"], 12, { project_id: projects[0].id }),
-    mem("Decision: Annual-only Enterprise billing", "The C-Suite Session on pricing recommended annual-only billing for Enterprise; approved by the CEO.", "DECISIONS", 4, "VERIFIED", ["CFO", "CCO", "CEO"], 20, { source_type: "CSUITE_SESSION", project_id: projects[1].id }),
+    mem("Decision: Annual-only Enterprise billing", "The C-Level Session on pricing recommended annual-only billing for Enterprise; approved by the CEO.", "DECISIONS", 4, "VERIFIED", ["CFO", "CCO", "CEO"], 20, { source_type: "CSUITE_SESSION", project_id: projects[1].id }),
     mem("Brand voice rule", "Never use the words 'revolutionary' or 'game-changing' in external copy.", "BRAND", 3, "VERIFIED", ["CCO"], 30),
     mem("SOC 2 readiness gap", "Gap assessment found missing vendor-risk reviews and incomplete access reviews.", "TECHNOLOGY", 4, "VERIFIED", ["CTO", "CLO"], 9),
     mem("Head of Customer Success hire", "Role approved; target start within 60 days; budget $140K base.", "HR", 3, "USER_CONFIRMED", ["CHRO", "CFO"], 4),
@@ -170,7 +170,7 @@ async function seed() {
   await thread("Meridian channel terms need review", "CLO", [], "The proposed 20% revenue share includes an exclusivity clause that could restrict future partners. Counsel review recommended: **Yes**.\n\n— Chief Legal Officer", 2, { read: true });
   await thread("Draft announcement for Enterprise tier", "USER", ["CCO", "CEO"], "Please prepare a launch announcement for the Enterprise tier aimed at existing customers.", 1.5);
 
-  // ---------------- C-Suite Session ----------------
+  // ---------------- C-Level Session ----------------
   const sessionId = newId();
   const participants = (["CEO", "CFO", "CCO", "CLO"] as ExecutiveRoleCode[]).map((r) => E(r).id);
   await d.sessions.insert({ id: sessionId, organization_id: orgId, project_id: projects[1].id, created_by: user.id, title: "Should Enterprise launch with annual-only billing?", objective: "Decide Enterprise billing terms before the Q3 launch.", mode: "CEO_SYNTHESIS", status: "ACTIVE", chair_executive_id: E("CEO").id, participant_executive_ids: participants, created_at: daysAgo(20), started_at: daysAgo(20), ended_at: null });
@@ -201,7 +201,7 @@ async function seed() {
   await d.reports.insertMany([
     report("CEO Executive Brief", "Daily CEO Brief", "CEO", ["CFO", "CTO", "CLO"], "Runway sensitivity to hiring, two SOC 2 owners needed, Meridian terms need counsel.", "## Today\n1. **Runway** — hiring plan reduces runway to 11 months (CFO).\n2. **SOC 2** — assign owners for two control gaps (CTO).\n3. **Meridian** — exclusivity clause needs counsel review (CLO).", 0),
     report("Financial Review", "Monthly Financial Review", "CFO", [], "ARR $640K, burn $68K/mo, 14 months runway.", "## Highlights\n| Metric | Value |\n|---|---|\n| ARR | $640K |\n| Burn | $68K/mo |\n| Runway | 14 mo |", 6),
-    report("C-Suite Session Minutes", "Minutes — Enterprise billing session", "CEO", ["CFO", "CCO", "CLO"], "Annual-only billing recommended; CCO dissent preserved.", "Recorded in the C-Suite Session transcript.", 20),
+    report("C-Level Session Minutes", "Minutes — Enterprise billing session", "CEO", ["CFO", "CCO", "CLO"], "Annual-only billing recommended; CCO dissent preserved.", "Recorded in the C-Level Session transcript.", 20),
     report("Security Review", "SOC 2 Readiness Review", "CTO", ["CLO"], "Two gaps: vendor risk and access reviews.", "## Findings\n- Vendor risk management: **missing**\n- Access reviews: **incomplete**", 9),
   ]);
 

@@ -79,7 +79,7 @@ export async function saveOnboardingStep(_: OnboardingState, fd: FormData): Prom
   }
 }
 
-/** Final step: seed initial C-Suite Memory from the Constitution and enter HQ. */
+/** Final step: seed initial C-Level Memory from the Constitution and enter HQ. */
 export async function completeOnboarding(): Promise<void> {
   const user = await requireUser();
   const m = await ownedOrg(user.id);
@@ -113,6 +113,6 @@ export async function completeOnboarding(): Promise<void> {
   }
   await updateProfile(user.id, { onboarding_completed: true });
   await audit(orgId, user.id, "constitution.update", "organization_constitution", c.id, { source: "onboarding" });
-  await notify(orgId, user.id, "welcome", "Your C-Suite is convened", "All seven A.I. Executives have read your Organization Constitution.", "/executives");
+  await notify(orgId, user.id, "welcome", "Your C-Level is convened", "All seven A.I. Executives have read your Organization Constitution.", "/executives");
   redirect("/hq");
 }

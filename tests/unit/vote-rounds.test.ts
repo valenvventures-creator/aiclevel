@@ -35,7 +35,7 @@ describe("vote rounds", () => {
     expect(tie[0].tied).toEqual(["A", "B"]);
   });
 
-  it("writes a readable 'How the C-Suite voted' section with real tables", () => {
+  it("writes a readable 'How the C-Level voted' section with real tables", () => {
     const md = voteRoundMarkdown(rounds[0], (id) => id.toUpperCase());
     expect(md).toContain("**A** — Raise _(CEO recommends)_");
     expect(md).toContain("| CLO | B — Bootstrap | 60% | Because v2 |");

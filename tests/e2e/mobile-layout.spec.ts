@@ -24,7 +24,7 @@ const APP = [
   "/projects",
   "/settings/team",
   "/settings/ai-models",
-  "/settings/c-suite/chief-financial-officer",
+  "/settings/c-level/chief-financial-officer",
   "/tutorials",
   "/tutorials/executive-votes",
 ];
@@ -42,7 +42,7 @@ for (const width of [320, 390]) {
       expect(await horizontalOverflow(page), `${url} at ${width}px`).toBeLessThanOrEqual(0);
     }
     await page.goto("/login?demo=1");
-    await page.getByRole("button", { name: "Enter the demo C-Suite" }).click();
+    await page.getByRole("button", { name: "Enter the demo C-Level" }).click();
     await page.waitForURL(/\/hq/);
     for (const url of APP) {
       await page.goto(url);

@@ -11,10 +11,10 @@ import { canView, rankMemories } from "@/server/memory/retrieval";
 import { memoryOpAction } from "@/server/memory/actions";
 import { MEMORY_CATEGORIES, MEMORY_STATUSES, type MemoryRecord } from "@/types/domain";
 
-export const metadata: Metadata = { title: "C-Suite Memory" };
+export const metadata: Metadata = { title: "C-Level Memory" };
 
 const STATUS_TONE: Record<MemoryRecord["status"], Tone> = { VERIFIED: "ok", USER_CONFIRMED: "info", PROPOSED: "warn", SYSTEM_IMPORTED: "neutral", ARCHIVED: "neutral" };
-const SOURCE_LABEL: Record<MemoryRecord["source_type"], string> = { HUMAN_ENTRY: "Human entry", UPLOADED_DOCUMENT: "Uploaded document", EXECUTIVE_CONVERSATION: "Executive conversation", CSUITE_SESSION: "C-Suite Session", REPORT: "Report", EXTERNAL_INTEGRATION: "External integration", API: "API", RESEARCH: "Research", IMPORT: "Onboarding import" };
+const SOURCE_LABEL: Record<MemoryRecord["source_type"], string> = { HUMAN_ENTRY: "Human entry", UPLOADED_DOCUMENT: "Uploaded document", EXECUTIVE_CONVERSATION: "Executive conversation", CSUITE_SESSION: "C-Level Session", REPORT: "Report", EXTERNAL_INTEGRATION: "External integration", API: "API", RESEARCH: "Research", IMPORT: "Onboarding import" };
 
 export default async function MemoryPage({ searchParams }: PageProps<"/memory">) {
   const sp = await searchParams;
@@ -39,12 +39,12 @@ export default async function MemoryPage({ searchParams }: PageProps<"/memory">)
 
   return (
     <div>
-      <PageHeader eyebrow="C-Suite Memory" title="Organizational intelligence" description="Not chat history: facts, decisions, commitments and lessons with provenance. A.I. conclusions arrive as PROPOSED and never become organizational truth until a human confirms them." />
+      <PageHeader eyebrow="C-Level Memory" title="Organizational intelligence" description="Not chat history: facts, decisions, commitments and lessons with provenance. A.I. conclusions arrive as PROPOSED and never become organizational truth until a human confirms them." />
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="min-w-0 space-y-4">
           <form action="/memory" className="flex items-center gap-2 rounded-full border border-line-strong bg-ink-900/60 px-4" role="search">
             <Search className="size-4 text-gold-300" aria-hidden />
-            <label htmlFor="mq" className="sr-only">Search C-Suite Memory</label>
+            <label htmlFor="mq" className="sr-only">Search C-Level Memory</label>
             <input id="mq" name="q" defaultValue={q} placeholder="Search memory — e.g. runway, Northwind, SOC 2" className="h-12 flex-1 bg-transparent text-sm outline-none placeholder:text-ivory-faint" />
             {category && <input type="hidden" name="category" value={category} />}
             {status && <input type="hidden" name="status" value={status} />}
@@ -60,7 +60,7 @@ export default async function MemoryPage({ searchParams }: PageProps<"/memory">)
           {q && <p className="text-xs text-ivory-faint">Ranked by relevance, recency, importance and verification · lexical retrieval{ctx.organization.is_demo ? " (demo)" : ""}</p>}
 
           {results.length === 0 ? (
-            <EmptyState icon={<Brain className="size-5" />} title={q || category || status ? "No matching memory." : "C-Suite Memory is empty."} body="Add facts, decisions and lessons your executives should remember." />
+            <EmptyState icon={<Brain className="size-5" />} title={q || category || status ? "No matching memory." : "C-Level Memory is empty."} body="Add facts, decisions and lessons your executives should remember." />
           ) : (
             <ul className="space-y-3">
               {results.map(({ m, score }) => (
@@ -117,7 +117,7 @@ export default async function MemoryPage({ searchParams }: PageProps<"/memory">)
             </Card>
           ) : canWrite ? (
             <Card>
-              <SectionTitle>Add to C-Suite Memory</SectionTitle>
+              <SectionTitle>Add to C-Level Memory</SectionTitle>
               <MemoryForm projects={projects} canOwnerOnly={ctx.role === "OWNER"} />
             </Card>
           ) : null}

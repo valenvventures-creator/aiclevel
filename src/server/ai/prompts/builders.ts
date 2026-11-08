@@ -8,7 +8,7 @@ import { fill, PromptRegistry, type ResolvedTemplate } from "./registry";
  *  1 Platform rules · 2 Organization Constitution · 3 Executive role ·
  *  4 Executive persona · 5 Expertise · 5a Approved lessons from leadership ·
  *  6 Human leadership intelligence (CEO only, if authorized) ·
- *  7 Relevant C-Suite Memory · 7a Executive Library (most relevant items) · 8 Relevant files · 9 Project ·
+ *  7 Relevant C-Level Memory · 7a Executive Library (most relevant items) · 8 Relevant files · 9 Project ·
  *  10 Recent conversation (as messages) · 11 Current request (final user message)
  *
  * Untrusted content is wrapped in tagged blocks that the platform rules
@@ -114,7 +114,7 @@ export function buildExecutivePrompt(args: {
   if (ctx.memory.length) {
     push(
       "c_suite_memory",
-      `# RELEVANT C-SUITE MEMORY (retrieved; cite as [M#]; PROPOSED items are unverified)\n<organization_memory>\n${ctx.memory
+      `# RELEVANT C-LEVEL MEMORY (retrieved; cite as [M#]; PROPOSED items are unverified)\n<organization_memory>\n${ctx.memory
         .map((m, i) => `[M${i + 1}] (${m.category}, ${m.status}, ${m.updated_at.slice(0, 10)}) ${esc(m.title)}: ${esc(m.content)}`)
         .join("\n")}\n</organization_memory>`,
     );

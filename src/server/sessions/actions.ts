@@ -69,12 +69,12 @@ export async function createMinutesAction(sessionId: string) {
     `**Objective:** ${s.objective}`,
     `**Mode:** ${s.mode.replace(/_/g, " ")} · **Participants:** ${s.participant_executive_ids.map((id) => execs.get(id)?.short_title).filter(Boolean).join(", ")}`,
     ...msgs.filter((m) => m.speaker_type !== "SYSTEM").map((m) => `## ${m.speaker_type === "USER" ? "Leadership" : (execs.get(m.speaker_id ?? "")?.title ?? "Executive")} — ${m.stage.replace(/_/g, " ").toLowerCase()}\n${stripRecommendedLine(m.content)}`),
-    ...rounds.filter((r) => r.votes.length).map((r, i, all) => voteRoundMarkdown(r, titleOf, all.length > 1 ? `## How the C-Suite voted — round ${i + 1}` : "## How the C-Suite voted")),
+    ...rounds.filter((r) => r.votes.length).map((r, i, all) => voteRoundMarkdown(r, titleOf, all.length > 1 ? `## How the C-Level voted — round ${i + 1}` : "## How the C-Level voted")),
   ].join("\n\n");
   const id = newId();
   const simulated = msgs.some((m) => m.simulated);
   await db().reports.insert({
-    id, organization_id: orgId, project_id: s.project_id, report_type: "C-Suite Session Minutes", title: `Minutes — ${s.title}`, summary: `Minutes of the ${s.mode.replace(/_/g, " ").toLowerCase()} session.`,
+    id, organization_id: orgId, project_id: s.project_id, report_type: "C-Level Session Minutes", title: `Minutes — ${s.title}`, summary: `Minutes of the ${s.mode.replace(/_/g, " ").toLowerCase()} session.`,
     content: body, lead_executive_id: s.chair_executive_id ?? s.participant_executive_ids[0], contributing_executive_ids: s.participant_executive_ids, sources: [], version: 1,
     source_session_id: s.id, simulated, created_by: ctx.user.id, created_at: nowIso(),
   });

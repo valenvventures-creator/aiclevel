@@ -1,4 +1,4 @@
-# Milestone 03 — C-Suite HQ
+# Milestone 03 — C-Level HQ
 
 **Status:** DONE
 

@@ -9,7 +9,7 @@ export function ExecutiveCard({ exec, primaryQuestion, activity }: { exec: AIExe
   const actions = [
     { href: `/executives/${exec.slug}?tab=conversation`, label: "Start conversation", icon: MessageSquare },
     { href: `/comms?compose=1&to=${exec.id}`, label: "Send Executive Comms", icon: Mail },
-    { href: `/sessions/new?with=${exec.id}`, label: "Invite to C-Suite Session", icon: Users },
+    { href: `/sessions/new?with=${exec.id}`, label: "Invite to C-Level Session", icon: Users },
     { href: `/studio?lead=${exec.role_code}`, label: "Assign Studio work", icon: Workflow },
     { href: `/executives/${exec.slug}?tab=reports`, label: "Request report", icon: FileText },
   ];
