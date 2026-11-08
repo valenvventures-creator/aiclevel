@@ -6,7 +6,7 @@ import { createServerClient } from "@supabase/ssr";
  * refresh. This is NOT the authorization boundary — every page, route handler
  * and server action re-verifies the session and organization membership.
  */
-const PROTECTED = ["/hq", "/executives", "/comms", "/sessions", "/memory", "/studio", "/reports", "/files", "/projects", "/settings", "/decisions", "/onboarding"];
+const PROTECTED = ["/hq", "/executives", "/comms", "/sessions", "/memory", "/studio", "/reports", "/files", "/projects", "/settings", "/decisions", "/tutorials", "/onboarding"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

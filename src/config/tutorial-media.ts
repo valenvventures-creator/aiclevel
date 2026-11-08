@@ -1,0 +1,44 @@
+/**
+ * Tutorial screenshots (public/tutorials/media/<name>.webp), taken from the
+ * demo organization. Sizes let the page reserve space before images load.
+ */
+export const TUTORIAL_MEDIA = {
+  "ai-models": { width: 802, height: 156 },
+  "answer-actions": { width: 806, height: 48 },
+  "ceo-intelligence": { width: 1176, height: 836 },
+  "comms-compose": { width: 1176, height: 823 },
+  "comms": { width: 1176, height: 836 },
+  "configure-memory": { width: 868, height: 356 },
+  "configure": { width: 868, height: 284 },
+  "conversation": { width: 832, height: 557 },
+  "decisions": { width: 1096, height: 455 },
+  "email": { width: 1176, height: 700 },
+  "feedback-box": { width: 532, height: 224 },
+  "files": { width: 1176, height: 700 },
+  "hq": { width: 1176, height: 836 },
+  "learning": { width: 756, height: 790 },
+  "library": { width: 756, height: 616 },
+  "memory-inspector": { width: 1176, height: 836 },
+  "memory": { width: 1176, height: 836 },
+  "notifications": { width: 540, height: 620 },
+  "office-header": { width: 1096, height: 263 },
+  "offices": { width: 1176, height: 836 },
+  "organization": { width: 1176, height: 836 },
+  "palette": { width: 592, height: 546 },
+  "projects": { width: 1176, height: 700 },
+  "report-detail": { width: 1176, height: 836 },
+  "reports": { width: 1176, height: 700 },
+  "security": { width: 1176, height: 700 },
+  "session-controls": { width: 744, height: 677 },
+  "session-new": { width: 1176, height: 836 },
+  "session-progress": { width: 744, height: 477 },
+  "settings-team": { width: 1176, height: 836 },
+  "sidebar": { width: 264, height: 900 },
+  "studio-job": { width: 1176, height: 836 },
+  "studio": { width: 1176, height: 700 },
+  "tools": { width: 900, height: 300 },
+  "vote-card": { width: 744, height: 164 },
+  "vote-panel": { width: 320, height: 1231 },
+} as const;
+
+export type TutorialMediaName = keyof typeof TUTORIAL_MEDIA;

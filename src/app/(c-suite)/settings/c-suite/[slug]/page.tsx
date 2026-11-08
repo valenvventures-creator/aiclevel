@@ -84,7 +84,7 @@ export default async function ConfigureExecutivePage({ params }: PageProps<"/set
             {MEMORY_CATEGORIES.map((c) => (
               <label key={c} className="flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-xs">
                 <input type="checkbox" name="memory_categories" value={c} defaultChecked={e.model.memory_categories === "ALL" || e.model.memory_categories.includes(c)} className="accent-gold-400" />
-                {c.charAt(0) + c.slice(1).toLowerCase()}
+                {c === "HR" ? "HR" : c.charAt(0) + c.slice(1).toLowerCase()}
               </label>
             ))}
           </div>
