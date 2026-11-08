@@ -30,7 +30,7 @@ export default function LandingPage() {
             <div className="max-w-2xl">
               <p className="animate-fade-up font-mono text-[11px] tracking-[0.3em] text-gold-300/90">THOUGHT AUTHORITIES · A.I. C-SUITE</p>
               <h1 className="headline mt-6 animate-fade-up text-[clamp(3rem,7.2vw,6.2rem)] [animation-delay:80ms]">
-                Your C-Suite,
+                Your C-Suite
                 <br />
                 augmented{" "}
                 <span className="relative inline-block">
