@@ -11,7 +11,8 @@ export type AuditEvent =
   | "memory.create" | "memory.edit" | "memory.verify" | "memory.delete" | "memory.archive"
   | "file.upload" | "file.delete"
   | "session.create" | "session.run" | "session.stop" | "report.create" | "report.export" | "report.delete" | "studio.job_create" | "studio.revision"
-  | "approval.action" | "ceo_intelligence.change" | "comms.send";
+  | "approval.action" | "ceo_intelligence.change" | "comms.send"
+  | "executive.feedback" | "executive.lesson" | "executive.library";
 
 /** Append-only audit trail. Failures are logged loudly but never block the user action. */
 export async function audit(

@@ -5,6 +5,7 @@ import { FileText, Gavel, ScrollText } from "lucide-react";
 import { ExecutiveAvatar } from "@/components/executives/executive-avatar";
 import { SessionRunner } from "@/components/sessions/session-runner";
 import { VoteResults } from "@/components/sessions/vote-results";
+import { FeedbackButtons } from "@/components/executives/feedback-buttons";
 import { Markdown } from "@/components/ui/markdown";
 import { Badge, Card, SectionTitle, SimulatedBadge } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,9 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
   const rounds = groupVoteRounds(messages, votes, decisions);
   const ballotAt = (at: string) => [...rounds].reverse().find((r) => r.askedAt <= at)?.ballot ?? DEFAULT_VOTE_OPTIONS;
   const canApprove = can(ctx.role, "decisions.approve");
+  const canRate = can(ctx.role, "executives.use");
+  // This person's earlier ratings of answers in this session.
+  const ratings = new Map(canRate ? (await db().feedback.list(orgId, { where: { source_type: "SESSION", created_by: ctx.user.id } })).map((f) => [f.source_id, f.rating]) : []);
   // What the last round asked, so a failed executive can be retried on the same question and ballot.
   const lastAsk = [...messages].reverse().find((m) => m.stage === "QUESTION" && !m.metadata?.retry);
   const optionName = (d: (typeof decisions)[number], id: string | null | undefined) => (id ? `Option ${id}${d.options_json.find((o) => o.id === id) ? ` — ${d.options_json.find((o) => o.id === id)!.label}` : ""}` : "");
@@ -117,6 +121,7 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
                         <summary className="cursor-pointer list-none text-xs text-gold-300 hover:text-gold-200">Show full scoring</summary>
                         <div className="mt-2"><Markdown>{m.content}</Markdown></div>
                       </details>
+                      {canRate && e && <div className="mt-2"><FeedbackButtons executiveId={e.id} executiveTitle={e.title} sourceType="SESSION" sourceId={m.id} initial={ratings.get(m.id) ?? null} /></div>}
                     </div>
                   </article>
                 );
@@ -134,6 +139,7 @@ export default async function SessionPage({ params, searchParams }: PageProps<"/
                     {m.simulated && <SimulatedBadge />}
                   </div>
                   <Markdown>{synth ? stripRecommendedLine(m.content) : m.content}</Markdown>
+                  {canRate && e && <div className="mt-2"><FeedbackButtons executiveId={e.id} executiveTitle={e.title} sourceType="SESSION" sourceId={m.id} initial={ratings.get(m.id) ?? null} /></div>}
                 </div>
               </article>
             );

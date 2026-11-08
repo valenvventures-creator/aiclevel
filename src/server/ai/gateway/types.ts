@@ -7,6 +7,7 @@ export type TaskType =
   | "session_synthesis"
   | "session_vote"
   | "vote_options"
+  | "lesson_drafting"
   | "studio_routing"
   | "studio_production"
   | "memory_extraction"

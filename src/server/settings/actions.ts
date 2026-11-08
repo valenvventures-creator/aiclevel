@@ -16,7 +16,7 @@ import { db, newId, nowIso } from "@/server/db/store";
 import { DEMO_USER_ID } from "@/server/db/demo-seed";
 import { audit } from "@/server/audit";
 import { TOOL_REGISTRY } from "@/config/tools/registry";
-import { ROLES, type OrganizationConstitution, type Role } from "@/types/domain";
+import { MEMORY_CATEGORIES, ROLES, type AIExecutiveModelConfig, type MemoryCategory, type OrganizationConstitution, type Role } from "@/types/domain";
 
 export interface SettingsState {
   ok?: boolean;
@@ -164,18 +164,42 @@ const ExecPatch = z.object({
   effort: z.enum(["low", "medium", "high", "xhigh", "max"]), token_budget: z.coerce.number().int().min(1000).max(128000),
 });
 
+/** One skill per line: "Name — description" (or "Name: description"). At most 20. */
+function parseSkills(text: string): { name: string; description: string }[] {
+  return text
+    .split("\n")
+    .map((l) => l.trim().replace(/^[-*•]\s*/, ""))
+    .filter(Boolean)
+    .slice(0, 20)
+    .map((l) => {
+      const [name, ...rest] = l.split(/\s+[—–-]\s+|:\s+/);
+      return { name: name.trim().slice(0, 80), description: rest.join(" — ").trim().slice(0, 300) };
+    })
+    .filter((s) => s.name);
+}
+
 export async function updateExecutiveConfigAction(_: SettingsState, fd: FormData): Promise<SettingsState> {
   try {
     const ctx = await authorize("executives.configure");
     const p = ExecPatch.parse(Object.fromEntries(fd));
     const tools = fd.getAll("tools").map(String).filter((t) => t in TOOL_REGISTRY);
+    // Memory areas: "all", or the chosen categories (at least one).
+    const areas = fd.getAll("memory_categories").map(String);
+    const memory_categories: AIExecutiveModelConfig["memory_categories"] | undefined = fd.has("memory_scope")
+      ? fd.get("memory_scope") === "ALL"
+        ? "ALL"
+        : (MEMORY_CATEGORIES.filter((c) => areas.includes(c)) as MemoryCategory[])
+      : undefined;
+    if (Array.isArray(memory_categories) && memory_categories.length === 0) return { error: "Choose at least one memory area, or allow all areas." };
+    const skills = fd.has("skills") ? parseSkills(String(fd.get("skills"))) : null;
     const exec = await AIExecutiveRegistry.getExecutive(ctx.organization.id, p.executive_id);
     if (!exec) return { error: "Executive not found." };
     await AIExecutiveRegistry.updateExecutive(ctx.organization.id, ctx.user.id, exec.id, {
       executive: { display_name: p.display_name || null, title: p.title, functional_mandate: p.functional_mandate, description: p.description, avatar_url: p.avatar_url || null },
       persona: { north_star: p.north_star, core_belief: p.core_belief, leadership_promise: p.leadership_promise, biography: p.biography, personality: p.personality, communication_style: p.communication_style, decision_style: p.decision_style, primary_question: p.primary_question, system_instructions: p.system_instructions, reasoning_guidelines: p.reasoning_guidelines, output_preferences: p.output_preferences, risk_constraints: p.risk_constraints },
-      model: { primary_provider: p.primary_provider, primary_model: p.primary_model, fallback_provider: p.fallback_provider || null, fallback_model: p.fallback_model || null, effort: p.effort, token_budget: p.token_budget, tool_permissions: tools },
+      model: { primary_provider: p.primary_provider, primary_model: p.primary_model, fallback_provider: p.fallback_provider || null, fallback_model: p.fallback_model || null, effort: p.effort, token_budget: p.token_budget, tool_permissions: tools, ...(memory_categories ? { memory_categories } : {}) },
     });
+    if (skills) await AIExecutiveRegistry.replaceSkills(ctx.organization.id, ctx.user.id, exec.id, skills);
     revalidatePath("/executives", "layout");
     return { ok: true, message: `${p.title} updated.` };
   } catch (e) { return fail(e); }

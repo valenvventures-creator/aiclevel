@@ -40,3 +40,6 @@ Untrusted content is wrapped in `<organization_memory>`, `<files>`, `<project>`,
 
 ## Human CEO Leadership Intelligence
 Owner-only (`ceo_intelligence.manage`, RLS owner-only). Structured entries (principles, decisions, writing, speeches, interviews, preferences, history) with an `included` toggle and delete. Described to users as a *structured leadership intelligence profile* — never as copying a person.
+
+## Learning and library
+Each executive improves through approved **lessons** drawn from feedback and an **Executive Library** of reference knowledge. See [EXECUTIVE_LEARNING.md](./EXECUTIVE_LEARNING.md). Context layers now include `leadership_lessons` (after the executive profile) and `executive_library` (after C-Suite Memory).

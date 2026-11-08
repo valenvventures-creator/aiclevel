@@ -24,6 +24,11 @@ function compose(req: GenerateRequest): string {
   switch (req.taskType) {
     case "session_vote":
       return `${SIMULATED_BANNER}\n\n| Option | Score | Reason |\n|---|---|---|\n| A | 7 | Strongest on ${lens.lens}. |\n| B | 5 | Viable, but ${lens.risk}. |\n\nVOTE: A | CONFIDENCE: 60`;
+    case "lesson_drafting": {
+      const correction = /<feedback>\n([\s\S]*?)\n<\/feedback>/.exec(req.system)?.[1]?.trim() || "Follow the leadership team's correction.";
+      const words = correction.split(/[.!?\n]/)[0].split(/\s+/).filter(Boolean);
+      return `TITLE: ${words.slice(0, 8).join(" ")}${words.length > 8 ? "…" : ""}\nLESSON: ${correction}`;
+    }
     case "vote_options":
       return "A: Proceed as proposed\nB: Run a limited pilot first\nC: Do not proceed for now";
     case "session_synthesis":

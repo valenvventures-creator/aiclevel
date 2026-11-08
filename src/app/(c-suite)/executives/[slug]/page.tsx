@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import { FileText, Mail, MessageSquare, Plus, Settings2, Users, Volume2, Workflow } from "lucide-react";
 import { ExecutiveAvatar } from "@/components/executives/executive-avatar";
 import { ExecutiveConversation, type UIMessage } from "@/components/conversations/executive-conversation";
+import { LibraryTab } from "@/components/executives/library-tab";
+import { LearningTab } from "@/components/executives/learning-tab";
 import { ReportPreview, ProductionJobCard, Empty } from "@/components/hq/widgets";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, Card, SectionTitle } from "@/components/ui/primitives";
@@ -17,6 +19,8 @@ import { can } from "@/server/auth/permissions";
 const TABS = [
   ["conversation", "Conversation"],
   ["profile", "Executive Profile"],
+  ["library", "Library"],
+  ["learning", "Learning"],
   ["reports", "Reports"],
   ["files", "Files"],
   ["activity", "Activity"],
@@ -50,6 +54,7 @@ export default async function ExecutiveOfficePage({ params, searchParams }: Page
   const pq = new Map(personas.map((p) => [p.executive_id, p.primary_question]));
   const lite = (e: (typeof all)[number]) => ({ id: e.id, slug: e.slug, title: e.title, short_title: e.short_title, avatar_url: e.avatar_url, accent: e.accent, primary_question: pq.get(e.id) ?? "" });
   const execMap = new Map(all.map((e) => [e.id, e]));
+  const waitingLessons = (await db().lessons.list(orgId, { where: { executive_id: exec.id, status: "PROPOSED" } })).length;
 
   return (
     <div>
@@ -80,6 +85,7 @@ export default async function ExecutiveOfficePage({ params, searchParams }: Page
         {TABS.map(([k, label]) => (
           <Link key={k} href={`/executives/${exec.slug}?tab=${k}`} aria-current={tab === k ? "page" : undefined} className={cn("relative whitespace-nowrap px-4 py-3 text-sm transition", tab === k ? "text-gold-200" : "text-ivory-muted hover:text-ivory")}>
             {label}
+            {k === "learning" && waitingLessons > 0 && <span className="ml-1.5 rounded-full bg-gold-400/15 px-1.5 py-0.5 font-mono text-[10px] text-gold-200" aria-label={`${waitingLessons} lessons waiting for approval`}>{waitingLessons}</span>}
             {tab === k && <span className="absolute inset-x-3 -bottom-px h-[2px] rounded-full bg-gold-400" />}
           </Link>
         ))}
@@ -87,6 +93,8 @@ export default async function ExecutiveOfficePage({ params, searchParams }: Page
 
       {tab === "conversation" && <ConversationTab ctx={ctx} exec={exec} others={all.filter((e) => e.id !== exec.id).map(lite)} cParam={typeof sp.c === "string" ? sp.c : null} lite={lite(exec)} />}
       {tab === "profile" && <ProfileTab exec={exec} canConfigure={can(ctx.role, "executives.configure")} />}
+      {tab === "library" && <LibraryTab orgId={orgId} exec={exec} canConfigure={can(ctx.role, "executives.configure")} />}
+      {tab === "learning" && <LearningTab orgId={orgId} exec={exec} canConfigure={can(ctx.role, "executives.configure")} />}
       {tab === "reports" && <ReportsTab orgId={orgId} execId={exec.id} execMap={execMap} roleCode={exec.role_code} />}
       {tab === "files" && <FilesTab orgId={orgId} />}
       {tab === "activity" && <ActivityTab orgId={orgId} execId={exec.id} execMap={execMap} />}
@@ -98,9 +106,10 @@ async function ConversationTab({ ctx, exec, others, cParam, lite }: { ctx: Await
   const orgId = ctx.organization.id;
   const convs = await db().conversations.list(orgId, { where: { executive_id: exec.id, user_id: ctx.user.id }, orderBy: "updated_at", desc: true, limit: 30 });
   const active = cParam === "new" ? null : (convs.find((c) => c.id === cParam) ?? (cParam ? null : convs[0] ?? null));
-  const messages: UIMessage[] = active
-    ? (await db().messages.list(orgId, { where: { conversation_id: active.id }, orderBy: "created_at" })).map((m) => ({ id: m.id, role: m.role, content: m.content, simulated: m.simulated, model: m.model }))
-    : [];
+  const rows = active ? await db().messages.list(orgId, { where: { conversation_id: active.id }, orderBy: "created_at" }) : [];
+  // This person's earlier ratings, so the 👍/👎 show as they left them.
+  const ratings = new Map(rows.length ? (await db().feedback.list(orgId, { where: { executive_id: exec.id, created_by: ctx.user.id } })).map((f) => [f.source_id, f.rating]) : []);
+  const messages: UIMessage[] = rows.map((m) => ({ id: m.id, role: m.role, content: m.content, simulated: m.simulated, model: m.model, rating: ratings.get(m.id) ?? null }));
   return (
     <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
       <aside className="order-2 lg:order-1" aria-label="Conversations">
@@ -118,7 +127,7 @@ async function ConversationTab({ ctx, exec, others, cParam, lite }: { ctx: Await
         </ul>
       </aside>
       <div className="order-1 min-w-0 lg:order-2">
-        <ExecutiveConversation key={active?.id ?? "new"} exec={lite} others={others} conversationId={active?.id ?? null} initialMessages={messages} canWrite={can(ctx.role, "conversations.create")} suggestions={SUGGESTIONS[exec.role_code] ?? []} />
+        <ExecutiveConversation key={active?.id ?? "new"} exec={lite} others={others} conversationId={active?.id ?? null} initialMessages={messages} canWrite={can(ctx.role, "conversations.create")} canRate={can(ctx.role, "executives.use")} suggestions={SUGGESTIONS[exec.role_code] ?? []} />
       </div>
     </div>
   );
