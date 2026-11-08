@@ -68,6 +68,8 @@ export function AppShell(props: ShellProps) {
         e.preventDefault();
         setPaletteOpen((o) => !o);
       }
+      // Esc closes the mobile navigation drawer.
+      if (e.key === "Escape") setDrawer(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
