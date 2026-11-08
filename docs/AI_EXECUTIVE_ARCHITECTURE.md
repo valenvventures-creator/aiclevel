@@ -27,7 +27,7 @@ Custom specialist executives use `role_code = CUSTOM_*`, `is_core = false`; noth
 - Outputs record `prompt_version` (e.g. `cfo_core_v1+financial_review_v1`).
 
 ### Context layers (fixed order)
-1 Platform rules → 2 Organization Constitution → 3 Executive role → 4 Persona → 5 Expertise → 6 Human CEO leadership intelligence (**CEO only**, included items only) → 7 Task instructions → 8 Relevant C-Suite Memory (top-k, permitted categories) → 9 Files → 10 Project → 11 Recent conversation (≤12 turns, as messages) → 12 Current request.
+1 Platform rules → 2 Organization Constitution → 3 Executive role → 4 Persona → 5 Expertise → 6 Human CEO leadership intelligence (**CEO only**, included items only) → 7 Task instructions → 8 Relevant C-Level Memory (top-k, permitted categories) → 9 Files → 10 Project → 11 Recent conversation (≤12 turns, as messages) → 12 Current request.
 
 Untrusted content is wrapped in `<organization_memory>`, `<files>`, `<project>`, `<retrieved_content>`, `<human_leadership_intelligence>`; closing-tag injection is neutralised and platform rules declare these blocks to be data.
 
@@ -42,4 +42,4 @@ Untrusted content is wrapped in `<organization_memory>`, `<files>`, `<project>`,
 Owner-only (`ceo_intelligence.manage`, RLS owner-only). Structured entries (principles, decisions, writing, speeches, interviews, preferences, history) with an `included` toggle and delete. Described to users as a *structured leadership intelligence profile* — never as copying a person.
 
 ## Learning and library
-Each executive improves through approved **lessons** drawn from feedback and an **Executive Library** of reference knowledge. See [EXECUTIVE_LEARNING.md](./EXECUTIVE_LEARNING.md). Context layers now include `leadership_lessons` (after the executive profile) and `executive_library` (after C-Suite Memory).
+Each executive improves through approved **lessons** drawn from feedback and an **Executive Library** of reference knowledge. See [EXECUTIVE_LEARNING.md](./EXECUTIVE_LEARNING.md). Context layers now include `leadership_lessons` (after the executive profile) and `executive_library` (after C-Level Memory).

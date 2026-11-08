@@ -16,7 +16,7 @@ export interface ToolDefinition {
 }
 
 export const TOOL_REGISTRY: Record<string, ToolDefinition> = {
-  search_memory: { key: "search_memory", label: "C-Suite Memory", description: "Search verified organizational intelligence.", kind: "internal", risk: "read", requiresApproval: false },
+  search_memory: { key: "search_memory", label: "C-Level Memory", description: "Search verified organizational intelligence.", kind: "internal", risk: "read", requiresApproval: false },
   search_files: { key: "search_files", label: "File search", description: "Search the organization's document library.", kind: "internal", risk: "read", requiresApproval: false },
   get_project: { key: "get_project", label: "Project context", description: "Read a project workspace.", kind: "internal", risk: "read", requiresApproval: false },
   get_decision: { key: "get_decision", label: "Decision record", description: "Read structured decisions.", kind: "internal", risk: "read", requiresApproval: false },

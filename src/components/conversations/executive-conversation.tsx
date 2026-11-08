@@ -273,7 +273,7 @@ function MessageRow({ m, exec, others, canRate, isLastExec, streaming, conversat
             <IconBtn label="Read aloud" onClick={speak}><Volume2 className="size-3.5" /></IconBtn>
             {isLastExec && <IconBtn label="Regenerate" onClick={onRegenerate}><RotateCcw className="size-3.5" /></IconBtn>}
             {isLastExec && <IconBtn label="Continue" onClick={onContinue}><Play className="size-3.5" /></IconBtn>}
-            <IconBtn label={saved === "saved" ? "Saved to Memory (proposed)" : "Save to C-Suite Memory"} onClick={() => { setSaved("saving"); start(async () => { const r = await saveMessageToMemoryAction(m.id); setSaved(r.ok ? "saved" : "error"); }); }}>
+            <IconBtn label={saved === "saved" ? "Saved to Memory (proposed)" : "Save to C-Level Memory"} onClick={() => { setSaved("saving"); start(async () => { const r = await saveMessageToMemoryAction(m.id); setSaved(r.ok ? "saved" : "error"); }); }}>
               {saved === "saved" ? <Check className="size-3.5 text-ok" /> : pending && saved === "saving" ? <Loader2 className="size-3.5 animate-spin" /> : <BookmarkPlus className="size-3.5" />}
             </IconBtn>
             <div className="relative">
@@ -290,7 +290,7 @@ function MessageRow({ m, exec, others, canRate, isLastExec, streaming, conversat
             </div>
             {conversationId && (
               <form action={bringToSessionAction.bind(null, conversationId)}>
-                <IconBtn label="Bring to C-Suite Session" type="submit"><Users className="size-3.5" /></IconBtn>
+                <IconBtn label="Bring to C-Level Session" type="submit"><Users className="size-3.5" /></IconBtn>
               </form>
             )}
             {fwdDone && <Link href={`/comms?thread=${fwdDone}`} className="ml-1 text-xs text-gold-300 underline-offset-2 hover:underline">Forwarded — view in Comms</Link>}

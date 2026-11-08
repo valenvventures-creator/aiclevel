@@ -240,7 +240,7 @@ export interface Communication {
 }
 
 /* ------------------------------------------------------------------ */
-/* C-Suite Sessions                                                    */
+/* C-Level Sessions                                                    */
 /* ------------------------------------------------------------------ */
 
 export const SESSION_MODES = [
@@ -264,7 +264,7 @@ export type SessionMode = (typeof SESSION_MODES)[number];
 
 export type SessionStatus = "DRAFT" | "ACTIVE" | "RUNNING" | "ADJOURNED" | "FAILED";
 
-/** Progress of one round of a C-Suite Session, which runs in bounded steps across requests. */
+/** Progress of one round of a C-Level Session, which runs in bounded steps across requests. */
 export interface SessionRunState {
   run_id: string;
   question: string;
@@ -361,7 +361,7 @@ export interface Decision {
 }
 
 /* ------------------------------------------------------------------ */
-/* C-Suite Memory                                                      */
+/* C-Level Memory                                                      */
 /* ------------------------------------------------------------------ */
 
 export const MEMORY_CATEGORIES = [
@@ -461,7 +461,7 @@ export const REPORT_TYPES = [
   "Impact Report",
   "Philanthropy Strategy",
   "Sustainability Report",
-  "C-Suite Session Minutes",
+  "C-Level Session Minutes",
   "Decision Memo",
 ] as const;
 export type ReportType = (typeof REPORT_TYPES)[number];

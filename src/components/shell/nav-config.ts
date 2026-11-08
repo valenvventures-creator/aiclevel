@@ -26,17 +26,17 @@ export const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
   {
     label: "Leadership",
     items: [
-      { href: "/hq", label: "C-Suite HQ", icon: LayoutDashboard, shortcut: "G H" },
+      { href: "/hq", label: "C-Level HQ", icon: LayoutDashboard, shortcut: "G H" },
       { href: "/executives", label: "Executive Offices", icon: Building2, shortcut: "G E" },
       { href: "/comms", label: "Executive Comms", icon: Mail, shortcut: "G C" },
-      { href: "/sessions", label: "C-Suite Sessions", icon: Users, shortcut: "G S" },
+      { href: "/sessions", label: "C-Level Sessions", icon: Users, shortcut: "G S" },
     ],
   },
   {
     label: "Intelligence",
     items: [
-      { href: "/memory", label: "C-Suite Memory", icon: Brain, shortcut: "G M" },
-      { href: "/studio", label: "C-Suite Studio", icon: Workflow },
+      { href: "/memory", label: "C-Level Memory", icon: Brain, shortcut: "G M" },
+      { href: "/studio", label: "C-Level Studio", icon: Workflow },
       { href: "/decisions", label: "Decisions", icon: Gavel },
       { href: "/reports", label: "Reports", icon: FileText },
       { href: "/files", label: "Files", icon: FilesIcon },

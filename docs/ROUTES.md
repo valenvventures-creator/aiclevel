@@ -13,23 +13,23 @@
 ## A.I. C-Level (authenticated, `src/app/(c-suite)`)
 | Route | Surface |
 |---|---|
-| `/hq` | C-Suite HQ |
+| `/hq` | C-Level HQ |
 | `/executives`, `/executives/[slug]?tab=conversation|profile|reports|files|activity&c=<conversationId|new>` | Executive Offices |
 | `/comms?folder=&thread=&compose=1&to=&q=&filter=unread` | Executive Comms |
-| `/sessions`, `/sessions/new?objective=&with=`, `/sessions/[id]` | C-Suite Sessions |
-| `/memory?q=&category=&status=&id=` | C-Suite Memory |
-| `/studio?lead=&preset=`, `/studio/[id]?v=` | C-Suite Studio / Finished Work |
+| `/sessions`, `/sessions/new?objective=&with=`, `/sessions/[id]` | C-Level Sessions |
+| `/memory?q=&category=&status=&id=` | C-Level Memory |
+| `/studio?lead=&preset=`, `/studio/[id]?v=` | C-Level Studio / Finished Work |
 | `/decisions` | Decision record |
 | `/reports`, `/reports/[id]` | Reports |
 | `/files` | Files |
 | `/projects`, `/projects/[id]` | Projects |
-| `/settings/[section]`, `/settings/c-suite/[slug]` | Settings (18 sections) |
+| `/settings/[section]`, `/settings/c-level/[slug]` | Settings (18 sections) |
 
 ## API (route handlers)
 | Method & path | Purpose |
 |---|---|
 | `POST /api/executives/[slug]/chat` | Streaming one-on-one (NDJSON) |
-| `POST /api/sessions/[id]/run` | Start a C-Suite Session round (JSON); `DELETE` stops it |
+| `POST /api/sessions/[id]/run` | Start a C-Level Session round (JSON); `DELETE` stops it |
 | `POST /api/sessions/[id]/step` | Run one bounded step of the round (NDJSON) |
 | `POST /api/sessions/[id]/suggest-options` | The chair drafts 2–4 Executive Vote options from a question (JSON) |
 | `POST /api/files` · `GET /api/files/[id]` | Validated upload · authorized download / signed URL |

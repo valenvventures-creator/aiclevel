@@ -30,7 +30,7 @@ export default function LandingPage() {
             <div className="max-w-2xl">
               <p className="animate-fade-up font-mono text-[11px] tracking-[0.3em] text-gold-300/90">THOUGHT AUTHORITIES · A.I. C-LEVEL</p>
               <h1 className="headline mt-6 animate-fade-up text-[clamp(3rem,7.2vw,6.2rem)] [animation-delay:80ms]">
-                Your C-Suite
+                Your C-Level
                 <br />
                 augmented{" "}
                 <span className="relative inline-block">
@@ -42,7 +42,7 @@ export default function LandingPage() {
               </p>
               <div className="mt-10 flex animate-fade-up flex-wrap items-center gap-3 [animation-delay:240ms]">
                 <Link href="/signup" className="group inline-flex h-[52px] items-center gap-2 rounded-full bg-gradient-to-b from-white to-gold-100 px-[26px] text-[15.5px] font-medium text-ink-950 shadow-[0_0_40px_-6px_rgba(251,241,208,.7)] transition-all duration-500 ease-[var(--ease-out)] hover:shadow-[0_0_60px_-4px_rgba(251,241,208,.9)]">
-                  Convene your C-Suite <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  Convene your C-Level <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
                 <Link href="/login?demo=1" className="inline-flex h-[52px] items-center rounded-full bg-white/[0.04] px-[26px] text-[15.5px] text-white/90 transition hover:bg-white/[0.08]">
                   Explore the live demo
@@ -92,7 +92,7 @@ export default function LandingPage() {
           <Reveal className="relative mx-auto max-w-7xl px-4 sm:px-6">
             <p className="eyebrow">How it works</p>
             <h2 className="headline mt-5 text-[clamp(2.6rem,5.6vw,4.6rem)]">One memory. <span className="accent">Seven minds</span></h2>
-            <p className="mt-5 max-w-xl text-white/64">Your documents, meetings and decisions become C-Suite Memory — verified, permissioned and traceable — and every executive draws from it.</p>
+            <p className="mt-5 max-w-xl text-white/64">Your documents, meetings and decisions become C-Level Memory — verified, permissioned and traceable — and every executive draws from it.</p>
           </Reveal>
           <Reveal delay={150} className="relative mt-14 px-4 sm:px-6">
             <SourcesHub execs={EXECS} />
@@ -108,7 +108,7 @@ export default function LandingPage() {
         <section id="executives" className="mx-auto max-w-7xl scroll-mt-16 px-4 py-32 sm:px-6">
           <Reveal>
             <p className="eyebrow">Executive Offices</p>
-            <h2 className="headline mt-5 text-[clamp(2.6rem,5.6vw,4.6rem)]">Meet your <span className="accent">C-Suite</span></h2>
+            <h2 className="headline mt-5 text-[clamp(2.6rem,5.6vw,4.6rem)]">Meet your <span className="accent">C-Level</span></h2>
             <p className="mt-5 max-w-xl text-white/64">Each executive has a mandate, a reasoning framework and permissions of its own — all grounded in your Organization Constitution.</p>
           </Reveal>
           <div className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -149,7 +149,7 @@ export default function LandingPage() {
               <h2 className="headline mt-5 text-[clamp(2.4rem,5vw,4.2rem)]">Ask anything. <span className="accent">Get an executive answer</span></h2>
               <p className="mt-5 max-w-md text-white/64">Private conversations that already know your numbers, your decisions and your constraints — with every source shown.</p>
               <ul className="mt-8 space-y-3 text-sm text-white/75">
-                {["Grounded in verified C-Suite Memory", "Cites the files and decisions it used", "Forward to another executive or a C-Suite Session"].map((t) => (
+                {["Grounded in verified C-Level Memory", "Cites the files and decisions it used", "Forward to another executive or a C-Level Session"].map((t) => (
                   <li key={t} className="flex items-center gap-2.5"><CheckCircle2 className="size-4 text-gold-400" /> {t}</li>
                 ))}
               </ul>
@@ -197,8 +197,8 @@ export default function LandingPage() {
               ["Are the executives people?", "No. Each A.I. Executive is an artificial-intelligence system configured for a specific mandate. They never represent themselves as licensed professionals, and they recommend qualified human counsel, accountants or advisers when a matter requires one."],
               ["Can an executive act on my behalf?", "Executives analyze, prepare and recommend. Consequential external actions — sending email, publishing, sharing confidential files, financial or contractual commitments — always require your explicit approval."],
               ["Where does my organization's data go?", "Your memory, files, sessions and decisions are isolated to your organization, and only the relevant context is retrieved for each request."],
-              ["Which A.I. models power the C-Suite?", "Claude is the primary reasoning provider, with OpenAI and future models available through one gateway. Administrators choose models and fallbacks per executive."],
-              ["How do plans work?", "Every organization starts on a trial with the full seven-executive C-Suite. Leadership and Enterprise plans add team scale, CEO Leadership Intelligence, integrations, SSO and advanced governance."],
+              ["Which A.I. models power the C-Level?", "Claude is the primary reasoning provider, with OpenAI and future models available through one gateway. Administrators choose models and fallbacks per executive."],
+              ["How do plans work?", "Every organization starts on a trial with the full seven-executive C-Level. Leadership and Enterprise plans add team scale, CEO Leadership Intelligence, integrations, SSO and advanced governance."],
             ].map(([q, a]) => (
               <details key={q} className="group rounded-2xl border border-white/[0.07] bg-white/[0.02] px-6 py-5 transition-colors duration-500 open:bg-white/[0.04] [&_summary::-webkit-details-marker]:hidden">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">
@@ -216,7 +216,7 @@ export default function LandingPage() {
           <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[40rem] bg-[radial-gradient(ellipse_at_bottom,rgba(46,72,170,.22),transparent_60%)]" />
           <Reveal className="relative mx-auto max-w-5xl px-4 text-center sm:px-6">
             <h2 className="headline text-[clamp(3rem,7.5vw,6.4rem)]">
-              Your C-Suite is
+              Your C-Level is
               <br />
               <span className="accent">ready to convene</span>
             </h2>
@@ -230,13 +230,13 @@ export default function LandingPage() {
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <Image src="/brand/crest-full.png" alt="Thought Authorities" width={1195} height={1195} className="h-auto w-28 opacity-90" />
-            <p className="mt-4 max-w-xs text-sm text-white/40">Your C-Suite. Augmented by A.I.</p>
+            <p className="mt-4 max-w-xs text-sm text-white/40">Your C-Level. Augmented by A.I.</p>
           </div>
           {(
             [
-              ["Product", [["How it works", "#how"], ["Executives", "#executives"], ["C-Suite Sessions", "#sessions"], ["Security", "#security"]]],
+              ["Product", [["How it works", "#how"], ["Executives", "#executives"], ["C-Level Sessions", "#sessions"], ["Security", "#security"]]],
               ["Company", [["FAQ", "#faq"], ["Terms", "/legal/terms"], ["Privacy", "/legal/privacy"]]],
-              ["Get in", [["Convene your C-Suite", "/signup"], ["Sign in", "/login"], ["Live demo", "/login?demo=1"]]],
+              ["Get in", [["Convene your C-Level", "/signup"], ["Sign in", "/login"], ["Live demo", "/login?demo=1"]]],
             ] as [string, [string, string][]][]
           ).map(([h, links]) => (
             <div key={h}>

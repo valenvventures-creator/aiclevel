@@ -1,6 +1,6 @@
-# C-Suite Orchestration
+# C-Level Orchestration
 
-The C-Suite Session is "convening leadership", implemented as a **server-side, bounded, stepwise** orchestrator in `src/server/ai/orchestration/csuite-orchestrator.ts`.
+The C-Level Session is "convening leadership", implemented as a **server-side, bounded, stepwise** orchestrator in `src/server/ai/orchestration/csuite-orchestrator.ts`.
 
 Hosting platforms cap each request (Netlify: 60 s, including work after the response). A full round — several positions, reviews and a CEO synthesis — takes longer, so a round never runs in one request. It runs in **bounded steps**, the same pattern Studio uses (`advanceProductionJob`):
 
@@ -63,9 +63,9 @@ Vote modes are those with a `VOTE` stage (`isVoteMode`): EXECUTIVE_VOTE and DISC
 - **Rounds:** `groupVoteRounds` (`src/server/sessions/vote-rounds.ts`) splits votes at each question that opened a vote. A single-executive retry (`metadata.single_executive`, `retry`) joins its round, and a retried vote replaces that executive's earlier vote.
 - **Retry:** when an executive fails, "Retry … vote" re-runs their vote on the same question and ballot. Calling on one executive in a vote mode plans a single `VOTE` stage with no new decision. "Retry … analysis" re-runs other stages on the round's question.
 - **Recommendation:** the `vote_synthesis` prompt asks the chair to end with `RECOMMENDED OPTION: <id>` (`parseRecommendedOption`). If that line is missing or invalid, the vote leader is used (`voteLeader`). The result is stored as `decisions.recommended_option`. The line is hidden from people (`stripRecommendedLine`).
-- **Approval:** the person approving picks the option to adopt; it defaults to the CEO's recommendation. That becomes `chosen_option`, and the audit records both. An approved decision is saved to C-Suite Memory as a VERIFIED `DECISIONS` record with `source_id` = decision (`rememberApprovedDecision`), so later sessions retrieve it.
+- **Approval:** the person approving picks the option to adopt; it defaults to the CEO's recommendation. That becomes `chosen_option`, and the audit records both. An approved decision is saved to C-Level Memory as a VERIFIED `DECISIONS` record with `source_id` = decision (`rememberApprovedDecision`), so later sessions retrieve it.
 - **UI:** the session's right-hand panel shows the latest round in full. For each option it shows the wording, votes, average score and confidence, a CEO recommends or Chosen badge, and a tie notice; each executive's vote expands to show their reason and scores. Earlier rounds sit under "Previous votes". In the transcript, votes show as compact cards with the full scoring behind "Show full scoring".
-- **Records:** Minutes and Decision Memos include "How the C-Suite voted" (`voteRoundMarkdown`). A Decision Memo is labelled simulated when the synthesis behind it was simulated.
+- **Records:** Minutes and Decision Memos include "How the C-Level voted" (`voteRoundMarkdown`). A Decision Memo is labelled simulated when the synthesis behind it was simulated.
 
 ## Progress
 Each step streams `progress` events (`index`/`count` stages, `finished`/`total` executives in the stage). The session screen shows "Stage 1 of 2 · Short positions · 3 of 5 executives finished".

@@ -5,9 +5,9 @@
 | apex.host pattern | Thought Authorities implementation |
 |---|---|
 | Heavy grotesk headline + italic serif accent with self-drawing underline | `.headline` (Space Grotesk 600, −0.045em) + `.accent` (Instrument Serif italic, gold gradient) + `<DrawUnderline/>` |
-| Rotating network sphere in the hero | `<Constellation/>` — canvas sphere of organizational memory with seven gold, pulsing, labelled C-Suite nodes; pointer tilt |
-| Pinned "Without / With" problem chapters | `<Chapters/>` — five sticky chapters (desktop) that flip from red-glow *Without a C-Suite* to gold-glow *With your A.I. C-Level* at mid-scroll; manual toggle; callout card |
-| Sources → hub diagram with flowing dashed lines | `<SourcesHub/>` — organizational sources → crest (C-Suite Memory) → seven executives |
+| Rotating network sphere in the hero | `<Constellation/>` — canvas sphere of organizational memory with seven gold, pulsing, labelled C-Level nodes; pointer tilt |
+| Pinned "Without / With" problem chapters | `<Chapters/>` — five sticky chapters (desktop) that flip from red-glow *Without a C-Level* to gold-glow *With your A.I. C-Level* at mid-scroll; manual toggle; callout card |
+| Sources → hub diagram with flowing dashed lines | `<SourcesHub/>` — organizational sources → crest (C-Level Memory) → seven executives |
 | "N of 3 connected" scroll-lit cards | `<ConveneHub/>` — curved beams from the crest light up "N of 7 convened" |
 | Typed chat demo | `<LiveDemo/>` — executive tabs, typewriter Q&A, cited sources, "Example data" label |
 | Light-portal closing CTA | `<Portal/>` — beam, floor glow, rising particles |

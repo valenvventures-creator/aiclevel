@@ -4,7 +4,7 @@ import { memory } from "./fixtures";
 
 const base = { organizationId: "org-a", viewerRole: "MEMBER" as const };
 
-describe("C-Suite Memory retrieval", () => {
+describe("C-Level Memory retrieval", () => {
   it("never returns another organization's memory", () => {
     const rows = [memory({ title: "Runway", content: "14 months runway" }), memory({ title: "Runway", content: "14 months runway", organization_id: "org-b" })];
     const out = rankMemories(rows, { ...base, query: "runway" });

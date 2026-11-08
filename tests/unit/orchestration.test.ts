@@ -6,7 +6,7 @@ import { resolvedExec } from "./fixtures";
 const all = ["CEO", "CFO", "CCO", "CHRO", "CTO", "CLO", "CIO"].map((r) => resolvedExec(r));
 const ceo = all[0];
 
-describe("C-Suite orchestration plan", () => {
+describe("C-Level orchestration plan", () => {
   it("runs independent positions in parallel and synthesis by the chair", () => {
     const plan = planStages(SESSION_MODES.CEO_SYNTHESIS, all.slice(0, 3), ceo);
     expect(plan.map((s) => s.def.key)).toEqual(["INDEPENDENT", "SYNTHESIS"]);

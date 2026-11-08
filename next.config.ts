@@ -16,6 +16,14 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [{ protocol: "https", hostname: "thoughtauthorities.com" }],
   },
+  // Old "C-Suite" addresses, kept working after the rename to C-Level.
+  async redirects() {
+    return [
+      { source: "/settings/c-suite", destination: "/settings/c-level", permanent: true },
+      { source: "/settings/c-suite/:slug", destination: "/settings/c-level/:slug", permanent: true },
+      { source: "/tutorials/c-suite-:topic(hq|sessions|memory|studio)", destination: "/tutorials/c-level-:topic", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

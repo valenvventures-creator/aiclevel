@@ -101,7 +101,7 @@ export const AIExecutiveRegistry = {
   },
   async deactivateExecutive(orgId: string, actorId: string, executiveId: string) {
     const e = await this.getExecutive(orgId, executiveId);
-    if (e?.is_core) throw new Error("Core C-Suite executives cannot be deactivated.");
+    if (e?.is_core) throw new Error("Core C-Level executives cannot be deactivated.");
     await this.updateExecutive(orgId, actorId, executiveId, { executive: { is_active: false } });
   },
 };

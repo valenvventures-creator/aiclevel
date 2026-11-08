@@ -30,7 +30,7 @@ const { db } = await import("@/server/db/store");
 
 const org = { id: "org-studio", name: "Studio Test", slug: "studio-test", logo_url: null, owner_id: "u1", industry: null, subscription_status: "TRIAL" as const, is_demo: false, created_at: new Date().toISOString() };
 
-describe("stepwise C-Suite Studio production", () => {
+describe("stepwise C-Level Studio production", () => {
   beforeEach(async () => {
     script.calls = [];
     await seedExecutivesForOrganization(org.id);

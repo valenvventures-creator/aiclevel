@@ -10,9 +10,9 @@ export default async function SignupPage({ searchParams }: PageProps<"/signup">)
   const email = typeof sp.email === "string" ? sp.email : undefined;
   return (
     <div className="animate-fade-up">
-      <p className="eyebrow">Convene your C-Suite</p>
+      <p className="eyebrow">Convene your C-Level</p>
       <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight">Create your account.</h1>
-      <p className="mt-2 text-sm text-ivory-muted">{invite ? "You've been invited to join an organization's C-Suite." : "Seven A.I. executives are ready to work with you."}</p>
+      <p className="mt-2 text-sm text-ivory-muted">{invite ? "You've been invited to join an organization's C-Level." : "Seven A.I. executives are ready to work with you."}</p>
       <div className="mt-8">
         <SignupForm inviteToken={invite} email={email} />
       </div>

@@ -11,12 +11,12 @@ export const metadata: Metadata = { title: "Tutorials" };
 
 /** Which tutorial explains each menu area. */
 const AREA_TUTORIAL: Record<string, string> = {
-  "/hq": "c-suite-hq",
+  "/hq": "c-level-hq",
   "/executives": "executive-offices",
   "/comms": "executive-comms",
-  "/sessions": "c-suite-sessions",
-  "/memory": "c-suite-memory",
-  "/studio": "c-suite-studio",
+  "/sessions": "c-level-sessions",
+  "/memory": "c-level-memory",
+  "/studio": "c-level-studio",
   "/decisions": "decisions",
   "/reports": "reports",
   "/files": "files",

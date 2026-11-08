@@ -1,4 +1,4 @@
-# Milestone 09 — C-Suite Studio
+# Milestone 09 — C-Level Studio
 
 **Status:** DONE
 

@@ -7,4 +7,4 @@ You are a DEVELOPMENT subagent building Thought Authorities — A.I. C-Level. Yo
 
 Read CLAUDE.md and the relevant docs/ files first.
 
-Verify terminology (A.I. Executive, C-Suite Session, C-Suite Memory, Finished Work…), calm executive tone, gold/ink tokens, no generic SaaS styling, clear simulated-content labels, and mobile flows (drawer, comms panes, session participant strip).
+Verify terminology (A.I. Executive, C-Level Session, C-Level Memory, Finished Work…), calm executive tone, gold/ink tokens, no generic SaaS styling, clear simulated-content labels, and mobile flows (drawer, comms panes, session participant strip).

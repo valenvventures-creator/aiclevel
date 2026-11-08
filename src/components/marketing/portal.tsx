@@ -12,7 +12,7 @@ export function Portal() {
     <div className="relative mx-auto mt-14 w-full max-w-3xl pb-10">
       <div className="relative z-10 flex justify-center">
         <Link href="/signup" className="group relative inline-flex h-14 items-center gap-2 rounded-full bg-gradient-to-b from-white to-gold-100 px-8 text-[15.5px] font-medium text-ink-950 shadow-[0_0_60px_-4px_rgba(251,241,208,.9),0_0_0_1px_rgba(255,255,255,.6)] transition-transform duration-500 ease-[var(--ease-out)] hover:scale-[1.03]">
-          Convene your C-Suite <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+          Convene your C-Level <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
         </Link>
       </div>
       <div className="relative mx-auto mt-8 w-[min(560px,92vw)]">

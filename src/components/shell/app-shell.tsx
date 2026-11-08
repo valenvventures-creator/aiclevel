@@ -151,7 +151,7 @@ function SidebarContent(props: ShellProps & { collapsed: boolean; pathname: stri
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className={cn("flex h-16 items-center border-b border-line", collapsed ? "justify-center" : "px-5")}>
-        <Link href="/hq" className="flex items-center gap-3" aria-label="C-Suite HQ">
+        <Link href="/hq" className="flex items-center gap-3" aria-label="C-Level HQ">
           <Crest size={collapsed ? 38 : 44} />
           {!collapsed && (
             <span className="leading-none">
@@ -195,7 +195,7 @@ function SidebarContent(props: ShellProps & { collapsed: boolean; pathname: stri
         ))}
 
         <div>
-          {!collapsed && <p className="mb-2 px-3 font-mono text-[10px] tracking-[0.22em] text-ivory-faint">YOUR C-SUITE</p>}
+          {!collapsed && <p className="mb-2 px-3 font-mono text-[10px] tracking-[0.22em] text-ivory-faint">YOUR C-LEVEL</p>}
           <ul className={cn("flex gap-1.5", collapsed ? "flex-col items-center" : "flex-wrap px-3")}>
             {props.executives.map((e) => (
               <li key={e.id}>

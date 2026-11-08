@@ -1,5 +1,5 @@
 /**
- * Astronomical clock for the closing "Your C-Suite is ready to convene"
+ * Astronomical clock for the closing "Your C-Level is ready to convene"
  * section: a gilded, starry dial (Roman-numeral bezel, zodiac medallions,
  * filigree, sub-dials, sun and moon hands) with rings of light dots orbiting
  * it clockwise. Pure SVG + CSS (no client JS); animations pause under

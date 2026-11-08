@@ -16,7 +16,7 @@ export const TUTORIAL_MEDIA = {
   "feedback-box": { width: 522, height: 208 },
   "files": { width: 1176, height: 700 },
   "hq": { width: 1176, height: 836 },
-  "learning": { width: 756, height: 1000 },
+  "learning": { width: 756, height: 774 },
   "library": { width: 756, height: 616 },
   "memory-inspector": { width: 1176, height: 836 },
   "memory": { width: 1176, height: 836 },

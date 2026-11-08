@@ -1,4 +1,4 @@
-# Milestone 07 — C-Suite Session
+# Milestone 07 — C-Level Session
 
 **Status:** DONE
 

@@ -12,7 +12,7 @@ import { updateExecutiveConfigAction } from "@/server/settings/actions";
 
 export const metadata: Metadata = { title: "Configure executive" };
 
-export default async function ConfigureExecutivePage({ params }: PageProps<"/settings/c-suite/[slug]">) {
+export default async function ConfigureExecutivePage({ params }: PageProps<"/settings/c-level/[slug]">) {
   const { slug } = await params;
   const ctx = await authorize("executives.configure");
   const e = await AIExecutiveRegistry.resolve(ctx.organization.id, slug);
@@ -20,7 +20,7 @@ export default async function ConfigureExecutivePage({ params }: PageProps<"/set
   const p = e.persona;
   return (
     <div className="space-y-6">
-      <Link href="/settings/c-suite" className="text-xs text-ivory-muted hover:text-ivory">← A.I. C-Level</Link>
+      <Link href="/settings/c-level" className="text-xs text-ivory-muted hover:text-ivory">← A.I. C-Level</Link>
       <div className="flex items-center gap-4">
         <ExecutiveAvatar src={e.avatar_url} shortTitle={e.short_title} accent={e.accent} size={56} />
         <div><h2 className="font-heading text-2xl font-semibold">{e.title}</h2><p className="text-xs text-ivory-muted">Database-driven configuration · prompt {e.model.prompt_key}_v1</p></div>
@@ -75,7 +75,7 @@ export default async function ConfigureExecutivePage({ params }: PageProps<"/set
         </Card>
         <Card className="space-y-3">
           <SectionTitle>Memory areas</SectionTitle>
-          <p className="text-xs text-ivory-muted">Which parts of C-Suite Memory this executive searches when answering. Approved decisions are always shared with every executive.</p>
+          <p className="text-xs text-ivory-muted">Which parts of C-Level Memory this executive searches when answering. Approved decisions are always shared with every executive.</p>
           <div className="flex flex-wrap gap-4 text-sm">
             <label className="flex items-center gap-2"><input type="radio" name="memory_scope" value="ALL" defaultChecked={e.model.memory_categories === "ALL"} className="accent-gold-400" /> All areas</label>
             <label className="flex items-center gap-2"><input type="radio" name="memory_scope" value="SELECTED" defaultChecked={e.model.memory_categories !== "ALL"} className="accent-gold-400" /> Only the areas ticked below</label>

@@ -1,7 +1,7 @@
 import type { ExecutiveRoleCode, ReportType } from "@/types/domain";
 
 /**
- * C-Suite Studio capability registry — "Route to the right executive".
+ * C-Level Studio capability registry — "Route to the right executive".
  * Routing is data, not JSX. Each capability names a lead executive, optional
  * contributors, the artifact it produces and the keywords used by the
  * deterministic router (an LLM router may refine the choice when configured).

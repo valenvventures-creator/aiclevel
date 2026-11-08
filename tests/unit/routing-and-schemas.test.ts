@@ -33,7 +33,7 @@ describe("auth validation", () => {
   });
 });
 
-describe("the seven-executive C-Suite", () => {
+describe("the seven-executive C-Level", () => {
   it("has exactly seven core executives in the canonical order", () => {
     expect(EXECUTIVE_SEEDS.map((e) => e.role_code)).toEqual(["CEO", "CFO", "CCO", "CHRO", "CTO", "CLO", "CIO"]);
     expect(new Set(EXECUTIVE_SEEDS.map((e) => e.slug)).size).toBe(7);

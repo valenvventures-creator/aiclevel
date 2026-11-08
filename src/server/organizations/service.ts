@@ -11,6 +11,7 @@ import { ORG_COOKIE, requireUser } from "@/server/auth/session";
 import { assertCan, type Capability } from "@/server/auth/permissions";
 import { seedExecutivesForOrganization } from "@/server/executives/seed";
 import { audit } from "@/server/audit";
+import { upgradeStoredLabels } from "@/server/organizations/stored-labels";
 import type { Organization, OrganizationConstitution, OrganizationMember, Role, UserProfile } from "@/types/domain";
 
 export interface Membership {
@@ -57,6 +58,7 @@ export const requireContext = cache(async (): Promise<RequestContext> => {
   if (!memberships.length) redirect("/onboarding");
   const preferred = (await cookies()).get(ORG_COOKIE)?.value;
   const active = memberships.find((m) => m.organization.id === preferred) ?? memberships[0];
+  await upgradeStoredLabels(active.organization);
   return { user, organization: active.organization, member: active.member, role: active.member.role, memberships };
 });
 

@@ -13,7 +13,7 @@ import { audit } from "@/server/audit";
 import type { MemoryCategory } from "@/types/domain";
 import { MEMORY_CATEGORIES } from "@/types/domain";
 
-/** Save an executive message to C-Suite Memory as PROPOSED (AI conclusions are never auto-verified). */
+/** Save an executive message to C-Level Memory as PROPOSED (AI conclusions are never auto-verified). */
 export async function saveMessageToMemoryAction(messageId: string, category: MemoryCategory = "STRATEGY") {
   const ctx = await authorize("memory.write");
   const orgId = ctx.organization.id;
@@ -58,7 +58,7 @@ export async function forwardToExecutivesAction(input: z.infer<typeof ForwardSch
   return { ok: true as const, threadId: comm.thread_id };
 }
 
-/** Bring a conversation to a new C-Suite Session. */
+/** Bring a conversation to a new C-Level Session. */
 export async function bringToSessionAction(conversationId: string) {
   const ctx = await authorize("sessions.create");
   const conv = await db().conversations.get(ctx.organization.id, conversationId);

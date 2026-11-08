@@ -6,13 +6,13 @@ Phases follow the master brief. Each milestone file in `docs/milestones/` lists 
 |---|---|---|
 | 1 | [Foundation & Authentication](milestones/01-foundation-auth.md) | DONE (demo + Supabase code paths) |
 | 2 | [Client Onboarding](milestones/02-onboarding-organizations.md) | DONE |
-| 3 | [C-Suite HQ](milestones/03-csuite-hq.md) | DONE |
+| 3 | [C-Level HQ](milestones/03-csuite-hq.md) | DONE |
 | 4 | [Executive Offices](milestones/04-executive-offices.md) | DONE |
 | 5 | [One-on-one AI](milestones/05-conversations.md) | DONE |
 | 6 | [Executive Comms](milestones/06-executive-comms.md) | DONE |
-| 7 | [C-Suite Session](milestones/07-csuite-session.md) | DONE |
-| 8 | [C-Suite Memory](milestones/08-memory.md) | DONE (lexical retrieval) |
-| 9 | [C-Suite Studio](milestones/09-studio.md) | DONE |
+| 7 | [C-Level Session](milestones/07-csuite-session.md) | DONE |
+| 8 | [C-Level Memory](milestones/08-memory.md) | DONE (lexical retrieval) |
+| 9 | [C-Level Studio](milestones/09-studio.md) | DONE |
 | 10 | [Reports, Files, Projects](milestones/10-reports-files.md) | DONE |
 | 11 | [Advanced Team Permissions](milestones/11-team-permissions.md) | PARTIAL |
 | 12 | [Integrations, Voice & Billing](milestones/12-integrations-billing.md) | PLANNED |

@@ -28,7 +28,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
       )}
       <PageHeader eyebrow="Reports" title="Executive briefs & reports" description="Briefs, reviews, minutes and decision memos — each with a lead executive, contributors, version and export." actions={<ButtonLink href="/studio?preset=report"><Plus className="size-4" /> Generate report</ButtonLink>} />
       {list.length === 0 ? (
-        <EmptyState icon={<FileText className="size-5" />} title="No reports yet." body="Request a report from any executive or create minutes from a C-Suite Session." action={<ButtonLink href="/studio" size="sm">Open Studio</ButtonLink>} />
+        <EmptyState icon={<FileText className="size-5" />} title="No reports yet." body="Request a report from any executive or create minutes from a C-Level Session." action={<ButtonLink href="/studio" size="sm">Open Studio</ButtonLink>} />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {list.map((r) => (

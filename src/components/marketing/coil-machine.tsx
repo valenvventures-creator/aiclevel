@@ -11,7 +11,7 @@ type Bolt = { paths: Pt[][]; born: number; life: number; gold: boolean; target?:
  * Hero visual: a line-art illustration of a giant electrical coil — a
  * cylindrical cage of bars on wooden legs with a central mast, ball and
  * disc cap — drawn as a gold outline. Lightning crackles out from the top,
- * and the seven C-Suite titles hover in a slow orbit around the top of the
+ * and the seven C-Level titles hover in a slow orbit around the top of the
  * machine, joined by gold triangular lines; now and then the coil strikes
  * one of them. Pointer movement tilts the scene. A single still frame under
  * reduced motion. Decorative only.
@@ -91,7 +91,7 @@ export function CoilMachine({ className }: { className?: string }) {
       return out;
     };
 
-    /** A bolt from a to b (for strikes on a C-Suite node). */
+    /** A bolt from a to b (for strikes on a C-Level node). */
     const strike = (a: Pt, b: Pt): Pt[] => {
       const pts: Pt[] = [a];
       const n = 10;
@@ -249,7 +249,7 @@ export function CoilMachine({ className }: { className?: string }) {
       ctx.arc(cx, ballY, ballR, 0, Math.PI * 2);
       ctx.stroke();
 
-      // C-Suite: seven titles orbiting around the top of the machine
+      // C-Level: seven titles orbiting around the top of the machine
       const orbitY = capY + (ballY - capY) * 0.55;
       const ax = rx * 1.45;
       const ay = rx * 0.32;

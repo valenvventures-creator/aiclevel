@@ -21,7 +21,7 @@ export default async function VerifyEmailPage({ searchParams }: PageProps<"/veri
           canEmail ? (
             <>We sent a verification link to <span className="text-ivory">{user.email}</span>. Open it to verify — inviting team members unlocks once you do. Can&apos;t find it? Check your spam folder or resend it below.</>
           ) : (
-            <>Verifying <span className="text-ivory">{user.email}</span> needs email delivery, which isn&apos;t set up on this site yet. Everything else in your C-Suite works in the meantime.</>
+            <>Verifying <span className="text-ivory">{user.email}</span> needs email delivery, which isn&apos;t set up on this site yet. Everything else in your C-Level works in the meantime.</>
           )
         ) : (
           "Confirm your email address to unlock inviting your team."

@@ -10,7 +10,7 @@ import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { requireContext } from "@/server/organizations/service";
 import { SESSION_MODES } from "@/config/sessions/modes";
 
-export const metadata: Metadata = { title: "C-Suite Sessions" };
+export const metadata: Metadata = { title: "C-Level Sessions" };
 
 export default async function SessionsPage() {
   const ctx = await requireContext();
@@ -18,9 +18,9 @@ export default async function SessionsPage() {
   const map = new Map(execs.map((e) => [e.id, e]));
   return (
     <div>
-      <PageHeader eyebrow="C-Suite Session" title="Convene leadership" description="Bring one business question to two or more executives. Independent positions, specialty reviews, challenge, CEO synthesis — and a decision record." actions={<ButtonLink href="/sessions/new"><Users className="size-4" /> New C-Suite Session</ButtonLink>} />
+      <PageHeader eyebrow="C-Level Session" title="Convene leadership" description="Bring one business question to two or more executives. Independent positions, specialty reviews, challenge, CEO synthesis — and a decision record." actions={<ButtonLink href="/sessions/new"><Users className="size-4" /> New C-Level Session</ButtonLink>} />
       {sessions.length === 0 ? (
-        <EmptyState icon={<Users className="size-5" />} title="No C-Suite Sessions yet." body="Convene your first session to see how your executives think together." action={<ButtonLink href="/sessions/new" size="sm">Convene a session</ButtonLink>} />
+        <EmptyState icon={<Users className="size-5" />} title="No C-Level Sessions yet." body="Convene your first session to see how your executives think together." action={<ButtonLink href="/sessions/new" size="sm">Convene a session</ButtonLink>} />
       ) : (
         <ul className="grid gap-4 md:grid-cols-2">
           {sessions.map((s) => (

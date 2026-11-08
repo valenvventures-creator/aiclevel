@@ -74,7 +74,7 @@ export function invitationEmail(p: { inviterName: string; organizationName: stri
 export function testEmail(p: { firstName: string; url: string; origin: string }): EmailContent {
   const heading = "Email delivery is working";
   const body = [`Hi ${p.firstName || "there"},`, "This is a test message from your A.I. C-Level. Verification, password-reset and invitation emails will be delivered the same way."];
-  const cta = { label: "Open C-Suite HQ", url: p.url };
+  const cta = { label: "Open C-Level HQ", url: p.url };
   const foot = "You received this because an administrator clicked “Send test email” in Settings → Email delivery.";
   return { subject: "Test email — Thought Authorities A.I. C-Level", html: layout({ preheader: "Your A.I. C-Level can send email.", heading, body, cta, footnote: foot, origin: p.origin }), text: text(heading, body, cta, foot) };
 }

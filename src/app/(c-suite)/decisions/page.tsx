@@ -22,7 +22,7 @@ export default async function DecisionsPage() {
     <div>
       <PageHeader eyebrow="Organizational Record" title="Decisions" description="Your organization's decision memory: the question, options, recommendation, rationale, risks and confidence — not just conversation history." />
       {decisions.length === 0 ? (
-        <EmptyState icon={<Gavel className="size-5" />} title="No decisions recorded yet." body="Decisions are created from C-Suite Session syntheses." action={<Link href="/sessions/new" className="text-sm text-gold-300">Convene a session →</Link>} />
+        <EmptyState icon={<Gavel className="size-5" />} title="No decisions recorded yet." body="Decisions are created from C-Level Session syntheses." action={<Link href="/sessions/new" className="text-sm text-gold-300">Convene a session →</Link>} />
       ) : (
         <ul className="space-y-4">
           {decisions.map((d) => (
@@ -53,8 +53,8 @@ export default async function DecisionsPage() {
                 </div>
               )}
               {d.risks_json.length > 0 && <ul className="mt-3 flex flex-wrap gap-2">{d.risks_json.map((r, i) => <li key={i}><Badge tone={r.severity === "HIGH" ? "risk" : r.severity === "MEDIUM" ? "warn" : "neutral"}>{r.risk}</Badge></li>)}</ul>}
-              {canApprove && d.status !== "APPROVED" && <p className="mt-5 text-[11px] text-ivory-faint">Approving records your choice and saves this decision to C-Suite Memory, so the executives remember it in later sessions.</p>}
-              {d.status === "APPROVED" && <p className="mt-5 text-[11px] text-ivory-faint">Saved to C-Suite Memory.</p>}
+              {canApprove && d.status !== "APPROVED" && <p className="mt-5 text-[11px] text-ivory-faint">Approving records your choice and saves this decision to C-Level Memory, so the executives remember it in later sessions.</p>}
+              {d.status === "APPROVED" && <p className="mt-5 text-[11px] text-ivory-faint">Saved to C-Level Memory.</p>}
               <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-4">
                 {canApprove && d.status !== "APPROVED" && (
                   <form action={updateDecisionStatusAction} className="flex flex-wrap items-center gap-2">

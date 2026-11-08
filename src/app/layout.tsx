@@ -15,7 +15,7 @@ const mono = IBM_Plex_Mono({ subsets: ["latin"], variable: "--font-code", weight
 
 export const metadata: Metadata = {
   title: { default: "A.I. C-Level — Thought Authorities", template: "%s · A.I. C-Level" },
-  description: "Seven C-Suite Executives. One Organization. Shared Intelligence. Your C-Suite, augmented by A.I.",
+  description: "Seven C-Level Executives. One Organization. Shared Intelligence. Your C-Level, augmented by A.I.",
   applicationName: "A.I. C-Level",
 };
 

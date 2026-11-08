@@ -9,7 +9,7 @@ import type { ExecLite } from "./chapters";
 
 /* ------------------------------------------------------------------ */
 /* Everything your organization knows → one hub → seven executives     */
-/* Vertical: sources at the top zap lightning down into C-Suite Memory, */
+/* Vertical: sources at the top zap lightning down into C-Level Memory, */
 /* which absorbs it and electrifies each executive below.             */
 /* ------------------------------------------------------------------ */
 
@@ -132,7 +132,7 @@ export function SourcesHub({ execs }: { execs: ExecLite[] }) {
         <Image src="/brand/crest-256.png" alt="" width={256} height={149} className="w-[70%]" />
       </div>
       {/* label beside the hub, clear of the lightning above and below */}
-      <p className="absolute -translate-y-1/2 whitespace-nowrap font-mono text-[9px] tracking-[0.3em] text-gold-300/80 sm:text-[10px]" style={{ left: `${((HUB.x + HUB.r * 1.45) / W) * 100}%`, top: `${(HUB.y / H) * 100}%` }}>C-SUITE<br />MEMORY</p>
+      <p className="absolute -translate-y-1/2 whitespace-nowrap font-mono text-[9px] tracking-[0.3em] text-gold-300/80 sm:text-[10px]" style={{ left: `${((HUB.x + HUB.r * 1.45) / W) * 100}%`, top: `${(HUB.y / H) * 100}%` }}>C-LEVEL<br />MEMORY</p>
 
       {people.map((p, i) => (
         <div
@@ -170,10 +170,10 @@ export function ConveneHub({ execs }: { execs: ExecLite[] }) {
   return (
     <div ref={ref} className="relative py-24 md:h-[200vh] md:py-0">
       <div className="flex flex-col items-center justify-center px-4 sm:px-6 md:sticky md:top-0 md:h-[100svh]">
-        <p className="eyebrow">C-Suite Session</p>
+        <p className="eyebrow">C-Level Session</p>
         <h2 className="headline mt-4 text-center text-[clamp(2.4rem,5.4vw,4.4rem)]">Ask once. <span className="accent">Seven perspectives</span></h2>
         <p className="mt-4 text-center text-white/64">
-          One question, convened across your C-Suite. <b className="text-white">{convened}</b> of {n} convened.
+          One question, convened across your C-Level. <b className="text-white">{convened}</b> of {n} convened.
         </p>
 
         <div className="relative mt-10 w-full max-w-7xl">

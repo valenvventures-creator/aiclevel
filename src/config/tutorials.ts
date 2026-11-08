@@ -54,13 +54,13 @@ import type { TutorialMediaName } from "./tutorial-media";
  * from the demo organization and are captioned as such.
  */
 
-export type TutorialCategory = "Start here" | "Leadership" | "Intelligence" | "Make your C-Suite better" | "For owners & admins" | "Help";
+export type TutorialCategory = "Start here" | "Leadership" | "Intelligence" | "Make your C-Level better" | "For owners & admins" | "Help";
 
 export const TUTORIAL_CATEGORIES: { name: TutorialCategory; blurb: string }[] = [
   { name: "Start here", blurb: "Your first visit, and how to find your way around." },
   { name: "Leadership", blurb: "Talk to your executives, convene them and hear their verdicts." },
   { name: "Intelligence", blurb: "Where your organization's knowledge, work and decisions live." },
-  { name: "Make your C-Suite better", blurb: "Teach the executives and give them the knowledge they need." },
+  { name: "Make your C-Level better", blurb: "Teach the executives and give them the knowledge they need." },
   { name: "For owners & admins", blurb: "Team, configuration, A.I. connections and organization settings." },
   { name: "Help", blurb: "Answers to common questions and messages." },
 ];
@@ -118,9 +118,9 @@ export const TUTORIALS: Tutorial[] = [
     minutes: 6,
     summary: "Meet your seven A.I. Executives and get your first real answer, session and saved knowledge.",
     who: "Everyone",
-    open: { href: "/hq", label: "Open C-Suite HQ" },
+    open: { href: "/hq", label: "Open C-Level HQ" },
     overview:
-      "The A.I. C-Level is a leadership team of seven A.I. Executives (CEO, CFO, CCO, CHRO, CTO, CLO and Chief Impact Officer) who share one memory of your organization. You can talk to one executive privately, bring several together on a business question, or ask them to produce finished work. Everything they learn about your organization is kept in C-Suite Memory, and every important conclusion waits for a person to confirm it.",
+      "The A.I. C-Level is a leadership team of seven A.I. Executives (CEO, CFO, CCO, CHRO, CTO, CLO and Chief Impact Officer) who share one memory of your organization. You can talk to one executive privately, bring several together on a business question, or ask them to produce finished work. Everything they learn about your organization is kept in C-Level Memory, and every important conclusion waits for a person to confirm it.",
     flow: [
       { icon: LayoutDashboard, label: "Land on HQ" },
       { icon: MessageSquare, label: "Ask an executive" },
@@ -129,10 +129,10 @@ export const TUTORIALS: Tutorial[] = [
     ],
     steps: [
       {
-        title: "Start at C-Suite HQ",
+        title: "Start at C-Level HQ",
         icon: LayoutDashboard,
-        body: "After you sign in you arrive at C-Suite HQ, your daily overview: the CEO's brief, decisions and approvals waiting for you, recent messages from your executives and quick actions.",
-        image: { name: "hq", alt: "C-Suite HQ with the greeting, quick actions and the Daily CEO Brief", caption: DEMO },
+        body: "After you sign in you arrive at C-Level HQ, your daily overview: the CEO's brief, decisions and approvals waiting for you, recent messages from your executives and quick actions.",
+        image: { name: "hq", alt: "C-Level HQ with the greeting, quick actions and the Daily CEO Brief", caption: DEMO },
       },
       {
         title: "Ask one executive a question",
@@ -143,12 +143,12 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: "Bring several executives together",
         icon: Users,
-        body: "For a real business decision, open C-Suite Sessions → New C-Suite Session. Write the question, pick the executives and a strategy, and press Convene. Each executive gives a position and the CEO pulls them into one recommendation and a decision record.",
+        body: "For a real business decision, open C-Level Sessions → New C-Level Session. Write the question, pick the executives and a strategy, and press Convene. Each executive gives a position and the CEO pulls them into one recommendation and a decision record.",
       },
       {
         title: "Keep what matters",
         icon: Brain,
-        body: "Add facts about your organization to C-Suite Memory (figures, customers, constraints), upload key documents to Files, and approve good decisions. The executives use all of it in future answers.",
+        body: "Add facts about your organization to C-Level Memory (figures, customers, constraints), upload key documents to Files, and approve good decisions. The executives use all of it in future answers.",
       },
       {
         title: "Help them get better",
@@ -165,7 +165,7 @@ export const TUTORIALS: Tutorial[] = [
       "The A.I. Executives are advisers, not licensed professionals: the CLO is not your lawyer and the CFO is not a regulated financial adviser.",
       "Nothing is sent outside the platform without a person approving it.",
     ],
-    related: ["finding-your-way", "executive-offices", "c-suite-sessions"],
+    related: ["finding-your-way", "executive-offices", "c-level-sessions"],
   },
   {
     slug: "finding-your-way",
@@ -186,13 +186,13 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: "The menu",
         icon: LayoutDashboard,
-        body: "The left menu is grouped into Leadership (HQ, Executive Offices, Executive Comms, C-Suite Sessions), Intelligence (Memory, Studio, Decisions, Reports, Files, Projects) and Organization (Settings, Tutorials). Your organization's name is at the top; your profile and Sign out are at the bottom. Use Collapse to make it narrow. On a phone, open it with the menu button at the top left.",
+        body: "The left menu is grouped into Leadership (HQ, Executive Offices, Executive Comms, C-Level Sessions), Intelligence (Memory, Studio, Decisions, Reports, Files, Projects) and Organization (Settings, Tutorials). Your organization's name is at the top; your profile and Sign out are at the bottom. Use Collapse to make it narrow. On a phone, open it with the menu button at the top left.",
         image: { name: "sidebar", alt: "The left menu with Leadership, Intelligence and Organization sections", caption: DEMO },
       },
       {
         title: "Search and commands",
         icon: Search,
-        body: "Click the search box at the top or press Ctrl + K (⌘ + K on a Mac). Type to filter: “Ask CFO” opens a conversation with the CFO; actions include Message C-Suite, Start C-Suite Session, Open Studio, Search Memory, Upload File and Generate Report. Type two or more letters to also search your organization's memory, decisions, reports and more. Use ↑ ↓ to move, Enter to open and Esc to close.",
+        body: "Click the search box at the top or press Ctrl + K (⌘ + K on a Mac). Type to filter: “Ask CFO” opens a conversation with the CFO; actions include Message C-Level, Start C-Level Session, Open Studio, Search Memory, Upload File and Generate Report. Type two or more letters to also search your organization's memory, decisions, reports and more. Use ↑ ↓ to move, Enter to open and Esc to close.",
         image: { name: "palette", alt: "The search and commands box listing Ask CEO, Ask CFO and other executives", caption: DEMO },
       },
       {
@@ -208,21 +208,21 @@ export const TUTORIALS: Tutorial[] = [
       { kind: "badge", text: "SIMULATION", tone: "gold", meaning: "Top right: no A.I. key is connected yet, so answers are templates." },
     ],
     tips: ["If you see “Verify your email to invite team members”, use the link in the banner to confirm your address."],
-    related: ["getting-started", "c-suite-hq"],
+    related: ["getting-started", "c-level-hq"],
   },
 
   /* ------------------------------------------------------------------ */
   /* Leadership                                                          */
   /* ------------------------------------------------------------------ */
   {
-    slug: "c-suite-hq",
-    title: "C-Suite HQ: your daily overview",
+    slug: "c-level-hq",
+    title: "C-Level HQ: your daily overview",
     category: "Leadership",
     icon: LayoutDashboard,
     minutes: 3,
     summary: "Read the CEO's brief, clear approvals and jump into the day's work.",
     who: "Everyone (approvals need the Owner, Admin or Executive role)",
-    open: { href: "/hq", label: "Open C-Suite HQ" },
+    open: { href: "/hq", label: "Open C-Level HQ" },
     overview: "HQ gathers what needs your attention today in one place. Start your day here, act on what is waiting, then use the quick actions to begin new work.",
     flow: [
       { icon: FileText, label: "Read the brief" },
@@ -233,7 +233,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: "Quick actions",
         icon: Play,
-        body: "Across the top: Convene a C-Suite Session, Ask the CEO, Message the C-Suite and Request Finished Work. Each takes you straight to the right place.",
+        body: "Across the top: Convene a C-Level Session, Ask the CEO, Message the C-Level and Request Finished Work. Each takes you straight to the right place.",
         image: { name: "hq", alt: "HQ with quick actions and the Daily CEO Brief", caption: DEMO },
       },
       { title: "Daily CEO Brief", icon: FileText, body: "The CEO's summary of what matters today: risks, deadlines and what each executive is watching. Open it to read the full brief." },
@@ -245,7 +245,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: "Keep an eye on the rest",
         icon: LayoutDashboard,
-        body: "Recent Executive Comms, Active C-Suite Sessions, C-Suite Studio work, Recent decisions, the Financial snapshot and Risk & technology alerts round out the picture. Click any item to open it.",
+        body: "Recent Executive Comms, Active C-Level Sessions, C-Level Studio work, Recent decisions, the Financial snapshot and Risk & technology alerts round out the picture. Click any item to open it.",
       },
     ],
     related: ["getting-started", "decisions", "executive-comms"],
@@ -276,7 +276,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: "The office",
         icon: LayoutDashboard,
-        body: "The header has quick actions: Start conversation, Send message (Executive Comms), Request report and Assign work (Studio), Add to C-Suite Session and Voice. Below are the tabs: Conversation, Executive Profile, Library, Learning, Reports, Files and Activity.",
+        body: "The header has quick actions: Start conversation, Send message (Executive Comms), Request report and Assign work (Studio), Add to C-Level Session and Voice. Below are the tabs: Conversation, Executive Profile, Library, Learning, Reports, Files and Activity.",
         image: { name: "office-header", alt: "The Chief Financial Officer's office header and quick actions", caption: DEMO },
       },
       {
@@ -289,7 +289,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: "Use the answer",
         icon: Copy,
-        body: "Under each answer: 👍 / 👎 to rate it, Copy, Read aloud, Regenerate and Continue (latest answer only), Save to C-Suite Memory, Forward to another executive (starts an Executive Comms thread) and Bring to C-Suite Session. Hover over your own message to edit and resend it.",
+        body: "Under each answer: 👍 / 👎 to rate it, Copy, Read aloud, Regenerate and Continue (latest answer only), Save to C-Level Memory, Forward to another executive (starts an Executive Comms thread) and Bring to C-Level Session. Hover over your own message to edit and resend it.",
         image: { name: "answer-actions", alt: "The row of buttons under an answer", caption: "The buttons under every answer, left to right." },
       },
     ],
@@ -300,9 +300,9 @@ export const TUTORIALS: Tutorial[] = [
       { kind: "icon", icon: Volume2, label: "Read aloud", meaning: "Have your browser read the answer out." },
       { kind: "icon", icon: RotateCcw, label: "Regenerate", meaning: "Ask again for a fresh answer (latest answer only)." },
       { kind: "icon", icon: Play, label: "Continue", meaning: "Ask the executive to keep going (latest answer only)." },
-      { kind: "icon", icon: BookmarkPlus, label: "Save to C-Suite Memory", meaning: "Keep this answer as a proposed memory for confirmation." },
+      { kind: "icon", icon: BookmarkPlus, label: "Save to C-Level Memory", meaning: "Keep this answer as a proposed memory for confirmation." },
       { kind: "icon", icon: CornerUpRight, label: "Forward", meaning: "Send the answer to another executive in Executive Comms." },
-      { kind: "icon", icon: Users, label: "Bring to C-Suite Session", meaning: "Open a session that starts from this conversation." },
+      { kind: "icon", icon: Users, label: "Bring to C-Level Session", meaning: "Open a session that starts from this conversation." },
       { kind: "icon", icon: Mic, label: "Voice input", meaning: "Speak your question instead of typing." },
     ],
     related: ["teaching-your-executives", "executive-library", "web-research"],
@@ -344,19 +344,19 @@ export const TUTORIALS: Tutorial[] = [
       { kind: "icon", icon: Send, label: "Sent", meaning: "Messages you sent." },
     ],
     tips: ["Executives never claim to have taken outside action from Comms. Anything consequential goes through an approval."],
-    related: ["executive-offices", "c-suite-hq"],
+    related: ["executive-offices", "c-level-hq"],
   },
   {
-    slug: "c-suite-sessions",
-    title: "C-Suite Sessions: convene leadership",
+    slug: "c-level-sessions",
+    title: "C-Level Sessions: convene leadership",
     category: "Leadership",
     icon: Users,
     minutes: 7,
     summary: "Bring a business question to several executives and get one integrated recommendation.",
     who: "Owners, Admins, Executives and Members",
-    open: { href: "/sessions/new", label: "New C-Suite Session" },
+    open: { href: "/sessions/new", label: "New C-Level Session" },
     overview:
-      "A C-Suite Session is a structured meeting on one question. Each executive gives an independent position, specialists review or challenge where the strategy calls for it, and the CEO (or the chair you choose) writes a synthesis with a recommendation, rationale, preserved dissent, risks, next steps and confidence. The synthesis becomes a proposed decision.",
+      "A C-Level Session is a structured meeting on one question. Each executive gives an independent position, specialists review or challenge where the strategy calls for it, and the CEO (or the chair you choose) writes a synthesis with a recommendation, rationale, preserved dissent, risks, next steps and confidence. The synthesis becomes a proposed decision.",
     flow: [
       { icon: ClipboardList, label: "Frame the question" },
       { icon: Users, label: "Executives respond" },
@@ -367,7 +367,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: "Set up the session",
         icon: ClipboardList,
-        body: "C-Suite Sessions → New C-Suite Session. Give it a Session title and the Objective (the business question, constraints and what a good outcome looks like). Select at least two executives, choose a Session strategy, a Chair (the CEO by default), an optional Project, and attach up to five documents. Press Convene.",
+        body: "C-Level Sessions → New C-Level Session. Give it a Session title and the Objective (the business question, constraints and what a good outcome looks like). Select at least two executives, choose a Session strategy, a Chair (the CEO by default), an optional Project, and attach up to five documents. Press Convene.",
         image: { name: "session-new", alt: "The new session form with title, objective, executives and strategy", caption: DEMO },
       },
       {
@@ -441,7 +441,7 @@ export const TUTORIALS: Tutorial[] = [
       { kind: "badge", text: "CEO RECOMMENDS", tone: "gold", meaning: "The option the CEO recommends after the vote." },
       { kind: "badge", text: "CHOSEN", tone: "ok", meaning: "The option a person approved." },
     ],
-    related: ["c-suite-sessions", "decisions"],
+    related: ["c-level-sessions", "decisions"],
   },
 
   /* ------------------------------------------------------------------ */
@@ -449,7 +449,7 @@ export const TUTORIALS: Tutorial[] = [
   /* ------------------------------------------------------------------ */
   {
     slug: "decisions",
-    title: "Decisions: approve what the C-Suite recommends",
+    title: "Decisions: approve what the C-Level recommends",
     category: "Intelligence",
     icon: Gavel,
     minutes: 4,
@@ -457,7 +457,7 @@ export const TUTORIALS: Tutorial[] = [
     who: "Everyone can read; Owners, Admins and Executives approve",
     open: { href: "/decisions", label: "Open Decisions" },
     overview:
-      "Every session synthesis creates a structured decision: the question, options, recommendation, rationale, risks and confidence. It stays PROPOSED until a person acts. Approved decisions are saved to C-Suite Memory, so all seven executives remember them.",
+      "Every session synthesis creates a structured decision: the question, options, recommendation, rationale, risks and confidence. It stays PROPOSED until a person acts. Approved decisions are saved to C-Level Memory, so all seven executives remember them.",
     flow: [
       { icon: Gavel, label: "Review" },
       { icon: ListChecks, label: "Choose option" },
@@ -476,26 +476,26 @@ export const TUTORIALS: Tutorial[] = [
         icon: CheckCircle2,
         body: "If there were options, pick the one to adopt in the Adopt list (the CEO's recommendation is pre-selected), then press Approve with this option. Or mark it Deferred or Rejected.",
       },
-      { title: "Share it", icon: FileText, body: "Decision memo creates a report with the question, the recommendation, how the C-Suite voted, risks and status, ready to export as PDF or Word." },
+      { title: "Share it", icon: FileText, body: "Decision memo creates a report with the question, the recommendation, how the C-Level voted, risks and status, ready to export as PDF or Word." },
     ],
     symbols: [
       { kind: "badge", text: "PROPOSED", tone: "gold", meaning: "Waiting for a person." },
       { kind: "badge", text: "UNDER REVIEW", tone: "warn", meaning: "Being considered." },
-      { kind: "badge", text: "APPROVED", tone: "ok", meaning: "Adopted, and saved to C-Suite Memory." },
+      { kind: "badge", text: "APPROVED", tone: "ok", meaning: "Adopted, and saved to C-Level Memory." },
     ],
-    related: ["c-suite-sessions", "executive-votes", "c-suite-memory"],
+    related: ["c-level-sessions", "executive-votes", "c-level-memory"],
   },
   {
-    slug: "c-suite-memory",
-    title: "C-Suite Memory: your organization's knowledge",
+    slug: "c-level-memory",
+    title: "C-Level Memory: your organization's knowledge",
     category: "Intelligence",
     icon: Brain,
     minutes: 6,
     summary: "Add facts, confirm what the executives propose, and control who sees what.",
     who: "Everyone can read; Members and above add; Owners, Admins and Executives verify and delete",
-    open: { href: "/memory", label: "Open C-Suite Memory" },
+    open: { href: "/memory", label: "Open C-Level Memory" },
     overview:
-      "C-Suite Memory is not chat history. It holds facts, decisions, commitments and lessons about your organization, each with where it came from. The executives search it for every answer, but only the parts relevant to the question. Anything an A.I. Executive concludes arrives as PROPOSED and never becomes organizational fact until a person confirms it.",
+      "C-Level Memory is not chat history. It holds facts, decisions, commitments and lessons about your organization, each with where it came from. The executives search it for every answer, but only the parts relevant to the question. Anything an A.I. Executive concludes arrives as PROPOSED and never becomes organizational fact until a person confirms it.",
     flow: [
       { icon: BookmarkPlus, label: "Add or save" },
       { icon: BadgeCheck, label: "Verify" },
@@ -505,13 +505,13 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: "Browse and search",
         icon: Search,
-        body: "Search C-Suite Memory at the top, and filter by status and category. Click a record to open the Memory inspector with its full provenance: source, date, creator, verifier, confidence and visibility.",
-        image: { name: "memory", alt: "C-Suite Memory with search, filters, records and the add form", caption: DEMO },
+        body: "Search C-Level Memory at the top, and filter by status and category. Click a record to open the Memory inspector with its full provenance: source, date, creator, verifier, confidence and visibility.",
+        image: { name: "memory", alt: "C-Level Memory with search, filters, records and the add form", caption: DEMO },
       },
       {
         title: "Add knowledge",
         icon: BookmarkPlus,
-        body: "Use Add to C-Suite Memory: a Title and Content, a Category, Importance (1 to 5), Visibility (Organization, Leadership only or Owner only), an optional Project, and which executives it is Most relevant to. Things you add yourself count as confirmed.",
+        body: "Use Add to C-Level Memory: a Title and Content, a Category, Importance (1 to 5), Visibility (Organization, Leadership only or Owner only), an optional Project, and which executives it is Most relevant to. Things you add yourself count as confirmed.",
       },
       {
         title: "Confirm what's proposed",
@@ -530,14 +530,14 @@ export const TUTORIALS: Tutorial[] = [
     related: ["files", "decisions", "configuring-executives"],
   },
   {
-    slug: "c-suite-studio",
-    title: "C-Suite Studio: request finished work",
+    slug: "c-level-studio",
+    title: "C-Level Studio: request finished work",
     category: "Intelligence",
     icon: Workflow,
     minutes: 5,
     summary: "Describe what you need; the right executive leads it and delivers a document for review.",
     who: "Owners, Admins, Executives and Members",
-    open: { href: "/studio", label: "Open C-Suite Studio" },
+    open: { href: "/studio", label: "Open C-Level Studio" },
     overview:
       "Studio produces finished work: strategies, plans, models, campaigns, policies, research and reports. You describe the work; the platform routes it to the best lead executive with contributors, and the lead writes it in steps. You review, ask for revisions and save it as a report.",
     flow: [
@@ -550,14 +550,14 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: "Describe the work",
         icon: ClipboardList,
-        body: "Write what you need in the box, or click a suggestion such as “Develop a fundraising strategy.” Leave Automatic routing on (or pick a lead executive), set the priority (Low, Normal, High, Urgent) and an optional project. Press Assign to the C-Suite.",
+        body: "Write what you need in the box, or click a suggestion such as “Develop a fundraising strategy.” Leave Automatic routing on (or pick a lead executive), set the priority (Low, Normal, High, Urgent) and an optional project. Press Assign to the C-Level.",
         image: { name: "studio", alt: "The Studio request box with suggestions, routing, priority and project", caption: DEMO },
       },
       { title: "Let it be written", icon: Workflow, body: "The lead executive writes the work in short steps; keep the page open to watch it progress, or come back later. In production and Awaiting your review show where each piece is." },
       {
         title: "Review it",
         icon: CheckCircle2,
-        body: "When it is ready: Approve as Finished Work, or Request revision with a note on what to change (a new version is written). Save as Report adds it to Reports; Attach to Executive Comms and Bring to C-Suite Session share it. Version history keeps every version.",
+        body: "When it is ready: Approve as Finished Work, or Request revision with a note on what to change (a new version is written). Save as Report adds it to Reports; Attach to Executive Comms and Bring to C-Level Session share it. Version history keeps every version.",
         image: { name: "studio-job", alt: "A finished Studio piece with the Review actions", caption: DEMO },
       },
     ],
@@ -594,7 +594,7 @@ export const TUTORIALS: Tutorial[] = [
       },
       { title: "Delete when needed", icon: Settings, body: "Under Manage, Delete report removes it for everyone after you confirm. Linked sessions, decisions and Studio work are kept." },
     ],
-    related: ["c-suite-studio", "decisions"],
+    related: ["c-level-studio", "decisions"],
   },
   {
     slug: "files",
@@ -618,11 +618,11 @@ export const TUTORIALS: Tutorial[] = [
         body: "Drag files onto the Upload box or click to browse. Supported: PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, images and common audio and video up to 20 MB. Text formats are readable straight away; other formats are processed first.",
         image: { name: "files", alt: "The Files library with the upload box", caption: DEMO },
       },
-      { title: "Use them", icon: Users, body: "Attach up to five files when you set up a C-Suite Session, or add a document to an executive's Library. A summary of each new document also appears in C-Suite Memory as PROPOSED for you to confirm." },
+      { title: "Use them", icon: Users, body: "Attach up to five files when you set up a C-Level Session, or add a document to an executive's Library. A summary of each new document also appears in C-Level Memory as PROPOSED for you to confirm." },
     ],
     symbols: [{ kind: "badge", text: "READY", tone: "ok", meaning: "Processed: its text can be used by the executives." }],
     tips: ["Downloads use short-lived private links: never permanent public ones."],
-    related: ["executive-library", "c-suite-sessions", "c-suite-memory"],
+    related: ["executive-library", "c-level-sessions", "c-level-memory"],
   },
   {
     slug: "projects",
@@ -646,18 +646,18 @@ export const TUTORIALS: Tutorial[] = [
         body: "Under New project, enter a Project name and Description and press Create project.",
         image: { name: "projects", alt: "Project workspaces with the new project form", caption: DEMO },
       },
-      { title: "Link work to it", icon: ArrowRightLeft, body: "Choose the project when you set up a C-Suite Session, request Studio work or add to C-Suite Memory. It then shows in the project's workspace, and executives give that project's context extra weight." },
+      { title: "Link work to it", icon: ArrowRightLeft, body: "Choose the project when you set up a C-Level Session, request Studio work or add to C-Level Memory. It then shows in the project's workspace, and executives give that project's context extra weight." },
     ],
-    related: ["c-suite-sessions", "c-suite-studio"],
+    related: ["c-level-sessions", "c-level-studio"],
   },
 
   /* ------------------------------------------------------------------ */
-  /* Make your C-Suite better                                            */
+  /* Make your C-Level better                                            */
   /* ------------------------------------------------------------------ */
   {
     slug: "teaching-your-executives",
     title: "Teaching your executives with feedback",
-    category: "Make your C-Suite better",
+    category: "Make your C-Level better",
     icon: GraduationCap,
     minutes: 5,
     summary: "Rate answers, turn corrections into lessons, and approve what each executive should always do.",
@@ -695,7 +695,7 @@ export const TUTORIALS: Tutorial[] = [
   {
     slug: "executive-library",
     title: "The Executive Library: knowledge for each role",
-    category: "Make your C-Suite better",
+    category: "Make your C-Level better",
     icon: BookOpen,
     minutes: 5,
     summary: "Give each executive your playbooks and documents alongside proven frameworks for their field.",
@@ -728,7 +728,7 @@ export const TUTORIALS: Tutorial[] = [
   {
     slug: "web-research",
     title: "Web research: current outside facts",
-    category: "Make your C-Suite better",
+    category: "Make your C-Level better",
     icon: Globe,
     minutes: 3,
     summary: "Let executives look up markets, competitors, regulations and news, with sources.",
@@ -800,7 +800,7 @@ export const TUTORIALS: Tutorial[] = [
     minutes: 6,
     summary: "Shape each executive's role, reasoning, skills, memory access, tools and model.",
     who: "Owners and Admins",
-    open: { href: "/settings/c-suite", label: "Open A.I. C-Level settings" },
+    open: { href: "/settings/c-level", label: "Open A.I. C-Level settings" },
     overview: "Every executive is configured in the database, not hard-coded. Settings → A.I. C-Level → Configure lets you change how one executive thinks, what it knows about and what it can use.",
     flow: [
       { icon: Users, label: "Pick an executive" },
@@ -813,7 +813,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: "Skills and memory areas",
         icon: Brain,
-        body: "Skills: one per line as “Name — what it covers”. Memory areas: let the executive search all of C-Suite Memory, or only the areas you tick. Approved decisions are always shared.",
+        body: "Skills: one per line as “Name — what it covers”. Memory areas: let the executive search all of C-Level Memory, or only the areas you tick. Approved decisions are always shared.",
         image: { name: "configure-memory", alt: "The Memory areas section with area checkboxes", caption: DEMO },
       },
       { title: "Tools", icon: Plug, body: "Tick the tools this executive may use, such as Web research. Tools marked “requires approval” always go through a human approval. Press Save executive configuration." },

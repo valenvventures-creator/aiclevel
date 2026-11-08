@@ -1,7 +1,7 @@
 import type { ExecutiveRoleCode, SessionMode } from "@/types/domain";
 
 /**
- * C-Suite Session strategies. The orchestrator reads these definitions to
+ * C-Level Session strategies. The orchestrator reads these definitions to
  * build its bounded stage plan — no session behaviour is hardcoded in UI.
  */
 export interface SessionStageDef {

@@ -11,7 +11,7 @@ export interface ExecLite { role_code: string; short_title: string; title: strin
 /* ------------------------------------------------------------------ */
 /* Before / After A.I. C-Level — each scene is a circle: a centre disc */
 /* with satellites on an orbit. Before: scattered, disconnected,       */
-/* waiting on you. After: the C-Suite in orbit, wired to one outcome.  */
+/* waiting on you. After: the C-Level in orbit, wired to one outcome.  */
 /* ------------------------------------------------------------------ */
 
 type Satellite =
@@ -100,7 +100,7 @@ const CHAPTERS: Chapter[] = [
       ],
     },
     after: {
-      center: { eyebrow: "Executive Comms", title: "One thread", sub: "Q3 growth plan, whole C-Suite" },
+      center: { eyebrow: "Executive Comms", title: "One thread", sub: "Q3 growth plan, whole C-Level" },
       satellites: [
         { kind: "exec", role: "CCO", title: "Shift budget", sub: "Converting at 3.1×" },
         { kind: "exec", role: "CFO", title: "CAC payback < 9 mo", sub: "Watched weekly" },
@@ -149,7 +149,7 @@ const CHAPTERS: Chapter[] = [
       ],
     },
     after: {
-      center: { eyebrow: "C-Suite Studio", title: "Routed", sub: "The right executive leads each piece" },
+      center: { eyebrow: "C-Level Studio", title: "Routed", sub: "The right executive leads each piece" },
       satellites: [
         { kind: "exec", role: "CFO", title: "Investor update", sub: "Awaiting review" },
         { kind: "exec", role: "CHRO", title: "Access policy", sub: "Finished" },

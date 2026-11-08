@@ -1,6 +1,6 @@
-# C-Suite Memory Architecture
+# C-Level Memory Architecture
 
-C-Suite Memory is organizational intelligence — facts, decisions, commitments, lessons — **not chat history**.
+C-Level Memory is organizational intelligence — facts, decisions, commitments, lessons — **not chat history**.
 
 ## Record
 `MemoryRecord`: title, content, category (19 categories), importance 1–5, status, pinned, source_type + source_id (provenance), created_by, verified_by, confidence, visibility (ORGANIZATION / LEADERSHIP / OWNER_ONLY), executive_relevance, project_id, embeddings, timestamps.
@@ -10,7 +10,7 @@ C-Suite Memory is organizational intelligence — facts, decisions, commitments,
 **AI-generated conclusions never become organizational truth automatically.** Saving an executive message to memory creates a PROPOSED record; uploaded documents create PROPOSED "Document:" records.
 
 ## Sources
-human entry · uploaded document · executive conversation · C-Suite Session · report · external integration · API · research · import (onboarding Constitution).
+human entry · uploaded document · executive conversation · C-Level Session · report · external integration · API · research · import (onboarding Constitution).
 
 ## Retrieval (`src/server/memory/retrieval.ts`)
 Score = (0.55·similarity + 0.15·recency + 0.15·importance + executive-relevance boost + project boost + pin boost) × status weight, after hard filters: organization, not archived, viewer visibility, executive's permitted categories (except approved decisions: VERIFIED or USER_CONFIRMED records in DECISIONS are organization-wide and every executive may recall them, see `isSharedDecision`). Top-k (default 8) only — the full memory is never sent to a model.

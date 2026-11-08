@@ -35,7 +35,7 @@ export function SiteNav() {
         <div className="flex items-center gap-2">
           <Link href="/login" className="hidden h-10 items-center rounded-full bg-white/[0.04] px-[18px] text-sm text-white/90 transition hover:bg-white/[0.08] sm:inline-flex">Sign in</Link>
           <Link href="/signup" className="group hidden h-10 items-center gap-1.5 rounded-full bg-gradient-to-b from-gold-200 to-gold-400 px-[18px] text-sm font-medium text-ink-950 shadow-[0_0_30px_-6px_rgba(239,186,17,.7)] transition-all duration-500 ease-[var(--ease-out)] hover:shadow-[0_0_44px_-4px_rgba(239,186,17,.9)] sm:inline-flex">
-            Convene your C-Suite <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
+            Convene your C-Level <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
           </Link>
           <button className="grid size-10 place-items-center rounded-full text-white/80 lg:hidden" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={open ? "Close menu" : "Open menu"}>
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -48,7 +48,7 @@ export function SiteNav() {
             <a key={h} href={h} onClick={() => setOpen(false)} className="block py-3 text-lg text-white/80">{l}</a>
           ))}
           <div className="mt-4 grid gap-2">
-            <Link href="/signup" className="flex h-12 items-center justify-center rounded-full bg-gradient-to-b from-gold-200 to-gold-400 font-medium text-ink-950">Convene your C-Suite</Link>
+            <Link href="/signup" className="flex h-12 items-center justify-center rounded-full bg-gradient-to-b from-gold-200 to-gold-400 font-medium text-ink-950">Convene your C-Level</Link>
             <Link href="/login" className="flex h-12 items-center justify-center rounded-full bg-white/[0.05]">Sign in</Link>
           </div>
         </nav>

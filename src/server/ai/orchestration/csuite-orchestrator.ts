@@ -14,7 +14,7 @@ import type { CSuiteSession, CSuiteSessionMessage, Organization, ResolvedExecuti
 import { planStages, parseRecommendedOption, parseVoteDetails, tallyVotes, voteLeader, type PlannedStage } from "./plan";
 
 /**
- * C-SUITE ORCHESTRATOR (server-side only) — STEPWISE.
+ * C-LEVEL ORCHESTRATOR (server-side only) — STEPWISE.
  *
  * Hosting platforms cap each request (Netlify: 60 s, including work after the
  * response). A full session — several executive positions, reviews and a CEO

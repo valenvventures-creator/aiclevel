@@ -74,7 +74,7 @@ export default async function ExecutiveOfficePage({ params, searchParams }: Page
           <ButtonLink href={`/executives/${exec.slug}?tab=conversation`} size="sm"><MessageSquare className="size-3.5" /> Start conversation</ButtonLink>
           <ButtonLink href={`/comms?compose=1&to=${exec.id}`} size="sm" variant="outline"><Mail className="size-3.5" /> Send message</ButtonLink>
           <ButtonLink href={`/studio?lead=${exec.role_code}&preset=report`} size="sm" variant="outline"><FileText className="size-3.5" /> Request report</ButtonLink>
-          <ButtonLink href={`/sessions/new?with=${exec.id}`} size="sm" variant="outline"><Users className="size-3.5" /> Add to C-Suite Session</ButtonLink>
+          <ButtonLink href={`/sessions/new?with=${exec.id}`} size="sm" variant="outline"><Users className="size-3.5" /> Add to C-Level Session</ButtonLink>
           <ButtonLink href={`/studio?lead=${exec.role_code}`} size="sm" variant="outline"><Workflow className="size-3.5" /> Assign work</ButtonLink>
           <ButtonLink href={`/settings/voice#${exec.slug}`} size="sm" variant="ghost"><Volume2 className="size-3.5" /> Voice</ButtonLink>
         </div>
@@ -142,7 +142,7 @@ function ProfileTab({ exec, canConfigure }: { exec: NonNullable<Awaited<ReturnTy
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <Card className="lg:col-span-2">
-        <SectionTitle action={canConfigure && <ButtonLink href={`/settings/c-suite/${exec.slug}`} size="sm" variant="ghost"><Settings2 className="size-3.5" /> Configure</ButtonLink>}>Executive Profile</SectionTitle>
+        <SectionTitle action={canConfigure && <ButtonLink href={`/settings/c-level/${exec.slug}`} size="sm" variant="ghost"><Settings2 className="size-3.5" /> Configure</ButtonLink>}>Executive Profile</SectionTitle>
         <blockquote className="mb-6 border-l-2 border-gold-500 pl-4 font-accent text-xl italic">“{p.primary_question.replace(/[“”"]/g, "")}”</blockquote>
         <dl className="grid gap-5 sm:grid-cols-2">
           {rows.map(([k, v]) => (
@@ -222,7 +222,7 @@ async function ActivityTab({ orgId, execId, execMap }: { orgId: string; execId: 
     db().usage.list(orgId, { where: { executive_id: execId }, orderBy: "created_at", desc: true, limit: 10 }),
   ]);
   const items = [
-    ...sessions.filter((s) => s.participant_executive_ids.includes(execId)).map((s) => ({ at: s.created_at, label: `Participated in C-Suite Session: ${s.title}`, href: `/sessions/${s.id}` })),
+    ...sessions.filter((s) => s.participant_executive_ids.includes(execId)).map((s) => ({ at: s.created_at, label: `Participated in C-Level Session: ${s.title}`, href: `/sessions/${s.id}` })),
     ...comms.map((c) => ({ at: c.created_at, label: `Sent Executive Comms: ${c.subject}`, href: `/comms?thread=${c.thread_id}` })),
     ...usage.map((u) => ({ at: u.created_at, label: `${u.request_type.replace(/_/g, " ")} via ${u.provider}/${u.model}${u.success ? "" : " — failed"}`, href: null })),
   ].sort((a, b) => b.at.localeCompare(a.at));

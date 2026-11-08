@@ -42,8 +42,8 @@ export function StudioRequest({ execs, capabilities, projects, defaultLead }: { 
   return (
     <form action={action} className="plate relative overflow-hidden p-6 sm:p-8">
       <div aria-hidden className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full bg-gold-400/10 blur-3xl" />
-      <p className="eyebrow relative">C-Suite Studio</p>
-      <h2 className="relative mt-2 font-heading text-3xl font-semibold">Tell your C-Suite what you need.</h2>
+      <p className="eyebrow relative">C-Level Studio</p>
+      <h2 className="relative mt-2 font-heading text-3xl font-semibold">Tell your C-Level what you need.</h2>
       <p className="relative mt-1 text-sm text-ivory-muted">The right executive leads the work.</p>
       {state.error && <div className="relative mt-4"><Alert tone="risk">{state.error}</Alert></div>}
       <label htmlFor="studio-req" className="sr-only">Describe the work you need</label>
@@ -85,7 +85,7 @@ export function StudioRequest({ execs, capabilities, projects, defaultLead }: { 
         </div>
       </div>
       <div className="relative mt-5 flex justify-end">
-        <Button type="submit" size="lg" disabled={pending || text.trim().length < 8}>{pending ? <Loader2 className="size-4 animate-spin" /> : null} Assign to the C-Suite <ArrowRight className="size-4" /></Button>
+        <Button type="submit" size="lg" disabled={pending || text.trim().length < 8}>{pending ? <Loader2 className="size-4 animate-spin" /> : null} Assign to the C-Level <ArrowRight className="size-4" /></Button>
       </div>
     </form>
   );

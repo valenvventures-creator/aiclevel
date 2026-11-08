@@ -35,10 +35,10 @@ export function CommandPalette({ onClose, executives }: { onClose: () => void; e
   const commands = useMemo<Command[]>(() => {
     const ask = executives.map((e) => ({ id: `ask-${e.slug}`, label: `Ask ${e.short_title}`, hint: e.title, icon: MessageSquare, href: `/executives/${e.slug}?tab=conversation`, group: "Ask an executive" }));
     const actions: Command[] = [
-      { id: "message", label: "Message C-Suite", hint: "Executive Comms", icon: Mail, href: "/comms?compose=1", group: "Actions" },
-      { id: "session", label: "Start C-Suite Session", hint: "Convene leadership", icon: Users, href: "/sessions/new", group: "Actions" },
+      { id: "message", label: "Message the C-Level", hint: "Executive Comms", icon: Mail, href: "/comms?compose=1", group: "Actions" },
+      { id: "session", label: "Start C-Level Session", hint: "Convene leadership", icon: Users, href: "/sessions/new", group: "Actions" },
       { id: "studio", label: "Open Studio", hint: "Request Finished Work", icon: Workflow, href: "/studio", group: "Actions" },
-      { id: "memory", label: "Search Memory", hint: "C-Suite Memory", icon: Brain, href: "/memory", group: "Actions" },
+      { id: "memory", label: "Search Memory", hint: "C-Level Memory", icon: Brain, href: "/memory", group: "Actions" },
       { id: "upload", label: "Upload File", hint: "Files", icon: Upload, href: "/files?upload=1", group: "Actions" },
       { id: "report", label: "Generate Report", hint: "Reports", icon: FileText, href: "/reports?new=1", group: "Actions" },
     ];

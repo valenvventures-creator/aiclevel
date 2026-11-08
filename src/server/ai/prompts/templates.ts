@@ -44,17 +44,17 @@ Risk constraints: {{risk_constraints}}`),
   ...["ceo_core", "cfo_core", "cco_core", "chro_core", "cto_core", "clo_core", "impact_core"].map((k) => ({ ...T(k, "EXECUTIVE_CORE", "{{>executive_generic}}") })),
 
   T("c_suite_session", "SESSION", `
-You are participating in a C-Suite Session convened by the organization's leadership.
+You are participating in a C-Level Session convened by the organization's leadership.
 Session objective: {{objective}}
 Mode: {{mode_label}} — {{mode_description}}
 Fellow participants: {{participants}}
 
 Give YOUR independent position strictly from your mandate ({{mandate}}). Do not speak for other executives.
-Structure: **Position** (one sentence) · **Reasoning** (3–5 bullets) · **Key risk from my seat** · **What I need to be confident** · **Confidence** (0–100%).`),
+Structure: **Position** (one sentence) · **Reasoning** (3–5 bullets) · **Key risk from my seat** · **What I need to be confident** · **Confidence** (0–100%).`, 2), // v2: renamed to C-Level
 
   T("rapid", "SESSION", `
-RAPID C-Suite Session. Objective: {{objective}}
-Answer in at most 120 words from your mandate ({{mandate}}): position, top reason, top risk, confidence (0–100%).`),
+RAPID C-Level Session. Objective: {{objective}}
+Answer in at most 120 words from your mandate ({{mandate}}): position, top reason, top risk, confidence (0–100%).`, 2), // v2: renamed to C-Level
 
   T("red_team", "SESSION", `
 RED TEAM ROUND. Objective: {{objective}}
@@ -124,7 +124,7 @@ A: <option>
 B: <option>`),
 
   T("ceo_synthesis", "SESSION", `
-You chair this C-Suite Session. Objective: {{objective}}
+You chair this C-Level Session. Objective: {{objective}}
 Synthesize the executive record below into ONE integrated recommendation. Represent each executive faithfully, name agreements, and PRESERVE meaningful disagreement rather than smoothing it over.
 <session_record>
 {{transcript}}
@@ -132,17 +132,17 @@ Synthesize the executive record below into ONE integrated recommendation. Repres
 Structure your output exactly:
 ## Recommendation
 ## Rationale
-## Where the C-Suite agrees
+## Where the C-Level agrees
 ## Preserved dissent
 ## Key risks
 | Risk | Severity (LOW/MEDIUM/HIGH) | Owner |
 ## Next steps
 | Action | Owner | When |
 ## Confidence
-A single percentage and what would raise it.`),
+A single percentage and what would raise it.`, 2), // v2: renamed to C-Level
 
   T("vote_synthesis", "SESSION", `
-You chair this C-Suite Session, which has just held an Executive Vote. Objective: {{objective}}
+You chair this C-Level Session, which has just held an Executive Vote. Objective: {{objective}}
 Options voted on:
 {{options}}
 Synthesize the votes below into ONE integrated recommendation. Report how the votes fell, represent each executive faithfully, and PRESERVE meaningful disagreement rather than smoothing it over. You may recommend an option other than the vote leader, but say why.
@@ -153,7 +153,7 @@ Structure your output exactly:
 ## Recommendation
 Name the recommended option by its id and wording.
 ## Rationale
-## Where the C-Suite agrees
+## Where the C-Level agrees
 ## Preserved dissent
 ## Key risks
 | Risk | Severity (LOW/MEDIUM/HIGH) | Owner |
@@ -162,7 +162,7 @@ Name the recommended option by its id and wording.
 ## Confidence
 A single percentage and what would raise it.
 End with a final line exactly in the form:
-RECOMMENDED OPTION: <option id>`),
+RECOMMENDED OPTION: <option id>`, 2), // v2: renamed to C-Level
 
   ...([
     ["financial_review", "FINANCIAL REVIEW led by the Chief Financial Officer. Quantify costs, revenue effects, cash/runway impact and ROI with explicit assumptions and base/upside/downside ranges. Label all estimates."],
@@ -184,12 +184,12 @@ Capabilities: {{capabilities}}
 Request: {{request}}`),
 
   T("studio_production", "STUDIO", `
-C-SUITE STUDIO ASSIGNMENT. You are the lead executive for this piece of Finished Work.
+C-LEVEL STUDIO ASSIGNMENT. You are the lead executive for this piece of Finished Work.
 Artifact type: {{artifact_type}}
 Request: {{request}}
 Contributing executives' perspectives to incorporate: {{contributors}}
 {{revision}}
-Produce a complete, professional, ready-to-review deliverable in Markdown. Include a short "Assumptions" section and a "Human review checklist" at the end.`),
+Produce a complete, professional, ready-to-review deliverable in Markdown. Include a short "Assumptions" section and a "Human review checklist" at the end.`, 2), // v2: renamed to C-Level
 
   T("memory_extraction", "MEMORY", `
 Extract durable organizational facts, decisions, commitments, deadlines and risks from the content below as JSON array items {"title","content","category","importance"(1-5)}. Only include facts explicitly supported by the content. These will be PROPOSED for human verification, not stored as truth.

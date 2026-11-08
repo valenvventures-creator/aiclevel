@@ -14,7 +14,7 @@ The 18 specified steps are grouped into 9 screens. Each screen persists server-s
 | Risk & priorities | 12 Risk tolerance · 13 Financial · 14 Technology · 15 Impact | Constitution |
 | Foundational documents | 16 Uploads | `files` (+ PROPOSED document memory for text formats) |
 | Plan | 17 Subscription (trial; billing disabled) | — |
-| Enter C-Suite HQ | 18 | Constitution → initial C-Suite Memory (USER_CONFIRMED, source IMPORT), `onboarding_completed`, welcome notification |
+| Enter C-Level HQ | 18 | Constitution → initial C-Level Memory (USER_CONFIRMED, source IMPORT), `onboarding_completed`, welcome notification |
 
 Invited members skip organizational onboarding and land in HQ. Owners with incomplete onboarding are redirected back from the app shell.
 

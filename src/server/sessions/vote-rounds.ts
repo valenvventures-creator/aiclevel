@@ -68,8 +68,8 @@ export function roundForDecision(rounds: VoteRound[], decision: Decision): VoteR
 const pct = (n: number | null) => (n === null ? "—" : `${Math.round(n * 100)}%`);
 const score = (n: number | null) => (n === null ? "—" : `${n.toFixed(1)} / 10`);
 
-/** "How the C-Suite voted" as Markdown, for Minutes and Decision Memos. */
-export function voteRoundMarkdown(round: VoteRound, titleOf: (executiveId: string) => string, heading = "## How the C-Suite voted"): string {
+/** "How the C-Level voted" as Markdown, for Minutes and Decision Memos. */
+export function voteRoundMarkdown(round: VoteRound, titleOf: (executiveId: string) => string, heading = "## How the C-Level voted"): string {
   const label = new Map(round.ballot.map((o) => [o.id, o.label]));
   const recommended = round.decision?.recommended_option ?? null;
   const blocks = [
