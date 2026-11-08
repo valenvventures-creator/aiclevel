@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, Gavel, Lock, ScrollText, ShieldCheck } from "lucide-react";
 import { ExecutiveAvatar } from "@/components/executives/executive-avatar";
 import { Chapters, type ExecLite } from "@/components/marketing/chapters";
-import { Constellation } from "@/components/marketing/constellation";
+import { CoilMachine } from "@/components/marketing/coil-machine";
 import { ConveneHub, SourcesHub } from "@/components/marketing/hubs";
 import { LiveDemo } from "@/components/marketing/live-demo";
 import { Reveal, ScrollProgress } from "@/components/marketing/motion";
@@ -25,7 +25,7 @@ export default function LandingPage() {
         <section className="relative min-h-[100svh] overflow-hidden">
           <div aria-hidden className="pointer-events-none absolute right-[-20%] top-[-10%] h-[70rem] w-[70rem] rounded-full bg-[radial-gradient(circle,rgba(46,72,170,.28),rgba(20,28,70,.12)_40%,transparent_65%)]" />
           <div aria-hidden className="pointer-events-none absolute right-[5%] top-[10%] h-[34rem] w-[34rem] rounded-full bg-[radial-gradient(circle,rgba(239,186,17,.14),transparent_60%)] blur-2xl" />
-          <Constellation className="absolute right-[-12%] top-[4%] h-[92%] w-[78%] opacity-90 max-lg:right-[-30%] max-lg:top-[38%] max-lg:h-[62%] max-lg:w-[130%] max-lg:opacity-50" />
+          <CoilMachine className="absolute right-[-12%] top-[4%] h-[92%] w-[78%] opacity-95 max-lg:right-[-30%] max-lg:top-[46%] max-lg:h-[58%] max-lg:w-[130%] max-lg:opacity-35" />
           <div className="relative mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-center px-4 pt-24 sm:px-6">
             <div className="max-w-2xl">
               <p className="animate-fade-up font-mono text-[11px] tracking-[0.3em] text-gold-300/90">THOUGHT AUTHORITIES · A.I. C-SUITE</p>
