@@ -1,8 +1,9 @@
 "use server";
 
+import { checkProvider, type ProviderCheck } from "@/server/ai/provider-check";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { dataMode, env } from "@/lib/env";
+import { dataMode } from "@/lib/env";
 import { authorize, getConstitution, requireContext, updateOrganizationRecord } from "@/server/organizations/service";
 import { createInvitation } from "@/server/organizations/invitations";
 import { sendInvitationEmail } from "@/server/email/flows";
@@ -222,21 +223,9 @@ export async function ceoIntelligenceOpAction(fd: FormData) {
 }
 
 /** Provider connectivity test — server-side only; never echoes the key. */
-export async function testProviderAction(provider: "anthropic" | "openai"): Promise<{ ok: boolean; message: string }> {
+export async function testProviderAction(provider: "anthropic" | "openai"): Promise<ProviderCheck> {
   await authorize("models.configure");
-  const key = provider === "anthropic" ? env.anthropicApiKey : env.openaiApiKey;
-  if (!key) return { ok: false, message: "No credential configured on the server." };
-  try {
-    if (provider === "anthropic") {
-      const { default: Anthropic } = await import("@anthropic-ai/sdk");
-      await new Anthropic({ apiKey: key, maxRetries: 0 }).models.list({ limit: 1 });
-      return { ok: true, message: "Connection verified." };
-    }
-    const res = await fetch("https://api.openai.com/v1/models", { headers: { authorization: `Bearer ${key}` } });
-    return res.ok ? { ok: true, message: "Connection verified." } : { ok: false, message: `Provider responded with ${res.status}.` };
-  } catch {
-    return { ok: false, message: "Could not reach the provider from the server." };
-  }
+  return checkProvider(provider);
 }
 
 /** Sends a test email to the signed-in administrator and reports the provider's answer (admins only). */

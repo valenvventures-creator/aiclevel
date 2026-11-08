@@ -11,13 +11,18 @@ function clean(v: string | undefined): string {
   return (v ?? "").trim().replace(/^(["'])(.*)\1$/, "$2").trim();
 }
 
+function cleanKey(v: string | undefined): string {
+  return clean(v).replace(/\s+/g, "").replace(/^(["'])(.*)\1$/, "$2");
+}
+
 export const env = {
   appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
   supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
-  openaiApiKey: process.env.OPENAI_API_KEY ?? "",
+  // API keys never contain whitespace: drop spaces, line breaks and wrapping quotes pasted with them.
+  anthropicApiKey: cleanKey(process.env.ANTHROPIC_API_KEY),
+  openaiApiKey: cleanKey(process.env.OPENAI_API_KEY),
   // Trimmed (and unquoted) because values pasted into hosting dashboards often carry stray spaces or quotes.
   resendApiKey: clean(process.env.RESEND_API_KEY),
   /** e.g. "Thought Authorities <no-reply@yourdomain.com>" — the domain must be verified with the email provider. */
