@@ -95,11 +95,11 @@
   --color-risk: var(--signal-risk);
   --color-info: var(--signal-info);
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-cinzel), "Trajan Pro", Georgia, serif;
-  --font-heading: var(--font-grotesk), system-ui, sans-serif;
-  --font-accent: var(--font-instrument), Georgia, serif;
-  --font-mono: var(--font-mono-jb), ui-monospace, monospace;
+  --font-heading: var(--font-head), system-ui, sans-serif;
+  --font-accent: var(--font-serif), Georgia, serif;
+  --font-mono: var(--font-code), ui-monospace, monospace;
 
   --animate-fade-up: fade-up 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   --animate-pulse-soft: pulse-soft 2.4s ease-in-out infinite;
@@ -221,12 +221,12 @@ body {
   color: transparent;
 }
 
-/* Apex-style display headline: heavy grotesk, tight tracking */
+/* Display headline: Sora, tight tracking */
 @utility headline {
   font-family: var(--font-heading);
   font-weight: 600;
-  letter-spacing: -0.045em;
-  line-height: 1;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
 }
 
 /* Italic serif accent phrase inside a headline */
@@ -234,7 +234,7 @@ body {
   font-family: var(--font-accent);
   font-style: italic;
   font-weight: 400;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   background: linear-gradient(180deg, var(--gold-100) 0%, var(--gold-300) 55%, var(--gold-500) 100%);
   -webkit-background-clip: text;
   background-clip: text;
