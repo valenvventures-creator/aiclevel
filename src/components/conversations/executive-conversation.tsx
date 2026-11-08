@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { ArrowUp, BookmarkPlus, Check, Copy, CornerUpRight, Globe, Loader2, Mic, MicOff, Pencil, Play, RotateCcw, Square, Users, Volume2 } from "lucide-react";
+import { FeedbackButtons } from "@/components/executives/feedback-buttons";
 import { ExecutiveAvatar } from "@/components/executives/executive-avatar";
 import { Markdown } from "@/components/ui/markdown";
 import { Alert, SimulatedBadge } from "@/components/ui/primitives";
@@ -17,6 +18,8 @@ export interface UIMessage {
   simulated?: boolean;
   model?: string | null;
   pending?: boolean;
+  /** This person's earlier rating of the answer, if any. */
+  rating?: "UP" | "DOWN" | null;
 }
 
 interface ExecLite {
@@ -31,7 +34,7 @@ interface ExecLite {
 
 type SpeechRec = { start: () => void; stop: () => void; onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void; onend: () => void; continuous: boolean; interimResults: boolean };
 
-export function ExecutiveConversation({ exec, others, conversationId: initialId, initialMessages, canWrite, suggestions }: { exec: ExecLite; others: ExecLite[]; conversationId: string | null; initialMessages: UIMessage[]; canWrite: boolean; suggestions: string[] }) {
+export function ExecutiveConversation({ exec, others, conversationId: initialId, initialMessages, canWrite, canRate = false, suggestions }: { exec: ExecLite; others: ExecLite[]; conversationId: string | null; initialMessages: UIMessage[]; canWrite: boolean; canRate?: boolean; suggestions: string[] }) {
   const router = useRouter();
   const [messages, setMessages] = useState<UIMessage[]>(initialMessages);
   const [conversationId, setConversationId] = useState(initialId);
@@ -159,7 +162,7 @@ export function ExecutiveConversation({ exec, others, conversationId: initialId,
           </div>
         )}
         {messages.map((m, i) => (
-          <MessageRow key={m.id} m={m} exec={exec} others={others} isLastExec={i === lastExecIdx} streaming={streaming} conversationId={conversationId} onRegenerate={() => send("", { regenerate: true })} onEdit={() => setInput(m.content)} onContinue={() => send("Continue from where you left off.")} />
+          <MessageRow key={m.id} m={m} exec={exec} others={others} canRate={canRate} isLastExec={i === lastExecIdx} streaming={streaming} conversationId={conversationId} onRegenerate={() => send("", { regenerate: true })} onEdit={() => setInput(m.content)} onContinue={() => send("Continue from where you left off.")} />
         ))}
         {streaming && activity && (
           <p role="status" className="flex items-center gap-2 pl-12 text-xs text-gold-300">
@@ -224,7 +227,7 @@ export function ExecutiveConversation({ exec, others, conversationId: initialId,
   );
 }
 
-function MessageRow({ m, exec, others, isLastExec, streaming, conversationId, onRegenerate, onEdit, onContinue }: { m: UIMessage; exec: ExecLite; others: ExecLite[]; isLastExec: boolean; streaming: boolean; conversationId: string | null; onRegenerate: () => void; onEdit: () => void; onContinue: () => void }) {
+function MessageRow({ m, exec, others, canRate, isLastExec, streaming, conversationId, onRegenerate, onEdit, onContinue }: { m: UIMessage; exec: ExecLite; others: ExecLite[]; canRate: boolean; isLastExec: boolean; streaming: boolean; conversationId: string | null; onRegenerate: () => void; onEdit: () => void; onContinue: () => void }) {
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [fwdOpen, setFwdOpen] = useState(false);
@@ -265,6 +268,7 @@ function MessageRow({ m, exec, others, isLastExec, streaming, conversationId, on
         {m.content ? <Markdown>{m.content}</Markdown> : <span className="inline-flex items-center gap-2 text-sm text-ivory-muted"><Loader2 className="size-3.5 animate-spin" /> Thinking through it from the {exec.short_title} seat…</span>}
         {real && !streaming && (
           <div className="mt-2 flex flex-wrap items-center gap-1">
+            {canRate && <FeedbackButtons executiveId={exec.id} executiveTitle={exec.title} sourceType="CONVERSATION" sourceId={m.id} initial={m.rating ?? null} />}
             <IconBtn label={copied ? "Copied" : "Copy"} onClick={async () => { await navigator.clipboard.writeText(m.content); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>{copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}</IconBtn>
             <IconBtn label="Read aloud" onClick={speak}><Volume2 className="size-3.5" /></IconBtn>
             {isLastExec && <IconBtn label="Regenerate" onClick={onRegenerate}><RotateCcw className="size-3.5" /></IconBtn>}

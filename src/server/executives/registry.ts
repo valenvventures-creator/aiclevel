@@ -1,5 +1,5 @@
 import "server-only";
-import { db, nowIso } from "@/server/db/store";
+import { db, newId, nowIso } from "@/server/db/store";
 import { audit } from "@/server/audit";
 import type { AIExecutive, AIExecutiveModelConfig, AIExecutivePersona, ExecutiveRoleCode, ResolvedExecutive } from "@/types/domain";
 
@@ -85,6 +85,15 @@ export const AIExecutiveRegistry = {
       if (m) await d.modelConfigs.update(orgId, m.id, patch.model);
     }
     await audit(orgId, actorId, "executive.config_change", "ai_executive", executiveId, { fields: Object.keys({ ...patch.executive, ...patch.persona, ...patch.model }) });
+  },
+
+  /** Replaces an executive's listed skills (shown in its profile and given to the model as its expertise). */
+  async replaceSkills(orgId: string, actorId: string, executiveId: string, skills: { name: string; description: string }[]) {
+    const d = db();
+    const current = await d.skills.list(orgId, { where: { executive_id: executiveId } });
+    await Promise.all(current.map((s) => d.skills.remove(orgId, s.id)));
+    if (skills.length) await d.skills.insertMany(skills.map((s, i) => ({ id: newId(), organization_id: orgId, executive_id: executiveId, name: s.name, description: s.description, priority: i + 1 })));
+    await audit(orgId, actorId, "executive.config_change", "ai_executive", executiveId, { fields: ["skills"] });
   },
 
   async activateExecutive(orgId: string, actorId: string, executiveId: string) {

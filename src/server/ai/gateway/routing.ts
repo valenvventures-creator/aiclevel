@@ -18,7 +18,7 @@ export interface RouteDecision {
 
 export const UTILITY_ROUTE: RouteDecision = { provider: "anthropic", model: "claude-haiku-5-5", effort: "low", fallbackProvider: "openai", fallbackModel: "gpt-5-mini", maxTokens: 2000 };
 
-const UTILITY_TASKS: TaskType[] = ["studio_routing", "memory_extraction", "short_communication", "vote_options"];
+const UTILITY_TASKS: TaskType[] = ["studio_routing", "memory_extraction", "short_communication", "vote_options", "lesson_drafting"];
 
 export const TASK_MAX_TOKENS: Record<TaskType, number> = {
   executive_conversation: 16000,
@@ -27,6 +27,7 @@ export const TASK_MAX_TOKENS: Record<TaskType, number> = {
   session_synthesis: 12000,
   session_vote: 3000,
   vote_options: 600,
+  lesson_drafting: 600,
   studio_routing: 500,
   studio_production: 32000,
   memory_extraction: 4000,

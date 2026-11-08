@@ -5,6 +5,7 @@ import { ExecutiveAvatar } from "@/components/executives/executive-avatar";
 import { ActionForm } from "@/components/settings/action-form";
 import { Card, Input, Label, SectionTitle, Select, Textarea } from "@/components/ui/primitives";
 import { TOOL_REGISTRY } from "@/config/tools/registry";
+import { MEMORY_CATEGORIES } from "@/types/domain";
 import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { authorize } from "@/server/organizations/service";
 import { updateExecutiveConfigAction } from "@/server/settings/actions";
@@ -24,6 +25,9 @@ export default async function ConfigureExecutivePage({ params }: PageProps<"/set
         <ExecutiveAvatar src={e.avatar_url} shortTitle={e.short_title} accent={e.accent} size={56} />
         <div><h2 className="font-heading text-2xl font-semibold">{e.title}</h2><p className="text-xs text-ivory-muted">Database-driven configuration · prompt {e.model.prompt_key}_v1</p></div>
       </div>
+      <p className="text-sm text-ivory-muted">
+        To make the {e.short_title} more knowledgeable, add to its <Link href={`/executives/${e.slug}?tab=library`} className="text-gold-300 underline-offset-2 hover:underline">Library</Link>; to correct how it works, use its <Link href={`/executives/${e.slug}?tab=learning`} className="text-gold-300 underline-offset-2 hover:underline">Learning</Link> lessons.
+      </p>
       <ActionForm action={updateExecutiveConfigAction} submit="Save executive configuration">
         <input type="hidden" name="executive_id" value={e.id} />
         <Card className="space-y-4">
@@ -62,6 +66,27 @@ export default async function ConfigureExecutivePage({ params }: PageProps<"/set
             <div><Label htmlFor="fp">Fallback provider</Label><Select id="fp" name="fallback_provider" defaultValue={e.model.fallback_provider ?? ""}><option value="">None</option><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option></Select></div>
             <div><Label htmlFor="fm">Fallback model</Label><Input id="fm" name="fallback_model" defaultValue={e.model.fallback_model ?? ""} /></div>
             <div><Label htmlFor="tb">Token budget</Label><Input id="tb" name="token_budget" type="number" defaultValue={e.model.token_budget} /></div>
+          </div>
+        </Card>
+        <Card className="space-y-3">
+          <SectionTitle>Skills</SectionTitle>
+          <p className="text-xs text-ivory-muted">The expertise this executive brings. One skill per line, written as “Name — what it covers”. Shown on the Executive Profile and given to the executive as its areas of expertise.</p>
+          <Textarea id="skills" name="skills" aria-label="Skills" rows={Math.min(12, Math.max(4, e.skills.length + 1))} defaultValue={e.skills.map((s) => (s.description ? `${s.name} — ${s.description}` : s.name)).join("\n")} placeholder="Scenario modeling — base, upside and downside cases with explicit drivers" />
+        </Card>
+        <Card className="space-y-3">
+          <SectionTitle>Memory areas</SectionTitle>
+          <p className="text-xs text-ivory-muted">Which parts of C-Suite Memory this executive searches when answering. Approved decisions are always shared with every executive.</p>
+          <div className="flex flex-wrap gap-4 text-sm">
+            <label className="flex items-center gap-2"><input type="radio" name="memory_scope" value="ALL" defaultChecked={e.model.memory_categories === "ALL"} className="accent-gold-400" /> All areas</label>
+            <label className="flex items-center gap-2"><input type="radio" name="memory_scope" value="SELECTED" defaultChecked={e.model.memory_categories !== "ALL"} className="accent-gold-400" /> Only the areas ticked below</label>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {MEMORY_CATEGORIES.map((c) => (
+              <label key={c} className="flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-xs">
+                <input type="checkbox" name="memory_categories" value={c} defaultChecked={e.model.memory_categories === "ALL" || e.model.memory_categories.includes(c)} className="accent-gold-400" />
+                {c.charAt(0) + c.slice(1).toLowerCase()}
+              </label>
+            ))}
           </div>
         </Card>
         <Card>

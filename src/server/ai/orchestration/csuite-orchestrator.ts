@@ -368,7 +368,7 @@ async function* runStageStep(args: {
       // Answers that used web research list their sources (kept across steps in the round state).
       const sourceList = sourcesMarkdown(state.sources ?? []);
       if (sourceList) yield { type: "delta", executiveId: exec.id, text: sourceList };
-      const row = await args.persist({ speaker_type: "EXECUTIVE", speaker_id: exec.id, stage: stage.def.key, content: state.text + sourceList, provider: (provider as CSuiteSessionMessage["provider"]) ?? null, model, prompt_version: `${built.promptVersion}+${template.versionTag}`, simulated, metadata: { run_id: run.run_id, memory_ids: built.memoryIds, layers: built.layers, ...(state.sources?.length ? { sources: state.sources } : {}) } });
+      const row = await args.persist({ speaker_type: "EXECUTIVE", speaker_id: exec.id, stage: stage.def.key, content: state.text + sourceList, provider: (provider as CSuiteSessionMessage["provider"]) ?? null, model, prompt_version: `${built.promptVersion}+${template.versionTag}`, simulated, metadata: { run_id: run.run_id, memory_ids: built.memoryIds, library_ids: built.libraryIds, lesson_ids: built.lessonIds, layers: built.layers, ...(state.sources?.length ? { sources: state.sources } : {}) } });
       state.done = true;
       yield { type: "turn_end", executiveId: exec.id, messageId: row.id, simulated, provider, model };
       yield progress();

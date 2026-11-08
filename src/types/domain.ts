@@ -610,3 +610,64 @@ export interface ProviderCredential {
   enabled: boolean;
   created_at: ISODate;
 }
+
+/* ------------------------------------------------------------------ */
+/* Executive learning (feedback → lessons) and the Executive Library    */
+/* ------------------------------------------------------------------ */
+
+/** A person's rating of one executive answer. */
+export interface ExecutiveFeedback {
+  id: UUID;
+  organization_id: UUID;
+  executive_id: UUID;
+  source_type: "CONVERSATION" | "SESSION";
+  /** The message rated (messages.id or executive_session_messages.id). */
+  source_id: UUID;
+  rating: "UP" | "DOWN";
+  /** What the answer should have said or done differently. */
+  comment: string;
+  /** The lesson drafted from this feedback, if any. */
+  lesson_id: UUID | null;
+  created_by: UUID;
+  created_at: ISODate;
+}
+
+/**
+ * A standing lesson for one executive. Drafted from feedback (by A.I.) or
+ * written by a person; only APPROVED lessons are applied to answers.
+ */
+export interface ExecutiveLesson {
+  id: UUID;
+  organization_id: UUID;
+  executive_id: UUID;
+  title: string;
+  guidance: string;
+  status: "PROPOSED" | "APPROVED" | "ARCHIVED";
+  origin: "FEEDBACK" | "MANUAL";
+  source_feedback_id: UUID | null;
+  created_by: UUID;
+  approved_by: UUID | null;
+  created_at: ISODate;
+  updated_at: ISODate;
+}
+
+/** Reference knowledge for one executive: frameworks, playbooks, references and documents. */
+export interface ExecutiveLibraryItem {
+  id: UUID;
+  organization_id: UUID;
+  executive_id: UUID;
+  kind: "FRAMEWORK" | "PLAYBOOK" | "REFERENCE" | "DOCUMENT";
+  title: string;
+  content: string;
+  /** For DOCUMENT items: the file the text was taken from. */
+  file_id: UUID | null;
+  /** STARTER items come with the platform (they can be turned off, not deleted). */
+  origin: "STARTER" | "ORGANIZATION";
+  /** Stable key of a starter item, so it is added only once. */
+  starter_key: string | null;
+  enabled: boolean;
+  embedding: number[] | null;
+  created_by: UUID | null;
+  created_at: ISODate;
+  updated_at: ISODate;
+}

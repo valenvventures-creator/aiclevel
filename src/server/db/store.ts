@@ -165,6 +165,9 @@ const TABLES = {
   usage: "ai_usage_records",
   credentials: "provider_credentials",
   audit: "audit_logs",
+  feedback: "executive_feedback",
+  lessons: "executive_lessons",
+  library: "executive_library_items",
 } as const;
 
 export interface PromptTemplateRow {
@@ -210,6 +213,9 @@ export interface Database {
   usage: TenantRepo<D.UsageRecord>;
   credentials: TenantRepo<D.ProviderCredential>;
   audit: TenantRepo<D.AuditLog & { organization_id: string }>;
+  feedback: TenantRepo<D.ExecutiveFeedback>;
+  lessons: TenantRepo<D.ExecutiveLesson>;
+  library: TenantRepo<D.ExecutiveLibraryItem>;
 }
 
 let cached: { mode: string; db: Database } | null = null;
