@@ -229,17 +229,16 @@ body {
   line-height: 1.02;
 }
 
-/* Italic serif accent phrase inside a headline */
+/* Gold accent phrase inside a headline: same upright headline font, gold gradient */
 @utility accent {
-  font-family: var(--font-accent);
-  font-style: italic;
-  font-weight: 400;
-  letter-spacing: -0.015em;
+  font-family: var(--font-heading);
+  font-style: normal;
+  font-weight: inherit;
+  letter-spacing: inherit;
   background: linear-gradient(180deg, var(--gold-100) 0%, var(--gold-300) 55%, var(--gold-500) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  padding-right: 0.08em;
 }
 
 @utility glass {
