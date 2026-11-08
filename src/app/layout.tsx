@@ -14,9 +14,9 @@ const serif = Playfair_Display({ subsets: ["latin"], variable: "--font-serif", w
 const mono = IBM_Plex_Mono({ subsets: ["latin"], variable: "--font-code", weight: ["400", "500"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "A.I. C-Suite — Thought Authorities", template: "%s · A.I. C-Suite" },
+  title: { default: "A.I. C-Level — Thought Authorities", template: "%s · A.I. C-Level" },
   description: "Seven C-Suite Executives. One Organization. Shared Intelligence. Your C-Suite, augmented by A.I.",
-  applicationName: "A.I. C-Suite",
+  applicationName: "A.I. C-Level",
 };
 
 export const viewport: Viewport = { themeColor: "#04060c", colorScheme: "dark" };

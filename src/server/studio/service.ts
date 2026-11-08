@@ -210,7 +210,7 @@ export async function advanceProductionJob(args: { organization: Organization; u
   // Not finished within this step: keep the draft and release the lease.
   const empty = added.trim() ? 0 : (meta.empty_steps ?? 0) + 1;
   if (empty >= STUDIO_LIMITS.MAX_EMPTY_STEPS) {
-    return fail(`${lead.title} did not produce any text within the hosting time limit. Retry, or lower this executive's reasoning effort in Settings → A.I. C-Suite.`);
+    return fail(`${lead.title} did not produce any text within the hosting time limit. Retry, or lower this executive's reasoning effort in Settings → A.I. C-Level.`);
   }
   await d.productionJobs.update(orgId, job.id, { provider, model, metadata: { ...meta, steps, draft: full, draft_sources: sources, empty_steps: empty, lease_until: null } });
   return { state: "continue", draftChars: full.length };

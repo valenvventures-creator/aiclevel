@@ -11,7 +11,7 @@
 | 06 | Chief Legal Officer | CLO | Governance, Legal, & Risk | What must be protected, governed, documented, or challenged? | `clo_core` |
 | 07 | Chief Impact Officer | CIO | Charity, Philanthropy, & Sustainability | Who benefits, what changes, and how do we measure the impact? | `impact_core` |
 
-Seeds: `src/config/executives/defaults.ts` (persona, skills, model, tools, memory categories, avatar). On organization creation `seedExecutivesForOrganization()` copies them into the tenant's tables; from then on **the database is the source of truth** and administrators edit everything in *Settings → A.I. C-Suite → Configure*.
+Seeds: `src/config/executives/defaults.ts` (persona, skills, model, tools, memory categories, avatar). On organization creation `seedExecutivesForOrganization()` copies them into the tenant's tables; from then on **the database is the source of truth** and administrators edit everything in *Settings → A.I. C-Level → Configure*.
 
 ## Data model
 `AIExecutive` (identity, status, order) · `AIExecutivePersona` (north star, beliefs, style, system instructions, reasoning framework, risk constraints) · `AIExecutiveSkill` · `AIExecutiveModelConfig` (primary/fallback provider+model, effort, token budget, tool permissions, memory categories, prompt key) · `AIExecutiveVoice`.

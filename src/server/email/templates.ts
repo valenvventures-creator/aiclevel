@@ -23,7 +23,7 @@ function layout(opts: { preheader: string; heading: string; body: string[]; cta:
 <tr><td style="background:#07080b;padding:22px 32px;">
 <img src="${esc(opts.origin)}/brand/crest-256.png" width="52" height="30" alt="Thought Authorities" style="display:inline-block;vertical-align:middle;border:0;">
 <span style="display:inline-block;vertical-align:middle;margin-left:12px;font-size:12px;letter-spacing:3px;font-weight:700;color:#efba11;">THOUGHT AUTHORITIES</span>
-<div style="margin:4px 0 0 64px;font-size:10px;letter-spacing:3px;color:#a7a399;">A.I. C-SUITE</div>
+<div style="margin:4px 0 0 64px;font-size:10px;letter-spacing:3px;color:#a7a399;">A.I. C-LEVEL</div>
 </td></tr>
 <tr><td style="padding:36px 32px 12px;">
 <h1 style="margin:0 0 18px;font-size:24px;line-height:1.25;color:#12141c;">${esc(opts.heading)}</h1>
@@ -36,7 +36,7 @@ ${paras}
 <p style="margin:0 0 28px;font-size:12px;line-height:1.6;color:#6b6b73;">${esc(opts.footnote)}</p>
 </td></tr>
 <tr><td style="padding:18px 32px;border-top:1px solid #eee9dc;font-size:11px;line-height:1.6;color:#8a8a90;">
-Thought Authorities · A.I. C-Suite — Seven Executives. One Organization. Shared Intelligence.
+Thought Authorities · A.I. C-Level — Seven Executives. One Organization. Shared Intelligence.
 </td></tr>
 </table>
 </td></tr></table>
@@ -44,15 +44,15 @@ Thought Authorities · A.I. C-Suite — Seven Executives. One Organization. Shar
 }
 
 function text(heading: string, body: string[], cta: { label: string; url: string }, footnote: string): string {
-  return [`THOUGHT AUTHORITIES · A.I. C-SUITE`, ``, heading, ``, ...body.flatMap((p) => [p, ""]), `${cta.label}: ${cta.url}`, ``, footnote].join("\n");
+  return [`THOUGHT AUTHORITIES · A.I. C-LEVEL`, ``, heading, ``, ...body.flatMap((p) => [p, ""]), `${cta.label}: ${cta.url}`, ``, footnote].join("\n");
 }
 
 export function verificationEmail(p: { firstName: string; url: string; origin: string }): EmailContent {
   const heading = "Verify your email address";
-  const body = [`Hi ${p.firstName || "there"},`, "Confirm this email address to finish setting up your A.I. C-Suite. Verifying unlocks inviting team members to your organization."];
+  const body = [`Hi ${p.firstName || "there"},`, "Confirm this email address to finish setting up your A.I. C-Level. Verifying unlocks inviting team members to your organization."];
   const cta = { label: "Verify email address", url: p.url };
   const foot = "This link expires in 24 hours and can be used once. If you didn't create a Thought Authorities account, you can ignore this email.";
-  return { subject: "Verify your email — Thought Authorities A.I. C-Suite", html: layout({ preheader: "Confirm your email to finish setting up your A.I. C-Suite.", heading, body, cta, footnote: foot, origin: p.origin }), text: text(heading, body, cta, foot) };
+  return { subject: "Verify your email — Thought Authorities A.I. C-Level", html: layout({ preheader: "Confirm your email to finish setting up your A.I. C-Level.", heading, body, cta, footnote: foot, origin: p.origin }), text: text(heading, body, cta, foot) };
 }
 
 export function passwordResetEmail(p: { firstName: string; url: string; origin: string }): EmailContent {
@@ -60,21 +60,21 @@ export function passwordResetEmail(p: { firstName: string; url: string; origin: 
   const body = [`Hi ${p.firstName || "there"},`, "We received a request to reset the password for your Thought Authorities account. Choose a new password using the button below. Resetting signs you out on your other devices."];
   const cta = { label: "Choose a new password", url: p.url };
   const foot = "This link expires in 30 minutes and can be used once. If you didn't ask to reset your password, ignore this email — your password stays the same.";
-  return { subject: "Reset your password — Thought Authorities A.I. C-Suite", html: layout({ preheader: "Choose a new password for your A.I. C-Suite account.", heading, body, cta, footnote: foot, origin: p.origin }), text: text(heading, body, cta, foot) };
+  return { subject: "Reset your password — Thought Authorities A.I. C-Level", html: layout({ preheader: "Choose a new password for your A.I. C-Level account.", heading, body, cta, footnote: foot, origin: p.origin }), text: text(heading, body, cta, foot) };
 }
 
 export function invitationEmail(p: { inviterName: string; organizationName: string; role: string; url: string; origin: string }): EmailContent {
-  const heading = `Join ${p.organizationName} on the A.I. C-Suite`;
-  const body = [`${p.inviterName} invited you to join ${p.organizationName} as ${p.role.charAt(0) + p.role.slice(1).toLowerCase()}.`, "The A.I. C-Suite gives your organization seven A.I. executives — CEO to Chief Impact Officer — who share one organizational memory and work alongside your leadership team."];
+  const heading = `Join ${p.organizationName} on the A.I. C-Level`;
+  const body = [`${p.inviterName} invited you to join ${p.organizationName} as ${p.role.charAt(0) + p.role.slice(1).toLowerCase()}.`, "The A.I. C-Level gives your organization seven A.I. executives — CEO to Chief Impact Officer — who share one organizational memory and work alongside your leadership team."];
   const cta = { label: "Accept invitation", url: p.url };
   const foot = "This invitation expires in 7 days and can only be accepted with this email address. If you weren't expecting it, you can ignore this email.";
-  return { subject: `${p.inviterName} invited you to ${p.organizationName} — A.I. C-Suite`, html: layout({ preheader: `Join ${p.organizationName} on Thought Authorities A.I. C-Suite.`, heading, body, cta, footnote: foot, origin: p.origin }), text: text(heading, body, cta, foot) };
+  return { subject: `${p.inviterName} invited you to ${p.organizationName} — A.I. C-Level`, html: layout({ preheader: `Join ${p.organizationName} on Thought Authorities A.I. C-Level.`, heading, body, cta, footnote: foot, origin: p.origin }), text: text(heading, body, cta, foot) };
 }
 
 export function testEmail(p: { firstName: string; url: string; origin: string }): EmailContent {
   const heading = "Email delivery is working";
-  const body = [`Hi ${p.firstName || "there"},`, "This is a test message from your A.I. C-Suite. Verification, password-reset and invitation emails will be delivered the same way."];
+  const body = [`Hi ${p.firstName || "there"},`, "This is a test message from your A.I. C-Level. Verification, password-reset and invitation emails will be delivered the same way."];
   const cta = { label: "Open C-Suite HQ", url: p.url };
   const foot = "You received this because an administrator clicked “Send test email” in Settings → Email delivery.";
-  return { subject: "Test email — Thought Authorities A.I. C-Suite", html: layout({ preheader: "Your A.I. C-Suite can send email.", heading, body, cta, footnote: foot, origin: p.origin }), text: text(heading, body, cta, foot) };
+  return { subject: "Test email — Thought Authorities A.I. C-Level", html: layout({ preheader: "Your A.I. C-Level can send email.", heading, body, cta, footnote: foot, origin: p.origin }), text: text(heading, body, cta, foot) };
 }

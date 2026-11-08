@@ -1,5 +1,5 @@
 /**
- * Shared domain types for Thought Authorities — A.I. C-Suite.
+ * Shared domain types for Thought Authorities — A.I. C-Level.
  * Field names mirror PostgreSQL columns (snake_case) so the data layer needs
  * no mapping between the database and the application.
  */

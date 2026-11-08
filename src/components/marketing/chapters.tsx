@@ -9,7 +9,7 @@ import { useScrollProgress } from "./motion";
 export interface ExecLite { role_code: string; short_title: string; title: string; avatar_url: string; accent: string }
 
 /* ------------------------------------------------------------------ */
-/* Before / After A.I. C-Suite — each scene is a circle: a centre disc */
+/* Before / After A.I. C-Level — each scene is a circle: a centre disc */
 /* with satellites on an orbit. Before: scattered, disconnected,       */
 /* waiting on you. After: the C-Suite in orbit, wired to one outcome.  */
 /* ------------------------------------------------------------------ */
@@ -246,22 +246,22 @@ function SceneCircle({ scene, after, execs, shown }: { scene: Scene; after: bool
 /** A round dial that switches between Before and After. */
 function Dial({ after, onChange }: { after: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div role="group" aria-label="Compare before and after the A.I. C-Suite" className="flex items-center justify-center gap-3 sm:gap-4">
+    <div role="group" aria-label="Compare before and after the A.I. C-Level" className="flex items-center justify-center gap-3 sm:gap-4">
       <button type="button" onClick={() => onChange(false)} aria-pressed={!after} className={cn("flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3 text-xs transition-colors duration-500 sm:text-sm", !after ? "text-white" : "text-white/40 hover:text-white/75")}>
         <span className={cn("size-3 rounded-full border transition-all duration-500", !after ? "border-[#ff6b6b] bg-[#ff6b6b] shadow-[0_0_12px_rgba(255,107,107,.8)]" : "border-white/30")} />
-        Before A.I. C-Suite
+        Before A.I. C-Level
       </button>
       <button
         type="button"
         onClick={() => onChange(!after)}
-        aria-label={after ? "Show before the A.I. C-Suite" : "Show after the A.I. C-Suite"}
+        aria-label={after ? "Show before the A.I. C-Level" : "Show after the A.I. C-Level"}
         className={cn("relative grid size-14 shrink-0 place-items-center rounded-full border transition-all duration-700", after ? "border-line-gold bg-[radial-gradient(circle,#1d2540,#070a14)] shadow-[0_0_30px_-4px_rgba(239,186,17,.7)]" : "border-[rgba(255,107,107,0.45)] bg-[radial-gradient(circle,#2a1418,#0b0709)] shadow-[0_0_26px_-6px_rgba(255,107,107,.6)]")}
       >
         <span className={cn("absolute h-[2px] w-[42%] origin-left rounded-full transition-transform duration-700 ease-[var(--ease-out)]", after ? "bg-gold-300" : "bg-[#ff8a8a]")} style={{ left: "50%", top: "calc(50% - 1px)", transform: after ? "rotate(0deg)" : "rotate(180deg)" }} />
         <span className={cn("size-2.5 rounded-full", after ? "bg-gold-200" : "bg-[#ffb3b3]")} />
       </button>
       <button type="button" onClick={() => onChange(true)} aria-pressed={after} className={cn("flex items-center gap-2 rounded-full py-1.5 pl-3 pr-1.5 text-xs transition-colors duration-500 sm:text-sm", after ? "text-gold-100" : "text-white/40 hover:text-white/75")}>
-        After A.I. C-Suite
+        After A.I. C-Level
         <span className={cn("size-3 rounded-full border transition-all duration-500", after ? "border-gold-300 bg-gold-300 shadow-[0_0_12px_rgba(239,186,17,.9)]" : "border-white/30")} />
       </button>
     </div>

@@ -320,10 +320,10 @@ function renderTable(w: Writer, f: Fonts, t: Extract<Block, { type: "table" }>, 
 export async function renderPdf(doc: ExportDocument): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   pdf.setTitle(doc.title);
-  pdf.setAuthor("Thought Authorities — A.I. C-Suite");
+  pdf.setAuthor("Thought Authorities — A.I. C-Level");
   pdf.setSubject(doc.subtitle);
-  pdf.setCreator("Thought Authorities A.I. C-Suite");
-  pdf.setProducer("Thought Authorities A.I. C-Suite");
+  pdf.setCreator("Thought Authorities A.I. C-Level");
+  pdf.setProducer("Thought Authorities A.I. C-Level");
   pdf.setCreationDate(new Date(doc.createdAt));
 
   const f: Fonts = {
@@ -342,7 +342,7 @@ export async function renderPdf(doc: ExportDocument): Promise<Uint8Array> {
     const y = PAGE.height - 44;
     p.drawImage(crest, { x: M.left, y: y - crestH / 2 + 3, width: crestW, height: crestH });
     p.drawText("THOUGHT AUTHORITIES", { x: M.left + crestW + 10, y: y + 2, size: 8.5, font: f.bold, color: C.gold });
-    p.drawText("A.I. C-SUITE", { x: M.left + crestW + 10, y: y - 8, size: 6.5, font: f.regular, color: C.muted });
+    p.drawText("A.I. C-LEVEL", { x: M.left + crestW + 10, y: y - 8, size: 6.5, font: f.regular, color: C.muted });
     const org = clean(doc.organization).toUpperCase();
     p.drawText(org, { x: PAGE.width - M.right - f.regular.widthOfTextAtSize(org, 7), y: y - 3, size: 7, font: f.regular, color: C.muted });
     p.drawLine({ start: { x: M.left, y: y - 18 }, end: { x: PAGE.width - M.right, y: y - 18 }, thickness: 0.8, color: C.gold });

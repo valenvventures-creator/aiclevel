@@ -20,7 +20,7 @@ export default async function ConfigureExecutivePage({ params }: PageProps<"/set
   const p = e.persona;
   return (
     <div className="space-y-6">
-      <Link href="/settings/c-suite" className="text-xs text-ivory-muted hover:text-ivory">← A.I. C-Suite</Link>
+      <Link href="/settings/c-suite" className="text-xs text-ivory-muted hover:text-ivory">← A.I. C-Level</Link>
       <div className="flex items-center gap-4">
         <ExecutiveAvatar src={e.avatar_url} shortTitle={e.short_title} accent={e.accent} size={56} />
         <div><h2 className="font-heading text-2xl font-semibold">{e.title}</h2><p className="text-xs text-ivory-muted">Database-driven configuration · prompt {e.model.prompt_key}_v1</p></div>

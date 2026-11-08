@@ -40,7 +40,7 @@ export default async function InvitePage({ params, searchParams }: PageProps<"/i
       <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight">{inv ? <>Join {inv.organization_name}.</> : "Invitation"}</h1>
       {inv && !error && (
         <p className="mt-3 text-sm text-ivory-muted">
-          You&apos;ve been invited to join the A.I. C-Suite as <Badge tone="gold">{inv.role}</Badge>
+          You&apos;ve been invited to join the A.I. C-Level as <Badge tone="gold">{inv.role}</Badge>
         </p>
       )}
       <div className="mt-8 space-y-4">

@@ -36,7 +36,7 @@ export interface ExportDocument {
 }
 
 export const AI_DISCLAIMER =
-  "Prepared by the A.I. Executives of Thought Authorities A.I. C-Suite. This is A.I.-generated analysis, not professional legal, financial, tax or accounting advice. Review before relying on it.";
+  "Prepared by the A.I. Executives of Thought Authorities A.I. C-Level. This is A.I.-generated analysis, not professional legal, financial, tax or accounting advice. Review before relying on it.";
 
 const decode = (s: string) =>
   s.replace(/&(amp|lt|gt|quot|#39);/g, (_, e: string) => ({ amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'" })[e] ?? _);

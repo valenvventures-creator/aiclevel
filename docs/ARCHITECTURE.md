@@ -1,11 +1,11 @@
 # Architecture
 
-> Thought Authorities · A.I. C-Suite — one shared intelligence platform with several interaction surfaces.
+> Thought Authorities · A.I. C-Level — one shared intelligence platform with several interaction surfaces.
 
 ## 1. System overview
 
 ```
-                         THOUGHT AUTHORITIES · A.I. C-SUITE
+                         THOUGHT AUTHORITIES · A.I. C-LEVEL
                                        │
       ┌──────────────┬─────────────────┼─────────────────┬──────────────┐
   C-Suite HQ   Executive Offices  Executive Comms   C-Suite Session  C-Suite Studio

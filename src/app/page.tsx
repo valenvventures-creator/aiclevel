@@ -28,7 +28,7 @@ export default function LandingPage() {
           <CoilMachine className="absolute right-[-12%] top-[4%] h-[92%] w-[78%] opacity-95 max-lg:right-[-30%] max-lg:top-[46%] max-lg:h-[58%] max-lg:w-[130%] max-lg:opacity-35" />
           <div className="relative mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-center px-4 pt-24 sm:px-6">
             <div className="max-w-2xl">
-              <p className="animate-fade-up font-mono text-[11px] tracking-[0.3em] text-gold-300/90">THOUGHT AUTHORITIES · A.I. C-SUITE</p>
+              <p className="animate-fade-up font-mono text-[11px] tracking-[0.3em] text-gold-300/90">THOUGHT AUTHORITIES · A.I. C-LEVEL</p>
               <h1 className="headline mt-6 animate-fade-up text-[clamp(3rem,7.2vw,6.2rem)] [animation-delay:80ms]">
                 Your C-Suite
                 <br />
@@ -81,7 +81,7 @@ export default function LandingPage() {
           <Reveal className="mx-auto max-w-7xl px-4 sm:px-6">
             <p className="eyebrow">Where leadership time goes</p>
             <h2 id="problems" className="headline mt-5 max-w-4xl text-[clamp(2.6rem,5.6vw,4.6rem)]">Things every leader <span className="accent">knows too well</span></h2>
-            <p className="mt-5 max-w-xl text-white/64">And how an A.I. C-Suite changes each one. Scroll — or turn the dial yourself.</p>
+            <p className="mt-5 max-w-xl text-white/64">And how an A.I. C-Level changes each one. Scroll — or turn the dial yourself.</p>
           </Reveal>
           <Chapters execs={EXECS} />
         </section>
@@ -248,8 +248,8 @@ export default function LandingPage() {
           ))}
         </div>
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-2 px-4 pb-10 text-xs text-white/30 sm:flex-row sm:px-6">
-          <p>© {new Date().getFullYear()} Thought Authorities · A.I. C-Suite</p>
-          <p>A.I. C-Suite executives are artificial-intelligence systems.</p>
+          <p>© {new Date().getFullYear()} Thought Authorities · A.I. C-Level</p>
+          <p>A.I. C-Level executives are artificial-intelligence systems.</p>
         </div>
       </footer>
     </div>
