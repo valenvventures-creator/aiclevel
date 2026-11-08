@@ -6,7 +6,7 @@ import { Chapters, type ExecLite } from "@/components/marketing/chapters";
 import { Constellation } from "@/components/marketing/constellation";
 import { ConveneHub, SourcesHub } from "@/components/marketing/hubs";
 import { LiveDemo } from "@/components/marketing/live-demo";
-import { DrawUnderline, Reveal, ScrollProgress } from "@/components/marketing/motion";
+import { Reveal, ScrollProgress } from "@/components/marketing/motion";
 import { Portal } from "@/components/marketing/portal";
 import { SiteNav } from "@/components/marketing/site-nav";
 import { EXECUTIVE_SEEDS } from "@/config/executives/defaults";
@@ -35,7 +35,6 @@ export default function LandingPage() {
                 augmented{" "}
                 <span className="relative inline-block">
                   <span className="accent">by A.I.</span>
-                  <DrawUnderline />
                 </span>
               </h1>
               <p className="mt-7 max-w-lg animate-fade-up text-[17px] leading-relaxed text-white/64 [animation-delay:160ms]">
@@ -82,7 +81,7 @@ export default function LandingPage() {
           <Reveal className="mx-auto max-w-7xl px-4 sm:px-6">
             <p className="eyebrow">Where leadership time goes</p>
             <h2 id="problems" className="headline mt-5 max-w-4xl text-[clamp(2.6rem,5.6vw,4.6rem)]">Five things every leader <span className="accent">knows too well</span></h2>
-            <p className="mt-5 max-w-xl text-white/64">And how an A.I. C-Suite changes each one. Scroll — or flip the switch yourself.</p>
+            <p className="mt-5 max-w-xl text-white/64">And how an A.I. C-Suite changes each one. Scroll — or turn the dial yourself.</p>
           </Reveal>
           <Chapters execs={EXECS} />
         </section>
