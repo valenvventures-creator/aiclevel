@@ -80,7 +80,7 @@ export default function LandingPage() {
         <section className="relative pt-32" aria-labelledby="problems">
           <Reveal className="mx-auto max-w-7xl px-4 sm:px-6">
             <p className="eyebrow">Where leadership time goes</p>
-            <h2 id="problems" className="headline mt-5 max-w-4xl text-[clamp(2.6rem,5.6vw,4.6rem)]">Five things every leader <span className="accent">knows too well</span></h2>
+            <h2 id="problems" className="headline mt-5 max-w-4xl text-[clamp(2.6rem,5.6vw,4.6rem)]">Things every leader <span className="accent">knows too well</span></h2>
             <p className="mt-5 max-w-xl text-white/64">And how an A.I. C-Suite changes each one. Scroll — or turn the dial yourself.</p>
           </Reveal>
           <Chapters execs={EXECS} />

@@ -288,17 +288,8 @@ function ChapterBlock({ c, execs }: { c: Chapter; execs: Record<string, ExecLite
       <div className="flex items-center lg:sticky lg:top-0 lg:h-[100svh]">
         <div className="mx-auto grid w-full max-w-7xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
           <div>
-            <div className="flex items-center gap-4">
-              {/* number badge with a circular progress ring for this chapter */}
-              <span className={cn("relative grid size-14 place-items-center rounded-full font-heading text-lg transition-colors duration-700", after ? "text-gold-200 shadow-[0_0_24px_-6px_rgba(239,186,17,.6)]" : "text-[#ffb3b3]")}>
-                <svg viewBox="0 0 56 56" className="absolute inset-0 size-full -rotate-90" aria-hidden>
-                  <circle cx="28" cy="28" r="26.5" fill="none" stroke={after ? "rgba(242,207,104,0.25)" : "rgba(255,107,107,0.3)"} strokeWidth="1.5" />
-                  <circle cx="28" cy="28" r="26.5" fill="none" stroke={after ? "#f2cf68" : "#ff8a8a"} strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray={`${Math.min(1, Math.max(0, progress))} 1`} />
-                </svg>
-                {String(c.n).padStart(2, "0")}
-              </span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/45">{c.kicker}</span>
-            </div>
+            {/* the point's name leads each section (no numbers) */}
+            <p className="font-mono text-[clamp(1rem,1.6vw,1.25rem)] uppercase tracking-[0.22em] text-white/55">{c.kicker}</p>
             <span className="mt-5 inline-block rounded-full bg-[rgba(255,107,107,0.12)] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#ff9a9a]">{c.chip}</span>
             <h3 id={`ch-${c.n}`} className="headline mt-4 text-[clamp(2rem,4.2vw,3.4rem)]">{c.title}</h3>
             <p className="mt-4 max-w-md text-[15px] leading-relaxed text-white/64">{c.body}</p>
