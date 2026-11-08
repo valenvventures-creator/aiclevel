@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Wordmark } from "@/components/brand/brand";
 
 const DOCS = {
-  terms: { title: "Terms of Service", body: ["These placeholder terms must be replaced by counsel-approved Terms of Service before commercial launch.", "A.I. C-Suite executives are artificial-intelligence systems. Their output is analysis and recommendation, not professional legal, financial, tax, accounting or medical advice.", "You remain responsible for decisions and for approving any consequential external action."] },
+  terms: { title: "Terms of Service", body: ["These placeholder terms must be replaced by counsel-approved Terms of Service before commercial launch.", "A.I. C-Level executives are artificial-intelligence systems. Their output is analysis and recommendation, not professional legal, financial, tax, accounting or medical advice.", "You remain responsible for decisions and for approving any consequential external action."] },
   privacy: { title: "Privacy Policy", body: ["This placeholder privacy policy must be replaced by a counsel-approved policy before commercial launch.", "Each organization's data is isolated and used only to serve that organization.", "Provider credentials are stored server-side and never exposed to browsers."] },
 } as const;
 

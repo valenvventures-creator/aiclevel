@@ -6,7 +6,7 @@ import type {
 } from "@/types/domain";
 
 /**
- * DEFAULT SEED DEFINITIONS for the seven core A.I. C-Suite Executives.
+ * DEFAULT SEED DEFINITIONS for the seven core A.I. C-Level Executives.
  *
  * These are *seed data*, not runtime configuration. On organization creation
  * they are copied into the tenant's `ai_executives`, `ai_executive_personas`,

@@ -49,7 +49,7 @@ import {
 import type { TutorialMediaName } from "./tutorial-media";
 
 /**
- * TUTORIALS — the in-app guide to every area of the A.I. C-Suite.
+ * TUTORIALS — the in-app guide to every area of the A.I. C-Level.
  * Content only (rendered by src/app/(c-suite)/tutorials). Screenshots come
  * from the demo organization and are captioned as such.
  */
@@ -120,7 +120,7 @@ export const TUTORIALS: Tutorial[] = [
     who: "Everyone",
     open: { href: "/hq", label: "Open C-Suite HQ" },
     overview:
-      "The A.I. C-Suite is a leadership team of seven A.I. Executives (CEO, CFO, CCO, CHRO, CTO, CLO and Chief Impact Officer) who share one memory of your organization. You can talk to one executive privately, bring several together on a business question, or ask them to produce finished work. Everything they learn about your organization is kept in C-Suite Memory, and every important conclusion waits for a person to confirm it.",
+      "The A.I. C-Level is a leadership team of seven A.I. Executives (CEO, CFO, CCO, CHRO, CTO, CLO and Chief Impact Officer) who share one memory of your organization. You can talk to one executive privately, bring several together on a business question, or ask them to produce finished work. Everything they learn about your organization is kept in C-Suite Memory, and every important conclusion waits for a person to confirm it.",
     flow: [
       { icon: LayoutDashboard, label: "Land on HQ" },
       { icon: MessageSquare, label: "Ask an executive" },
@@ -745,7 +745,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: "Turn it on",
         icon: Settings,
-        body: "Settings → Tools & MCP → Web research card: Turn on for all executives (or Turn off for all). To change one executive, use Settings → A.I. C-Suite → Configure → Tools.",
+        body: "Settings → Tools & MCP → Web research card: Turn on for all executives (or Turn off for all). To change one executive, use Settings → A.I. C-Level → Configure → Tools.",
         image: { name: "tools", alt: "The Web research card in Tools settings", caption: DEMO },
       },
       { title: "See it in action", icon: Globe, body: "Ask something current, such as “What is the UK SaaS market size this year?”. You will see “Searching the web…”, and the answer ends with a Sources list of links. Session answers that used the web show a Web research badge." },
@@ -800,8 +800,8 @@ export const TUTORIALS: Tutorial[] = [
     minutes: 6,
     summary: "Shape each executive's role, reasoning, skills, memory access, tools and model.",
     who: "Owners and Admins",
-    open: { href: "/settings/c-suite", label: "Open A.I. C-Suite settings" },
-    overview: "Every executive is configured in the database, not hard-coded. Settings → A.I. C-Suite → Configure lets you change how one executive thinks, what it knows about and what it can use.",
+    open: { href: "/settings/c-suite", label: "Open A.I. C-Level settings" },
+    overview: "Every executive is configured in the database, not hard-coded. Settings → A.I. C-Level → Configure lets you change how one executive thinks, what it knows about and what it can use.",
     flow: [
       { icon: Users, label: "Pick an executive" },
       { icon: SlidersHorizontal, label: "Adjust" },

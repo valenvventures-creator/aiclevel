@@ -20,7 +20,7 @@ Every answer's metadata records the `lesson_ids` and `library_ids` that informed
 - Curated on the executive's **Library** tab (`executives.configure`); everyone else can read it.
 
 ## Skills and memory areas
-In Settings → A.I. C-Suite → Configure, admins can now edit each executive's **skills** ("Name — description" per line; given to the model as its expertise) and **memory areas** (all, or chosen categories). Approved decisions are always shared with every executive (`isSharedDecision`).
+In Settings → A.I. C-Level → Configure, admins can now edit each executive's **skills** ("Name — description" per line; given to the model as its expertise) and **memory areas** (all, or chosen categories). Approved decisions are always shared with every executive (`isSharedDecision`).
 
 ## Data and security
 Migration 009 adds `executive_feedback`, `executive_lessons` and `executive_library_items`, each with `organization_id` and RLS.

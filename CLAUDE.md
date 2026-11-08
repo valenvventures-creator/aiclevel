@@ -1,11 +1,11 @@
-# CLAUDE.md — Thought Authorities · A.I. C-Suite
+# CLAUDE.md — Thought Authorities · A.I. C-Level
 
 Durable rules for any Claude Code session in this repository. Detailed architecture lives in `docs/` — read the relevant doc before changing a subsystem.
 
 @AGENTS.md
 
 ## Product identity
-- **Thought Authorities** is the company/brand. **A.I. C-Suite** is the product.
+- **Thought Authorities** is the company/brand. **A.I. C-Level** is the product.
 - Promise: **Seven Executives. One Organization. Shared Intelligence.** Positioning: **Your C-Suite. Augmented by A.I.**
 - Seven core executives, in this order: CEO, CFO, CCO, CHRO, CTO, CLO, Chief Impact Officer (role code `CIO`).
 - Customer-facing terms: A.I. Executive, C-Suite HQ, Executive Offices, Executive Comms, C-Suite Session, C-Suite Memory, C-Suite Studio, Executive Profile, Executive Brief, Executive Report, Finished Work, Organizational Intelligence, Organizational Record.

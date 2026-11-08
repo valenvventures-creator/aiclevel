@@ -51,7 +51,7 @@ export default async function SettingsSectionPage({ params }: PageProps<"/settin
       {s === "integrations" && <Integrations />}
       {s === "email" && <EmailDelivery ctx={ctx} />}
       {s === "api-connections" && <ApiConnections />}
-      {s === "memory" && <Info title="Memory governance" points={["AI-generated conclusions are stored as PROPOSED and never become organizational truth automatically.", "Executives only retrieve memory in categories they are permitted to read (configure per executive in A.I. C-Suite).", "Visibility levels: Organization, Leadership only, Owner only.", "Every record keeps its provenance: source, creator, date, verification state and confidence."]} link={["/memory", "Open C-Suite Memory"]} />}
+      {s === "memory" && <Info title="Memory governance" points={["AI-generated conclusions are stored as PROPOSED and never become organizational truth automatically.", "Executives only retrieve memory in categories they are permitted to read (configure per executive in A.I. C-Level).", "Visibility levels: Organization, Leadership only, Owner only.", "Every record keeps its provenance: source, creator, date, verification state and confidence."]} link={["/memory", "Open C-Suite Memory"]} />}
       {s === "files-storage" && <Info title="Files & storage" points={["Files are stored privately per organization (Supabase Storage bucket `organization-files`, path-prefixed by organization id with RLS).", "Downloads use authorized requests and 60-second signed URLs — never permanent public links.", "Supported: PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, PNG, JPG, WEBP, common audio and video up to 20 MB.", "Plain-text formats are indexed immediately; binary formats are queued for the document-processing worker."]} link={["/files", "Open Files"]} />}
       {s === "data-privacy" && <Info title="Data & privacy" points={["Your organization's data is isolated server-side and by Row Level Security in the database.", "Data export: Owners can request a full organization export (JSON + files) — export job architecture is documented in docs/ARCHITECTURE.md.", "Deleting your individual account never deletes shared organization data.", "Organization deletion and ownership transfer are protected Owner actions and are audited."]} />}
       {s === "notifications" && <Info title="Notifications" points={["Executive response ready", "C-Suite Session report ready", "Finished Work ready", "Memory needs confirmation", "File processing complete", "Invitation accepted"]} />}
@@ -293,7 +293,7 @@ async function Tools({ ctx }: C) {
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-xs text-ivory-faint">Edit grants per executive in A.I. C-Suite → Configure.</p>
+      <p className="mt-3 text-xs text-ivory-faint">Edit grants per executive in A.I. C-Level → Configure.</p>
     </Card>
     </>
   );

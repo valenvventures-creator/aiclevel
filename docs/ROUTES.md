@@ -10,7 +10,7 @@
 ## Onboarding
 `/onboarding` — 18-step client onboarding.
 
-## A.I. C-Suite (authenticated, `src/app/(c-suite)`)
+## A.I. C-Level (authenticated, `src/app/(c-suite)`)
 | Route | Surface |
 |---|---|
 | `/hq` | C-Suite HQ |

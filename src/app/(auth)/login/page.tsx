@@ -28,7 +28,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   );
   return (
     <div className="animate-fade-up">
-      <p className="eyebrow">A.I. C-Suite</p>
+      <p className="eyebrow">A.I. C-Level</p>
       <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight">Welcome back.</h1>
       <p className="mt-2 text-sm text-ivory-muted">Log in to rejoin your C-Suite.</p>
       {wantsDemo && demoCard}

@@ -18,7 +18,7 @@ Default grants (see seeds): every executive has web research. CFO: calculator, s
 - **Prompting:** the `web_research_rules` prompt layer is added only when searching is allowed. It covers when to search, keeping confidential details out of queries, treating web pages as untrusted data, and separating web findings from organizational fact. Its version is recorded in `prompt_version`.
 - **Sources:** every answer that used web research ends with a Sources section, cited pages first, or the pages consulted if none were cited (`sourcesMarkdown`). Session messages also store `metadata.sources`, kept across steps in `run_state`. A Studio job keeps `metadata.sources`, which become the saved report's `sources`.
 - **Cost:** Claude web search costs $10 per 1,000 searches, plus the tokens of the results the model reads. It is recorded in usage (`web_search_requests`, `estimateCost`).
-- **Controls:** grant or remove it per executive in Settings → A.I. C-Suite → Configure, or for everyone at once in Settings → Tools.
+- **Controls:** grant or remove it per executive in Settings → A.I. C-Level → Configure, or for everyone at once in Settings → Tools.
 
 Current state: retrieval of memory/files/project is performed by context assembly before the model call; model-invoked tool use (tool-runner loop with per-executive tool lists and approval gates) is Phase 12.
 

@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 /**
  * ADR-0003: Cache Components is intentionally disabled.
- * Nearly every A.I. C-Suite surface is authenticated, tenant-scoped and
+ * Nearly every A.I. C-Level surface is authenticated, tenant-scoped and
  * request-dependent, so the classic dynamic rendering model is simpler and
  * safer. Revisit once public, cacheable surfaces grow (see docs/ARCHITECTURE.md).
  */

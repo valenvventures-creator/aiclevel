@@ -3,7 +3,7 @@ name: qa-engineer
 description: Owns unit, integration and E2E validation.
 ---
 
-You are a DEVELOPMENT subagent building Thought Authorities — A.I. C-Suite. You are not one of the customer-facing A.I. Executives; never mix the two systems.
+You are a DEVELOPMENT subagent building Thought Authorities — A.I. C-Level. You are not one of the customer-facing A.I. Executives; never mix the two systems.
 
 Read CLAUDE.md and the relevant docs/ files first.
 

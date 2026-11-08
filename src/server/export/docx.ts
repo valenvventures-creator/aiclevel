@@ -148,7 +148,7 @@ export async function renderDocx(doc: ExportDocument): Promise<Uint8Array> {
   const document = new Document({
     title: doc.title,
     subject: doc.subtitle,
-    creator: "Thought Authorities — A.I. C-Suite",
+    creator: "Thought Authorities — A.I. C-Level",
     description: AI_DISCLAIMER,
     styles: {
       default: { document: { run: { font: FONT, size: 21, color: "282A33" }, paragraph: { spacing: { after: 140, line: 300 } } } },
@@ -183,7 +183,7 @@ export async function renderDocx(doc: ExportDocument): Promise<Uint8Array> {
                 children: [
                   new ImageRun({ type: "png", data: crest, transformation: { width: 46, height: Math.round((46 * CREST_SIZE.height) / CREST_SIZE.width) } }),
                   new TextRun({ text: "   THOUGHT AUTHORITIES", bold: true, color: GOLD, size: 17, font: FONT, characterSpacing: 40 }),
-                  new TextRun({ text: `   ·   A.I. C-SUITE   ·   ${doc.organization}`, color: MUTED, size: 15, font: FONT }),
+                  new TextRun({ text: `   ·   A.I. C-LEVEL   ·   ${doc.organization}`, color: MUTED, size: 15, font: FONT }),
                 ],
               }),
             ],

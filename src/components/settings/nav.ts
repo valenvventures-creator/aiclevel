@@ -3,7 +3,7 @@ export const SETTINGS_SECTIONS = [
   ["organization", "Organization"],
   ["team", "Team"],
   ["email", "Email delivery"],
-  ["c-suite", "A.I. C-Suite"],
+  ["c-suite", "A.I. C-Level"],
   ["ceo-intelligence", "CEO Leadership Intelligence"],
   ["ai-models", "AI Models"],
   ["tools", "Tools & MCP"],

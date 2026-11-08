@@ -47,7 +47,7 @@ export default async function TutorialsPage() {
       <header>
         <p className="eyebrow">Help</p>
         <h1 className="mt-3 flex items-center gap-3 font-heading text-4xl font-semibold tracking-tight"><GraduationCap className="size-9 text-gold-300" aria-hidden /> Tutorials</h1>
-        <p className="mt-3 max-w-3xl text-ivory-muted">Step-by-step guides to every area of the A.I. C-Suite: what each area is for, how to use it, and what the symbols on screen mean. Start with the first one if you are new.</p>
+        <p className="mt-3 max-w-3xl text-ivory-muted">Step-by-step guides to every area of the A.I. C-Level: what each area is for, how to use it, and what the symbols on screen mean. Start with the first one if you are new.</p>
       </header>
 
       <Link href={`/tutorials/${start.slug}`} className="plate group block p-6 shadow-[var(--shadow-gold)] transition hover:border-line-gold sm:p-8">
@@ -59,7 +59,7 @@ export default async function TutorialsPage() {
       </Link>
 
       <section aria-labelledby="map">
-        <h2 id="map" className="font-heading text-2xl font-semibold">Map of the A.I. C-Suite</h2>
+        <h2 id="map" className="font-heading text-2xl font-semibold">Map of the A.I. C-Level</h2>
         <p className="mb-4 mt-1 text-sm text-ivory-muted">Every area in the menu, and the tutorial that explains it. Pick the area you need help with.</p>
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {areas.map((a) => (

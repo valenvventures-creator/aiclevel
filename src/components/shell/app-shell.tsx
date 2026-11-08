@@ -156,7 +156,7 @@ function SidebarContent(props: ShellProps & { collapsed: boolean; pathname: stri
           {!collapsed && (
             <span className="leading-none">
               <span className="block font-display text-[11.5px] font-semibold tracking-[0.16em] text-gold-300">THOUGHT AUTHORITIES</span>
-              <span className="mt-1 block font-mono text-[9px] tracking-[0.3em] text-ivory-faint">A.I. C-SUITE</span>
+              <span className="mt-1 block font-mono text-[9px] tracking-[0.3em] text-ivory-faint">A.I. C-LEVEL</span>
             </span>
           )}
         </Link>

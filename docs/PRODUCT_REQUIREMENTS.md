@@ -1,6 +1,6 @@
-# Product Requirements — A.I. C-Suite
+# Product Requirements — A.I. C-Level
 
-**Company:** Thought Authorities · **Product:** A.I. C-Suite
+**Company:** Thought Authorities · **Product:** A.I. C-Level
 **Promise:** Seven Executives. One Organization. Shared Intelligence.
 **Positioning:** Your C-Suite. Augmented by A.I. — *Put an intelligent C-Suite behind every important decision.*
 **Design principle:** Calm intelligence. Executive authority.
@@ -29,7 +29,7 @@ Founders, CEOs and leadership teams of 10–500 person companies, family offices
 | C-Suite Memory | CRUD, search, filters, verify, pin, archive, provenance inspector, visibility, executive relevance. |
 | C-Suite Studio | Natural-language request, live routing preview with override, priority, project; lead + contributors; versions; revisions; approve; save as report; export. |
 | Reports / Files / Projects / Decisions | Lists, detail, export, authorized downloads, project aggregation, decision approval workflow. |
-| Settings | Profile, Organization + Constitution, Team & invitations & roles, A.I. C-Suite configuration, CEO Leadership Intelligence, AI Models (status, test, routing, usage), Tools matrix, Security (password, sessions), Developer (prompt registry, audit), Billing, Voice, Integrations, and governance info pages. |
+| Settings | Profile, Organization + Constitution, Team & invitations & roles, A.I. C-Level configuration, CEO Leadership Intelligence, AI Models (status, test, routing, usage), Tools matrix, Security (password, sessions), Developer (prompt registry, audit), Billing, Voice, Integrations, and governance info pages. |
 
 ## Non-functional
 Multi-tenant isolation (server + RLS), WCAG-oriented accessibility, responsive (desktop primary, tablet collapsible, mobile drawer), streaming UX, every async view has loading/empty/success/error/retry, observability (usage, audit, correlation ids), no secrets client-side, demo content always labelled.

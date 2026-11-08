@@ -1,8 +1,8 @@
-# Thought Authorities — A.I. C-Suite
+# Thought Authorities — A.I. C-Level
 
 **Seven Executives. One Organization. Shared Intelligence.**
 
-A multi-tenant SaaS platform that gives an organization a persistent team of seven A.I. C-Suite Executives — CEO, CFO, CCO, CHRO, CTO, CLO and Chief Impact Officer — who work one-on-one, correspond through Executive Comms, convene in bounded C-Suite Sessions, produce Finished Work in C-Suite Studio, and share one organizational memory.
+A multi-tenant SaaS platform that gives an organization a persistent team of seven A.I. C-Level Executives — CEO, CFO, CCO, CHRO, CTO, CLO and Chief Impact Officer — who work one-on-one, correspond through Executive Comms, convene in bounded C-Suite Sessions, produce Finished Work in C-Suite Studio, and share one organizational memory.
 
 ## Quick start
 
