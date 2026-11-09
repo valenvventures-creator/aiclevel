@@ -34,7 +34,7 @@ export default async function FilesPage() {
                       <p className="truncate text-sm font-medium">{f.filename}</p>
                       <p className="font-mono text-[10px] text-ivory-faint">{f.category} · {formatBytes(f.size)} · {formatRelative(f.created_at)}</p>
                     </div>
-                    <Badge tone={f.processing_status === "READY" ? "ok" : f.processing_status === "FAILED" ? "risk" : "warn"}>{f.processing_status === "PENDING" ? "Awaiting extraction" : f.processing_status}</Badge>
+                    <Badge tone={f.processing_status === "READY" ? "ok" : f.processing_status === "FAILED" ? "risk" : "warn"}>{f.processing_status === "PENDING" ? "Awaiting extraction" : f.processing_status === "FAILED" ? "No readable text" : f.processing_status}</Badge>
                     <a href={`/api/files/${f.id}`} className="grid size-8 place-items-center rounded-lg text-ivory-muted hover:bg-white/5 hover:text-ivory" aria-label={`Download ${f.filename}`}><Download className="size-4" /></a>
                     {canDelete && (
                       <form action={deleteFileAction}><input type="hidden" name="id" value={f.id} /><button className="text-xs text-ivory-faint hover:text-risk" aria-label={`Delete ${f.filename}`}>Delete</button></form>

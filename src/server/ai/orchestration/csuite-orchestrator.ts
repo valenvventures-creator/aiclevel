@@ -321,7 +321,8 @@ async function* runStageStep(args: {
       transcript,
       options: (run.vote_options ?? DEFAULT_VOTE_OPTIONS).map((o) => `- ${o.id}: ${o.label}`).join("\n"),
     });
-    const web = webResearchFor(exec, STAGE_TASK[stage.def.key], { continuing: Boolean(state.text) });
+    // After a step that wrote nothing, answer without web research so the executive starts writing at once.
+    const web = webResearchFor(exec, STAGE_TASK[stage.def.key], { continuing: Boolean(state.text) || state.empty_steps > 0 });
     const built = await assembleExecutiveContext({ organization: input.organization, viewerRole: input.viewerRole, exec, query: `${session.objective} ${run.question}`, fileIds: run.attachment_ids, taskInstructions: task, webResearch: Boolean(web) });
     const content = state.text
       ? `${run.question}\n\n<your_answer_so_far>\n${state.text.slice(-30_000)}\n</your_answer_so_far>\n\nYour answer above is unfinished. Continue it from exactly where it ends. Output only the continuation — do not repeat any text already written.`

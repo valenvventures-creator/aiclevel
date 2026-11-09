@@ -63,11 +63,29 @@ describe("stepwise C-Level Studio production", () => {
     script.words = ["late"];
     script.delayMs = 200;
     const job = await createProductionJob({ organization: org, userId: "u1", request: "Create our marketing campaign." });
-    const a = await advanceProductionJob({ organization: org, userId: "u1", viewerRole: "OWNER", jobId: job.id, budgetMs: 20 });
-    const b = await advanceProductionJob({ organization: org, userId: "u1", viewerRole: "OWNER", jobId: job.id, budgetMs: 20 });
-    expect(a.state).toBe("continue");
-    expect(b.state).toBe("failed");
+    const states: string[] = [];
+    for (let i = 0; i < 3; i++) states.push((await advanceProductionJob({ organization: org, userId: "u1", viewerRole: "OWNER", jobId: job.id, budgetMs: 20 })).state);
+    expect(states).toEqual(["continue", "continue", "failed"]);
     expect((await db().productionJobs.get(org.id, job.id))?.status).toBe("FAILED");
+  });
+
+  it("after a step that writes nothing, starts writing without web research at low effort", async () => {
+    const cfo = (await db().executives.list(org.id, { where: { role_code: "CFO" } }))[0];
+    const [model] = await db().modelConfigs.list(org.id, { where: { executive_id: cfo.id } });
+    await db().modelConfigs.update(org.id, model.id, { tool_permissions: [...new Set([...model.tool_permissions, "web_research"])] });
+    script.words = ["late"];
+    script.delayMs = 200;
+    const job = await createProductionJob({ organization: org, userId: "u1", request: "Create a three-year financial model." });
+    await advanceProductionJob({ organization: org, userId: "u1", viewerRole: "OWNER", jobId: job.id, budgetMs: 20 });
+    script.delayMs = 0;
+    expect((await advanceProductionJob({ organization: org, userId: "u1", viewerRole: "OWNER", jobId: job.id, budgetMs: 500 })).state).toBe("done");
+
+    const [first, second] = script.calls;
+    expect(first.webResearch).toBeTruthy();
+    expect(first.modelPreference?.effort).toBe("medium");
+    expect(second.webResearch).toBeUndefined();
+    expect(second.modelPreference?.effort).toBe("low");
+    expect(second.messages[0].content).toContain("Begin writing the deliverable now");
   });
 
   it("lets only one runner work on a job at a time", async () => {

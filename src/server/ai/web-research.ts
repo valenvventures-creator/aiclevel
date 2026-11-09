@@ -9,7 +9,7 @@ import type { TaskType, WebSource } from "./gateway/types";
  */
 export const WEB_RESEARCH_MAX_USES: Partial<Record<TaskType, number>> = {
   executive_conversation: 5,
-  studio_production: 5,
+  studio_production: 3, // a few targeted searches leave time in the first step to start writing
   session_position: 3,
   session_review: 2,
 };

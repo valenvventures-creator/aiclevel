@@ -56,6 +56,9 @@ export async function createProductionJob(args: { organization: Organization; us
  *   - each step holds a short lease so only one runner works on a job at a time;
  *   - it streams for at most STEP_BUDGET_MS, saving the draft as it goes;
  *   - if the model has not finished, the next step continues from the saved draft;
+ *   - a step that writes nothing (typically web research plus reasoning filling
+ *     the whole budget) is followed by a step without web research, at low
+ *     effort, so the executive starts writing straight away;
  *   - hard bounds (MAX_STEPS, MAX_EMPTY_STEPS) make runaway loops impossible.
  *
  * The job page drives steps via POST /api/studio/[id]/advance while it is open.
@@ -64,7 +67,7 @@ export const STUDIO_LIMITS = {
   STEP_BUDGET_MS: 42_000,
   LEASE_MS: 58_000,
   MAX_STEPS: 14,
-  MAX_EMPTY_STEPS: 2,
+  MAX_EMPTY_STEPS: 3,
   DRAFT_SAVE_EVERY_MS: 4_000,
   MAX_DRAFT_CHARS: 120_000,
 } as const;
@@ -135,6 +138,8 @@ export async function advanceProductionJob(args: { organization: Organization; u
   const prior = (await d.artifacts.list(orgId, { where: { job_id: job.id }, orderBy: "version", desc: true, limit: 1 }))[0];
   const revisionNote = job.status === "REVISION_REQUESTED" ? (meta.pending_revision ?? null) : null;
   const draft = meta.draft ?? "";
+  // After a step that wrote nothing, skip web research and write from what the organization already knows.
+  const recovering = !draft && (meta.empty_steps ?? 0) > 0;
 
   const tpl = await PromptRegistry.resolve(orgId, "studio_production");
   const task = fill(tpl.content, {
@@ -143,14 +148,16 @@ export async function advanceProductionJob(args: { organization: Organization; u
     contributors: contributors.map((c) => `${c.title} (${c.persona.primary_question})`).join("; ") || "none",
     revision: revisionNote && prior ? `REVISION REQUEST: ${revisionNote}\nRevise the previous version below accordingly.\n<retrieved_content>\n${stripSourcesSection(prior.content).slice(0, 20000)}\n</retrieved_content>` : "",
   });
-  const web = webResearchFor(lead, "studio_production", { continuing: Boolean(draft) });
+  const web = webResearchFor(lead, "studio_production", { continuing: Boolean(draft) || recovering });
   const built = await assembleExecutiveContext({ organization: args.organization, viewerRole: args.viewerRole, exec: lead, query: job.request, projectId: job.project_id, taskInstructions: task, webResearch: Boolean(web) });
   let sources: WebSource[] = draft ? (meta.draft_sources ?? []) : [];
 
   // Continuation steps see the draft so far and must only add to it.
   const userContent = draft
     ? `${job.request}\n\n<draft_so_far>\n${draft.slice(-60_000)}\n</draft_so_far>\n\nThe deliverable above is unfinished. Continue it from exactly where the draft ends. Output only the continuation — do not repeat any text already written, do not restart, and do not add commentary.`
-    : job.request;
+    : recovering
+      ? `${job.request}\n\nBegin writing the deliverable now, using the organization's information above. Where a figure is unknown, state a clearly labelled assumption instead of researching it.`
+      : job.request;
 
   const ctrl = new AbortController();
   const budget = args.budgetMs ?? STUDIO_LIMITS.STEP_BUDGET_MS;
@@ -172,7 +179,7 @@ export async function advanceProductionJob(args: { organization: Organization; u
       system: built.system,
       messages: [{ role: "user", content: userContent }],
       // Medium effort keeps time-to-first-text inside one step; later steps only continue writing.
-      modelPreference: { provider: lead.model.primary_provider, model: lead.model.primary_model, fallbackProvider: lead.model.fallback_provider, fallbackModel: lead.model.fallback_model, effort: draft || (meta.empty_steps ?? 0) > 0 ? "low" : "medium" },
+      modelPreference: { provider: lead.model.primary_provider, model: lead.model.primary_model, fallbackProvider: lead.model.fallback_provider, fallbackModel: lead.model.fallback_model, effort: draft || recovering ? "low" : "medium" },
       promptVersion: tpl.versionTag,
       webResearch: web,
       signal: ctrl.signal,
@@ -210,7 +217,7 @@ export async function advanceProductionJob(args: { organization: Organization; u
   // Not finished within this step: keep the draft and release the lease.
   const empty = added.trim() ? 0 : (meta.empty_steps ?? 0) + 1;
   if (empty >= STUDIO_LIMITS.MAX_EMPTY_STEPS) {
-    return fail(`${lead.title} did not produce any text within the hosting time limit. Retry, or lower this executive's reasoning effort in Settings → A.I. C-Level.`);
+    return fail(`${lead.title} could not start writing within the time limit, even without web research. This is usually temporary — press Retry. If it keeps happening, try a narrower request (for example, "Year 1 revenue and cost model").`);
   }
   await d.productionJobs.update(orgId, job.id, { provider, model, metadata: { ...meta, steps, draft: full, draft_sources: sources, empty_steps: empty, lease_until: null } });
   return { state: "continue", draftChars: full.length };

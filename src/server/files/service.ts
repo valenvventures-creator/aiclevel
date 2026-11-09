@@ -5,6 +5,7 @@ import { db, newId, nowIso } from "@/server/db/store";
 import { hasPersistentStore } from "@/server/db/records";
 import { lexicalEmbedding } from "@/server/memory/embeddings";
 import { audit } from "@/server/audit";
+import { canExtract, extractText } from "./extract";
 import type { FileRecord, Organization } from "@/types/domain";
 
 export const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
@@ -85,12 +86,12 @@ export async function storeFile(args: { organization: Organization; userId: stri
     if (error) throw new Error(`Storage upload failed: ${error.message}`);
   } else await blobs.set(storage_path, args.bytes);
 
-  // Text extraction: plain-text formats inline; binary formats are queued for the document-processing worker.
-  const textual = ["txt", "md", "csv"].includes(v.ext);
-  const extracted = textual ? new TextDecoder().decode(args.bytes).slice(0, 200_000) : null;
+  // Text extraction (TXT, MD, CSV, PDF, DOCX, PPTX, XLSX) so executives can read the document.
+  const readable = canExtract(v.ext);
+  const extracted = readable ? await extractText(v.ext, args.bytes) : null;
   const rec: FileRecord = {
     id, organization_id: args.organization.id, project_id: args.projectId ?? null, uploaded_by: args.userId, filename, mime_type: v.mime, size: args.bytes.byteLength,
-    storage_path, category: CATEGORY[v.ext] ?? "Document", processing_status: textual ? "READY" : "PENDING", extracted_text: extracted, created_at: nowIso(),
+    storage_path, category: CATEGORY[v.ext] ?? "Document", processing_status: readable && !extracted ? "FAILED" : "READY", extracted_text: extracted, created_at: nowIso(),
   };
   await db().files.insert(rec);
   if (extracted) {
@@ -110,6 +111,22 @@ export async function readFile(rec: FileRecord): Promise<{ bytes: Uint8Array } |
   }
   const b = await blobs.get(rec.storage_path);
   return b ? { bytes: b } : null;
+}
+
+/**
+ * Makes sure a document's text has been extracted, extracting it now for
+ * files uploaded before their format was readable. Returns the text, or "".
+ */
+export async function ensureExtracted(rec: FileRecord): Promise<string> {
+  if ((rec.extracted_text ?? "").trim()) return rec.extracted_text!;
+  const ext = rec.filename.toLowerCase().split(".").pop() ?? "";
+  if (!canExtract(ext)) return "";
+  const stored = await readFile(rec);
+  if (!stored) return "";
+  const bytes = "bytes" in stored ? stored.bytes : new Uint8Array(await (await fetch(stored.signedUrl)).arrayBuffer());
+  const text = (await extractText(ext, bytes)) ?? "";
+  await db().files.update(rec.organization_id, rec.id, { extracted_text: text || null, processing_status: text ? "READY" : "FAILED" });
+  return text;
 }
 
 export async function deleteFile(rec: FileRecord) {
