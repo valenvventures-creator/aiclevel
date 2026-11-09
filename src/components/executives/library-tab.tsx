@@ -2,11 +2,14 @@ import { BookOpen, FileText, Library } from "lucide-react";
 import { ActionForm } from "@/components/settings/action-form";
 import { Badge, Card, Input, Label, SectionTitle, Select, Textarea } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
+import { LibraryUpload } from "./library-upload";
 import { formatRelative } from "@/lib/utils";
 import { db } from "@/server/db/store";
 import { listLibrary } from "@/server/executives/library";
 import { addLibraryDocumentAction, addLibraryItemAction, deleteLibraryItemAction, toggleLibraryItemAction, updateLibraryItemAction } from "@/server/executives/learning-actions";
 import type { AIExecutive, ExecutiveLibraryItem } from "@/types/domain";
+
+const DOC_EXT = /\.(pdf|docx|pptx|xlsx|csv|txt|md)$/i;
 
 const KIND_LABEL: Record<ExecutiveLibraryItem["kind"], string> = { FRAMEWORK: "Framework", PLAYBOOK: "Playbook", REFERENCE: "Reference", DOCUMENT: "Document" };
 
@@ -15,7 +18,8 @@ export async function LibraryTab({ orgId, exec, canConfigure }: { orgId: string;
   const [items, files] = await Promise.all([listLibrary(orgId, exec), canConfigure ? db().files.list(orgId, { orderBy: "created_at", desc: true, limit: 100 }) : Promise.resolve([])]);
   const own = items.filter((i) => i.origin === "ORGANIZATION");
   const starters = items.filter((i) => i.origin === "STARTER");
-  const readable = files.filter((f) => (f.extracted_text ?? "").trim());
+  const inLibrary = new Set(items.map((i) => i.file_id).filter(Boolean));
+  const documents = files.filter((f) => DOC_EXT.test(f.filename) && f.processing_status !== "FAILED" && !inLibrary.has(f.id));
   const active = items.filter((i) => i.enabled).length;
 
   return (
@@ -52,7 +56,12 @@ export async function LibraryTab({ orgId, exec, canConfigure }: { orgId: string;
       {canConfigure && (
         <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
           <Card>
-            <SectionTitle>Add knowledge</SectionTitle>
+            <SectionTitle>Upload documents</SectionTitle>
+            <p className="mb-3 text-xs text-ivory-muted">Playbooks, policies, price lists, past reports, decks or spreadsheets. The text of each file is added to the {exec.short_title}&apos;s library (up to about 20,000 characters per file), and the file is kept in Files.</p>
+            <LibraryUpload executiveId={exec.id} executiveShortTitle={exec.short_title} />
+          </Card>
+          <Card>
+            <SectionTitle>Write it in</SectionTitle>
             <ActionForm action={addLibraryItemAction} submit="Add to library">
               <input type="hidden" name="executive_id" value={exec.id} />
               <div>
@@ -67,23 +76,20 @@ export async function LibraryTab({ orgId, exec, canConfigure }: { orgId: string;
               <div><Label htmlFor="lib-content">Content</Label><Textarea id="lib-content" name="content" required rows={7} placeholder="Write it the way you would brief a new senior hire: steps, rules of thumb, numbers, what to avoid." /></div>
             </ActionForm>
           </Card>
-          <Card>
-            <SectionTitle>Add a document</SectionTitle>
-            {readable.length === 0 ? (
-              <p className="text-sm text-ivory-muted">Upload a document in <a href="/files" className="text-gold-300 underline-offset-2 hover:underline">Files</a> first. Text documents (TXT, MD, CSV) can be added straight away.</p>
-            ) : (
+          {documents.length > 0 && (
+            <Card>
+              <SectionTitle>Or choose from Files</SectionTitle>
               <ActionForm action={addLibraryDocumentAction} submit="Add document">
                 <input type="hidden" name="executive_id" value={exec.id} />
                 <div>
-                  <Label htmlFor="lib-file">Document</Label>
+                  <Label htmlFor="lib-file">Document already in Files</Label>
                   <Select id="lib-file" name="file_id" required>
-                    {readable.map((f) => <option key={f.id} value={f.id}>{f.filename}</option>)}
+                    {documents.map((f) => <option key={f.id} value={f.id}>{f.filename}</option>)}
                   </Select>
                 </div>
-                <p className="text-xs text-ivory-faint">The document&apos;s text is copied into the library (up to about 20,000 characters).</p>
               </ActionForm>
-            )}
-          </Card>
+            </Card>
+          )}
         </aside>
       )}
     </div>

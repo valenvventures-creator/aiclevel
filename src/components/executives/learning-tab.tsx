@@ -4,6 +4,7 @@ import { Badge, Card, Input, Label, SectionTitle, Textarea } from "@/components/
 import { Button } from "@/components/ui/button";
 import { formatRelative } from "@/lib/utils";
 import { db } from "@/server/db/store";
+import { LibraryUpload } from "./library-upload";
 import { createLessonAction, reviewLessonAction } from "@/server/executives/learning-actions";
 import type { AIExecutive, ExecutiveLesson } from "@/types/domain";
 
@@ -132,7 +133,7 @@ export async function LearningTab({ orgId, exec, canConfigure }: { orgId: string
       </div>
 
       {canConfigure && (
-        <aside className="xl:sticky xl:top-24 xl:self-start">
+        <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
           <Card>
             <SectionTitle>Teach the {exec.short_title} directly</SectionTitle>
             <p className="mb-3 text-xs text-ivory-muted">Write a standing instruction. It applies to every answer straight away.</p>
@@ -141,6 +142,11 @@ export async function LearningTab({ orgId, exec, canConfigure }: { orgId: string
               <div><Label htmlFor="new-title">Title</Label><Input id="new-title" name="title" required maxLength={160} placeholder="e.g. Always show runway in months" /></div>
               <div><Label htmlFor="new-guidance">Lesson</Label><Textarea id="new-guidance" name="guidance" required rows={4} maxLength={1200} placeholder="e.g. Whenever cash or hiring comes up, state runway in months under base and downside scenarios, and the monthly burn used." /></div>
             </ActionForm>
+          </Card>
+          <Card>
+            <SectionTitle>Teach with documents</SectionTitle>
+            <p className="mb-3 text-xs text-ivory-muted">Upload playbooks, policies, reports or spreadsheets. They go into the {exec.short_title}&apos;s Library, which it draws on whenever they are relevant.</p>
+            <LibraryUpload executiveId={exec.id} executiveShortTitle={exec.short_title} compact />
           </Card>
         </aside>
       )}

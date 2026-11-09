@@ -6,6 +6,7 @@ import { authorize } from "@/server/organizations/service";
 import { rateLimit } from "@/server/auth/rate-limit";
 import { db } from "@/server/db/store";
 import { audit } from "@/server/audit";
+import { ensureExtracted } from "@/server/files/service";
 import type { SettingsState } from "@/server/settings/actions";
 import { createLesson, setLessonStatus, submitFeedback } from "./learning";
 import { addLibraryItem, deleteLibraryItem, LIBRARY_LIMITS, updateLibraryItem } from "./library";
@@ -107,15 +108,27 @@ export async function addLibraryItemAction(_: SettingsState, fd: FormData): Prom
   }
 }
 
-/** Adds an uploaded document's text to an executive's library. */
+/**
+ * Adds an uploaded document's text to an executive's library. The document
+ * itself stays in Files (provenance); the library keeps its text, so the
+ * executive can draw on it. Older uploads are read on demand.
+ */
 export async function addLibraryDocumentAction(_: SettingsState, fd: FormData): Promise<SettingsState> {
   try {
     const ctx = await authorize("executives.configure");
     const exec = await ownExecutive(ctx.organization.id, String(fd.get("executive_id")));
     const file = await db().files.get(ctx.organization.id, String(fd.get("file_id")));
     if (!file) return { error: "Choose a file." };
-    const text = (file.extracted_text ?? "").trim();
-    if (!text) return { error: `“${file.filename}” has no readable text yet. Text documents (TXT, MD, CSV) work right away; other formats are added once processed.` };
+    const text = (await ensureExtracted(file)).trim();
+    if (!text) {
+      return {
+        error: /\.(pdf)$/i.test(file.filename)
+          ? `“${file.filename}” has no readable text — it is probably a scan or a picture of pages. Upload a PDF with selectable text, or a Word, PowerPoint, Excel or text version.`
+          : `“${file.filename}” has no readable text. Use a PDF, Word (DOCX), PowerPoint (PPTX), Excel (XLSX), CSV, TXT or Markdown file.`,
+      };
+    }
+    const existing = await db().library.list(ctx.organization.id, { where: { executive_id: exec.id } });
+    if (existing.some((i) => i.file_id === file.id)) return { ok: true, message: `“${file.filename}” is already in the ${exec.title}'s library.` };
     const item = await addLibraryItem(ctx.organization.id, ctx.user.id, exec.id, { kind: "DOCUMENT", title: file.filename, content: text.slice(0, LIBRARY_LIMITS.DOCUMENT_CHARS), fileId: file.id });
     await audit(ctx.organization.id, ctx.user.id, "executive.library", "executive_library_item", item.id, { action: "add_document", file_id: file.id, executive_id: exec.id });
     revalidatePath(`/executives/${exec.slug}`);

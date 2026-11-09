@@ -615,7 +615,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: "Upload",
         icon: Upload,
-        body: "Drag files onto the Upload box or click to browse. Supported: PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, images and common audio and video up to 20 MB. Text formats are readable straight away; other formats are processed first.",
+        body: "Drag files onto the Upload box or click to browse. Supported: PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, images and common audio and video up to 20 MB. The text of PDF, Word, PowerPoint, Excel, CSV, TXT and Markdown files is read on upload, so the executives can use it. Images, audio and video are stored as they are.",
         image: { name: "files", alt: "The Files library with the upload box", caption: DEMO },
       },
       { title: "Use them", icon: Users, body: "Attach up to five files when you set up a C-Level Session, or add a document to an executive's Library. A summary of each new document also appears in C-Level Memory as PROPOSED for you to confirm." },
@@ -683,7 +683,7 @@ export const TUTORIALS: Tutorial[] = [
         body: "Admins get a notification. Open the executive's office → Learning tab (a number shows how many are waiting). Under Waiting for approval, edit the title or wording if needed, then Approve lesson or Dismiss.",
         image: { name: "learning", alt: "Lessons waiting for approval with Approve and Dismiss", caption: DEMO },
       },
-      { title: "Teach directly", icon: GraduationCap, body: "Admins can write a lesson straight away with Teach the CFO directly (or whichever executive). Under Active lessons you can edit or retire a lesson at any time." },
+      { title: "Teach directly", icon: GraduationCap, body: "Admins can write a lesson straight away with Teach the CFO directly (or whichever executive). Under Active lessons you can edit or retire a lesson at any time. To teach with a document instead, upload it under Teach with documents: it goes into the executive's Library." },
     ],
     symbols: [
       { kind: "badge", text: "SUGGESTED", tone: "gold", meaning: "Drafted from feedback and waiting for an admin." },
@@ -714,7 +714,8 @@ export const TUTORIALS: Tutorial[] = [
         body: "In an executive's office, open the Library tab. Your organization's knowledge is listed first, then the Starter frameworks. Click Read to see an item.",
         image: { name: "library", alt: "The CFO's starter frameworks", caption: DEMO },
       },
-      { title: "Add your own knowledge", icon: BookmarkPlus, body: "Admins use Add knowledge: choose Playbook (how we do something), Framework (a way of thinking) or Reference (facts, figures, policies), give it a title and write it as you would brief a new senior hire. Add a document copies the text of a file from Files into the library." },
+      { title: "Upload your documents", icon: Upload, body: "Owners and Admins drag files onto Upload documents (or click Choose files). PDF, Word, PowerPoint, Excel, CSV, TXT and Markdown all work. The text of each file is added to the library (up to about 20,000 characters per file) and the file is kept in Files. A scanned PDF has no text to read, so upload a version with selectable text." },
+      { title: "Or write it in", icon: BookmarkPlus, body: "Under Write it in, choose Playbook (how we do something), Framework (a way of thinking) or Reference (facts, figures, policies), give it a title and write it as you would brief a new senior hire. Or choose from Files adds a document you uploaded earlier." },
       { title: "Keep it relevant", icon: SlidersHorizontal, body: "Turn off any starter you don't want used. Your own items can be edited or deleted. Only turned-on items are used." },
     ],
     symbols: [

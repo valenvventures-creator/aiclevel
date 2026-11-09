@@ -15,7 +15,7 @@ Every answer's metadata records the `lesson_ids` and `library_ids` that informed
 - **Starter frameworks** (`src/config/executives/library.ts`): four or more general, well-established frameworks per role, for example the 13-week cash flow and scenario planning for the CFO, and the contract review checklist for the CLO.
   - They are copied into the organization per executive on first read. Newly shipped starters are added the same way later.
   - Starters can be turned off but not edited or deleted, so a removed starter never comes back.
-- **The organization's own knowledge:** playbooks, frameworks and references written by admins, and **documents** whose extracted text is copied in from Files (up to about 20,000 characters).
+- **The organization's own knowledge:** playbooks, frameworks and references written by admins, and **documents** uploaded straight into the Library (or Learning tab) or chosen from Files; their extracted text (PDF, DOCX, PPTX, XLSX, CSV, TXT, MD; `src/server/files/extract.ts`) is copied in, up to about 20,000 characters.
 - **Retrieval:** for each request, enabled items are ranked by lexical similarity to the query, with a small preference for the organization's own items. At most 4 items and about 7,000 characters reach the model, as the `executive_library` layer, cited as [L#] and wrapped as reference data.
 - Curated on the executive's **Library** tab (`executives.configure`); everyone else can read it.
 
