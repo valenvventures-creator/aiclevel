@@ -15,9 +15,9 @@ export function Portal() {
           Convene your C-Level <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
         </Link>
       </div>
-      <div className="relative mx-auto mt-8 w-[min(560px,92vw)]">
+      <div className="relative mx-auto mt-8 w-[min(476px,78vw)]">
         {/* floor glow */}
-        <div aria-hidden className="absolute -bottom-6 left-1/2 h-24 w-[38rem] max-w-[120%] -translate-x-1/2 rounded-[100%] bg-[radial-gradient(ellipse,rgba(239,186,17,.28),transparent_65%)] blur-xl" />
+        <div aria-hidden className="absolute -bottom-5 left-1/2 h-20 w-[32.3rem] max-w-[120%] -translate-x-1/2 rounded-[100%] bg-[radial-gradient(ellipse,rgba(239,186,17,.28),transparent_65%)] blur-xl" />
         <AstroClock className="relative h-auto w-full drop-shadow-[0_30px_60px_rgba(0,0,0,.6)]" />
       </div>
     </div>
