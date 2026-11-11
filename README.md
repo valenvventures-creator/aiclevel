@@ -34,7 +34,8 @@ supabase db push
 3. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SESSION_SECRET`.
 4. Set `ANTHROPIC_API_KEY` (primary reasoning, `claude-opus-5-5`) and optionally `OPENAI_API_KEY` (fallback).
 5. Configure Supabase Auth SMTP and redirect URLs (`/verify-email`, `/reset-password`).
-6. Deploy to Vercel.
+6. Deploy to Netlify. The product lives at **https://www.aiclevel.io**: make `www.aiclevel.io` the site's primary domain in Netlify (so `aiclevel.io` redirects to it) and set `NEXT_PUBLIC_APP_URL=https://www.aiclevel.io` so emailed links use it.
+7. Email: set `RESEND_API_KEY` and `EMAIL_FROM` (e.g. `A.I. C-Level <no-reply@aiclevel.io>`, on a domain verified in Resend), then redeploy.
 
 ## Scripts
 

@@ -9,12 +9,22 @@ import type { AIExecutivePersona, Organization } from "@/types/domain";
  * definitions, the "Session Minutes" report type and, for the demo
  * organization, its seeded sample content. What customers wrote is left alone.
  *
- * Supabase deployments get the same change from migration 010; this covers
- * demo mode, whose data lives outside Postgres.
+ * It also moves executive portraits off the retired thoughtauthorities.com
+ * host to the copies served with the app (/brand/executives).
+ *
+ * Supabase deployments get the same changes from migrations 010 and 011; this
+ * covers demo mode, whose data lives outside Postgres.
  */
 export const LEGACY_MINUTES_TYPE = "C-Suite Session Minutes";
 
 const upgraded = new Set<string>();
+
+export const LEGACY_AVATAR_BASE = "https://thoughtauthorities.com/assets/avatars/";
+
+/** Portraits once hosted on thoughtauthorities.com now ship with the app. */
+export function relocateAvatar(url: string | null): string | null {
+  return url?.startsWith(LEGACY_AVATAR_BASE) ? `/brand/executives/${url.slice(LEGACY_AVATAR_BASE.length)}` : url;
+}
 
 export function renameLabel(text: string): string {
   return text.replace(/C-Suite/g, "C-Level").replace(/C-SUITE/g, "C-LEVEL");
@@ -41,10 +51,13 @@ export async function upgradeStoredLabels(org: Pick<Organization, "id" | "is_dem
   upgraded.add(orgId);
   try {
     const d = db();
-    const core = (await d.executives.list(orgId)).filter((e) => e.is_core);
-    for (const e of core) {
-      const patch = changed(e, ["description", "functional_mandate"]);
-      if (patch) await d.executives.update(orgId, e.id, patch);
+    const executives = await d.executives.list(orgId);
+    const core = executives.filter((e) => e.is_core);
+    for (const e of executives) {
+      const patch = { ...(e.is_core ? changed(e, ["description", "functional_mandate"]) : null) };
+      const avatar = relocateAvatar(e.avatar_url);
+      if (avatar !== e.avatar_url) patch.avatar_url = avatar;
+      if (Object.keys(patch).length) await d.executives.update(orgId, e.id, patch);
     }
     const coreIds = new Set(core.map((e) => e.id));
     for (const p of await d.personas.list(orgId)) {

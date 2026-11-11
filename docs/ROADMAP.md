@@ -20,6 +20,5 @@ Phases follow the master brief. Each milestone file in `docs/milestones/` lists 
 ## Genuine blockers / decisions for the owner
 - **Supabase project & keys** — required to run against PostgreSQL/RLS; demo mode covers everything else.
 - **Anthropic / OpenAI keys** — without them all executive output is simulated (and labelled).
-- **Avatar hosting** — portraits are loaded from thoughtauthorities.com; mirror them into Storage for reliability.
 - **Legal text** — Terms/Privacy are placeholders that need counsel-approved copy.
 - **Email delivery** — configure Supabase SMTP (or Resend) for verification, reset and invitation emails.
