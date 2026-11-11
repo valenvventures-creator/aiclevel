@@ -31,7 +31,7 @@
 Expo-out easing everywhere; scroll reveals (opacity + 28px rise + blur); `fade-up`, `pulse-soft`, `marquee`, `flow` (dashed lines), `ring`, `rise` (particles), `draw` (underline), `grain`. Pinned sections are desktop-only; on mobile chapters flow normally and flip at mid-viewport. All motion is disabled or made static under `prefers-reduced-motion`.
 
 ## Brand assets
-`public/brand/crest-full.png` (full logo, transparent), `crest.png` / `crest-256.png` (mark), `wordmark.png`, `icon-512.png` (app icon). Executive portraits load from thoughtauthorities.com with a monogram fallback.
+`public/brand/crest-full.png` (full logo, transparent), `crest.png` / `crest-256.png` (mark), `wordmark.png`, `icon-512.png` (app icon). Executive portraits ship with the app in `public/brand/executives/` (custom avatar URLs fall back to a monogram if they cannot load).
 
 ## Accessibility
 Skip link, landmark roles, visible gold focus ring, `aria-current` on navigation, labelled icon buttons, `aria-live` for streaming output, dialog semantics for drawer/palette/notifications, keyboard command palette, AA-contrast text tokens.

@@ -4,8 +4,8 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Executive portrait with a graceful monogram fallback (seed avatars are
- * hosted on thoughtauthorities.com and may be unavailable in some networks).
+ * Executive portrait with a graceful monogram fallback when an image
+ * (for example a custom avatar URL) cannot be loaded.
  */
 export function ExecutiveAvatar({
   src,
@@ -32,7 +32,7 @@ export function ExecutiveAvatar({
         style={{ ["--tw-ring-color" as string]: `color-mix(in srgb, ${accent} 55%, transparent)`, background: failed ? `radial-gradient(circle at 30% 25%, color-mix(in srgb, ${accent} 35%, #141820), #0b0d12 70%)` : undefined }}
       >
         {!failed && src ? (
-          // eslint-disable-next-line @next/next/no-img-element -- remote seed avatars; next/image would require the host to be reachable at build time
+          // eslint-disable-next-line @next/next/no-img-element -- avatars may be custom remote URLs; next/image would require every host to be allow-listed
           <img src={src} alt="" className="size-full object-cover" onError={() => setFailed(true)} loading="lazy" />
         ) : (
           <span className="font-display font-semibold tracking-wider" style={{ color: accent, fontSize: Math.max(10, size * 0.28) }}>

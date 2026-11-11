@@ -31,7 +31,7 @@ export interface ExecutiveSeed {
   model: Omit<AIExecutiveModelConfig, "id" | "organization_id" | "executive_id">;
 }
 
-const AVATAR_BASE = "https://thoughtauthorities.com/assets/avatars";
+const AVATAR_BASE = "/brand/executives"; // served from public/ with the app
 
 const strategic = (prompt_key: string, tools: string[], memory: MemoryCategory[] | "ALL"): ExecutiveSeed["model"] => ({
   primary_provider: "anthropic",

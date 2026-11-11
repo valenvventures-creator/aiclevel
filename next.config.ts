@@ -13,9 +13,6 @@ const nextConfig: NextConfig = {
       "*.css": { loaders: ["@tailwindcss/turbopack"], as: "*.css" },
     },
   },
-  images: {
-    remotePatterns: [{ protocol: "https", hostname: "thoughtauthorities.com" }],
-  },
   // Old "C-Suite" addresses, kept working after the rename to C-Level.
   async redirects() {
     return [
