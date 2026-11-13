@@ -445,6 +445,8 @@ export interface FileRecord {
    * Null/absent: a company-wide file every executive draws on.
    */
   executive_id?: UUID | null;
+  /** Set for files that serve one feature only (e.g. a project's cover image); these are not company documents. */
+  purpose?: "PROJECT_IMAGE" | null;
   created_at: ISODate;
 }
 
@@ -497,7 +499,15 @@ export interface Project {
   description: string;
   status: "ACTIVE" | "ON_HOLD" | "COMPLETED" | "ARCHIVED";
   owner_id: UUID;
+  /** Where the project takes place, as people read it (address or place name). */
+  location_label?: string | null;
+  /** WGS 84 coordinates of the project's pin on the Projects map. */
+  latitude?: number | null;
+  longitude?: number | null;
+  /** Cover image (a file with purpose PROJECT_IMAGE). */
+  image_file_id?: UUID | null;
   created_at: ISODate;
+  updated_at?: ISODate;
 }
 
 export const PRODUCTION_STATUSES = [

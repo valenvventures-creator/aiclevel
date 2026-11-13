@@ -91,3 +91,26 @@ export async function ensureDemoCrm(orgId: string, userId: string): Promise<void
     throw err;
   }
 }
+
+/** Sample locations for the demo organization's projects (once per database; never overwrites a location). */
+const PROJECT_MARKER = "demo_project_locations_v1";
+const PROJECT_PLACES: Record<string, { label: string; latitude: number; longitude: number }> = {
+  "Seed Extension": { label: "Northwind Capital, Boylston Street, Boston, MA", latitude: 42.3493, longitude: -71.0787 },
+  "Enterprise Tier Launch": { label: "Thought Authorities HQ, Congress Avenue, Austin, TX", latitude: 30.2686, longitude: -97.7427 },
+  "Founders Forward Initiative": { label: "Founders Forward Hub, West Loop, Chicago, IL", latitude: 41.8837, longitude: -87.6479 },
+};
+
+export async function ensureDemoProjectLocations(orgId: string): Promise<void> {
+  const store = records();
+  if (!(await store.insertIfAbsent("app_config", { id: PROJECT_MARKER, at: Date.now() }, { organizationId: "global" }))) return;
+  try {
+    const d = db();
+    for (const p of await d.projects.list(orgId)) {
+      const place = PROJECT_PLACES[p.name];
+      if (place && typeof p.latitude !== "number") await d.projects.update(orgId, p.id, { location_label: place.label, latitude: place.latitude, longitude: place.longitude });
+    }
+  } catch (err) {
+    await store.remove("app_config", PROJECT_MARKER);
+    throw err;
+  }
+}

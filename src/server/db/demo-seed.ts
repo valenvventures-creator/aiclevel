@@ -6,7 +6,7 @@ import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { lexicalEmbedding } from "@/server/memory/embeddings";
 import { db, newId, nowIso } from "./store";
 import { records } from "./records";
-import { ensureDemoCrm } from "./demo-crm";
+import { ensureDemoCrm, ensureDemoProjectLocations } from "./demo-crm";
 import type { ExecutiveRoleCode, MemoryCategory, MemoryRecord, MemoryStatus, ReportType, UserProfile } from "@/types/domain";
 
 /**
@@ -41,13 +41,13 @@ async function seedOnce(): Promise<void> {
   const store = records();
   const deadline = Date.now() + 45_000;
   while (Date.now() < deadline) {
-    if (await store.get(CONFIG, MARKER)) return ensureDemoCrm(DEMO_ORG_ID, DEMO_USER_ID).catch((err) => console.error("[demo] CRM sample data failed", err));
+    if (await store.get(CONFIG, MARKER)) return demoExtras();
     const acquired = await store.insertIfAbsent(CONFIG, { id: LOCK, at: Date.now() }, { organizationId: "global" });
     if (acquired) {
       try {
         await seed();
         await store.put(CONFIG, { id: MARKER, completed_at: nowIso() }, { organizationId: "global" });
-        await ensureDemoCrm(DEMO_ORG_ID, DEMO_USER_ID).catch((err) => console.error("[demo] CRM sample data failed", err));
+        await demoExtras();
         return;
       } finally {
         await store.remove(CONFIG, LOCK);
@@ -58,6 +58,12 @@ async function seedOnce(): Promise<void> {
     await sleep(400);
   }
   throw new Error("Timed out waiting for the demo organization to be prepared");
+}
+
+/** Sample data added after the original demo seed (each once per database). */
+async function demoExtras() {
+  await ensureDemoCrm(DEMO_ORG_ID, DEMO_USER_ID).catch((err) => console.error("[demo] CRM sample data failed", err));
+  await ensureDemoProjectLocations(DEMO_ORG_ID).catch((err) => console.error("[demo] project locations failed", err));
 }
 
 const daysAgo = (n: number, h = 0) => new Date(Date.now() - n * 86_400_000 - h * 3_600_000).toISOString();

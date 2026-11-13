@@ -75,8 +75,8 @@ const blobs = {
 };
 
 /** Company-wide file (Files tab, onboarding) — not one executive's private upload. */
-export function isCompanyFile(f: Pick<FileRecord, "executive_id">): boolean {
-  return !f.executive_id;
+export function isCompanyFile(f: Pick<FileRecord, "executive_id" | "purpose">): boolean {
+  return !f.executive_id && !f.purpose;
 }
 
 /** Files shared by the whole organization (every executive draws on them). */
@@ -90,7 +90,7 @@ export async function listCompanyFiles(orgId: string, opts: { limit?: number; pr
  * Stores an upload. With `executiveId` the file is private to that executive
  * (its Learning tab): it is not added to C-Level Memory and not listed in Files.
  */
-export async function storeFile(args: { organization: Organization; userId: string; filename: string; bytes: Uint8Array; projectId?: string | null; executiveId?: string | null }): Promise<FileRecord> {
+export async function storeFile(args: { organization: Organization; userId: string; filename: string; bytes: Uint8Array; projectId?: string | null; executiveId?: string | null; purpose?: FileRecord["purpose"] }): Promise<FileRecord> {
   const v = validateUpload(args.filename, args.bytes);
   if (!v.ok) throw new UploadError(v.error);
   const id = newId();
@@ -107,10 +107,10 @@ export async function storeFile(args: { organization: Organization; userId: stri
   const extracted = readable ? await extractText(v.ext, args.bytes) : null;
   const rec: FileRecord = {
     id, organization_id: args.organization.id, project_id: args.projectId ?? null, uploaded_by: args.userId, filename, mime_type: v.mime, size: args.bytes.byteLength,
-    storage_path, category: CATEGORY[v.ext] ?? "Document", processing_status: readable && !extracted ? "FAILED" : "READY", extracted_text: extracted, executive_id: args.executiveId ?? null, created_at: nowIso(),
+    storage_path, category: CATEGORY[v.ext] ?? "Document", processing_status: readable && !extracted ? "FAILED" : "READY", extracted_text: extracted, executive_id: args.executiveId ?? null, purpose: args.purpose ?? null, created_at: nowIso(),
   };
   await db().files.insert(rec);
-  if (extracted && !args.executiveId) {
+  if (extracted && !args.executiveId && !args.purpose) {
     // Searchable document memory is PROPOSED until a human verifies it.
     await db().memory.insert({ id: newId(), organization_id: args.organization.id, project_id: rec.project_id, title: `Document: ${filename}`, content: extracted.slice(0, 1500), category: "DOCUMENTS", importance: 2, status: "PROPOSED", pinned: false, source_type: "UPLOADED_DOCUMENT", source_id: id, created_by: args.userId, verified_by: null, confidence: 0.7, embedding: lexicalEmbedding(extracted.slice(0, 4000)), visibility: "ORGANIZATION", executive_relevance: [], created_at: nowIso(), updated_at: nowIso() });
   }

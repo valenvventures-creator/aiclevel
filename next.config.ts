@@ -29,7 +29,8 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=(self)" },
+          // geolocation=(self): "Use my current location" when placing a project on the map (the browser always asks first).
+          { key: "Permissions-Policy", value: "camera=(), geolocation=(self), microphone=(self)" },
         ],
       },
     ];
