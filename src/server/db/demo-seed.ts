@@ -6,6 +6,7 @@ import { AIExecutiveRegistry } from "@/server/executives/registry";
 import { lexicalEmbedding } from "@/server/memory/embeddings";
 import { db, newId, nowIso } from "./store";
 import { records } from "./records";
+import { ensureDemoCrm } from "./demo-crm";
 import type { ExecutiveRoleCode, MemoryCategory, MemoryRecord, MemoryStatus, ReportType, UserProfile } from "@/types/domain";
 
 /**
@@ -40,12 +41,13 @@ async function seedOnce(): Promise<void> {
   const store = records();
   const deadline = Date.now() + 45_000;
   while (Date.now() < deadline) {
-    if (await store.get(CONFIG, MARKER)) return;
+    if (await store.get(CONFIG, MARKER)) return ensureDemoCrm(DEMO_ORG_ID, DEMO_USER_ID).catch((err) => console.error("[demo] CRM sample data failed", err));
     const acquired = await store.insertIfAbsent(CONFIG, { id: LOCK, at: Date.now() }, { organizationId: "global" });
     if (acquired) {
       try {
         await seed();
         await store.put(CONFIG, { id: MARKER, completed_at: nowIso() }, { organizationId: "global" });
+        await ensureDemoCrm(DEMO_ORG_ID, DEMO_USER_ID).catch((err) => console.error("[demo] CRM sample data failed", err));
         return;
       } finally {
         await store.remove(CONFIG, LOCK);

@@ -677,3 +677,95 @@ export interface ExecutiveLibraryItem {
   created_at: ISODate;
   updated_at: ISODate;
 }
+
+/* ------------------------------------------------------------------ */
+/* CRM — contacts, the sales pipeline (deals) and activities           */
+/* ------------------------------------------------------------------ */
+
+/** Pipeline stages, in order. Onboard and Manage are won (post-sale) stages. */
+export const CRM_STAGES = ["PROSPECT", "APPROACH_CONTACT", "PRESENTATION", "FOLLOW_UP", "CLOSE", "ONBOARD", "MANAGE"] as const;
+export type CrmStage = (typeof CRM_STAGES)[number];
+
+export const CRM_LEAD_SOURCES = ["ADVERTISEMENT", "COLD_CALL", "EMPLOYEE_REFERRAL", "EXTERNAL_REFERRAL", "PARTNER", "PUBLIC_RELATIONS", "SEMINAR", "TRADE_SHOW", "WEB_FORM", "WEBSITE", "SOCIAL_MEDIA", "EMAIL_CAMPAIGN", "OTHER"] as const;
+export type CrmLeadSource = (typeof CRM_LEAD_SOURCES)[number];
+
+export const CRM_LEAD_STATUSES = ["NEW", "ATTEMPTED_TO_CONTACT", "CONTACTED", "QUALIFIED", "NOT_QUALIFIED", "CUSTOMER", "LOST"] as const;
+export type CrmLeadStatus = (typeof CRM_LEAD_STATUSES)[number];
+
+export const CRM_DEAL_TYPES = ["NEW_BUSINESS", "EXISTING_BUSINESS", "RENEWAL"] as const;
+export type CrmDealType = (typeof CRM_DEAL_TYPES)[number];
+
+export const CRM_ACTIVITY_KINDS = ["NOTE", "CALL", "MEETING", "TASK", "EMAIL", "STAGE_CHANGE"] as const;
+export type CrmActivityKind = (typeof CRM_ACTIVITY_KINDS)[number];
+
+export interface CrmContact {
+  id: UUID;
+  organization_id: UUID;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  mobile: string | null;
+  title: string | null;
+  company: string | null;
+  website: string | null;
+  industry: string | null;
+  lead_source: CrmLeadSource | null;
+  lead_status: CrmLeadStatus;
+  owner_id: UUID | null;
+  street: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
+  linkedin: string | null;
+  tags: string[];
+  description: string | null;
+  email_opt_out: boolean;
+  created_by: UUID | null;
+  created_at: ISODate;
+  updated_at: ISODate;
+}
+
+export interface CrmDeal {
+  id: UUID;
+  organization_id: UUID;
+  name: string;
+  contact_id: UUID | null;
+  company: string | null;
+  amount: number | null;
+  currency: string;
+  stage: CrmStage;
+  /** Win likelihood, 0–100; defaults from the stage, editable per deal. */
+  probability: number;
+  /** YYYY-MM-DD */
+  expected_close: string | null;
+  deal_type: CrmDealType | null;
+  lead_source: CrmLeadSource | null;
+  next_step: string | null;
+  description: string | null;
+  owner_id: UUID | null;
+  /** OPEN deals are on the board; LOST deals are kept but hidden from it. Won = Onboard or Manage. */
+  status: "OPEN" | "LOST";
+  lost_reason: string | null;
+  stage_changed_at: ISODate;
+  created_by: UUID | null;
+  created_at: ISODate;
+  updated_at: ISODate;
+}
+
+export interface CrmActivity {
+  id: UUID;
+  organization_id: UUID;
+  kind: CrmActivityKind;
+  subject: string;
+  details: string | null;
+  /** Tasks, calls and meetings can be scheduled. */
+  due_at: ISODate | null;
+  done: boolean;
+  contact_id: UUID | null;
+  deal_id: UUID | null;
+  created_by: UUID | null;
+  created_at: ISODate;
+  updated_at: ISODate;
+}

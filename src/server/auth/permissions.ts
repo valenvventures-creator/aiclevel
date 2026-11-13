@@ -42,12 +42,16 @@ export const CAPABILITIES = [
   "approvals.review",
   "audit.read",
   "ceo_intelligence.manage",
+  "crm.read",
+  "crm.write",
+  "crm.delete",
+  "crm.transfer",
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
-const READ: Capability[] = ["org.read", "team.read", "sessions.read", "memory.read", "files.read", "reports.read", "projects.read"];
-const COLLABORATE: Capability[] = [...READ, "executives.use", "conversations.create", "comms.send", "sessions.create", "memory.write", "files.upload", "reports.create", "studio.request"];
-const OPERATE: Capability[] = [...COLLABORATE, "memory.verify", "projects.manage", "decisions.approve", "approvals.review", "files.delete", "memory.delete", "reports.delete"];
+const READ: Capability[] = ["org.read", "team.read", "sessions.read", "memory.read", "files.read", "reports.read", "projects.read", "crm.read"];
+const COLLABORATE: Capability[] = [...READ, "executives.use", "conversations.create", "comms.send", "sessions.create", "memory.write", "files.upload", "reports.create", "studio.request", "crm.write"];
+const OPERATE: Capability[] = [...COLLABORATE, "memory.verify", "projects.manage", "decisions.approve", "approvals.review", "files.delete", "memory.delete", "reports.delete", "crm.delete", "crm.transfer"];
 const ADMINISTER: Capability[] = [
   ...OPERATE,
   "org.update",
@@ -68,7 +72,8 @@ export const ROLE_CAPABILITIES: Record<Role, ReadonlySet<Capability>> = {
   ADMIN: new Set<Capability>(ADMINISTER),
   EXECUTIVE: new Set<Capability>(OPERATE),
   MEMBER: new Set<Capability>(COLLABORATE),
-  ADVISOR: new Set<Capability>([...READ.filter((c) => c !== "team.read"), "executives.use", "conversations.create", "comms.send"]),
+  // Advisors are often outside the organization: no access to customer (CRM) data.
+  ADVISOR: new Set<Capability>([...READ.filter((c) => c !== "team.read" && c !== "crm.read"), "executives.use", "conversations.create", "comms.send"]),
   VIEWER: new Set<Capability>(READ),
 };
 

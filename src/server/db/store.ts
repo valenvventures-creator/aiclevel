@@ -168,6 +168,9 @@ const TABLES = {
   feedback: "executive_feedback",
   lessons: "executive_lessons",
   library: "executive_library_items",
+  crmContacts: "crm_contacts",
+  crmDeals: "crm_deals",
+  crmActivities: "crm_activities",
 } as const;
 
 export interface PromptTemplateRow {
@@ -216,6 +219,9 @@ export interface Database {
   feedback: TenantRepo<D.ExecutiveFeedback>;
   lessons: TenantRepo<D.ExecutiveLesson>;
   library: TenantRepo<D.ExecutiveLibraryItem>;
+  crmContacts: TenantRepo<D.CrmContact>;
+  crmDeals: TenantRepo<D.CrmDeal>;
+  crmActivities: TenantRepo<D.CrmActivity>;
 }
 
 let cached: { mode: string; db: Database } | null = null;

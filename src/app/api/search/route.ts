@@ -24,6 +24,9 @@ export async function GET(req: Request) {
       d.executives.list(orgId), d.conversations.list(orgId, { where: { user_id: ctx.user.id }, limit: 300 }), d.communications.list(orgId, { limit: 500 }), d.sessions.list(orgId, { limit: 300 }),
       can(ctx.role, "memory.read") ? d.memory.list(orgId, { limit: 1000 }) : [], listCompanyFiles(orgId, { limit: 500 }), d.reports.list(orgId, { limit: 300 }), d.projects.list(orgId), d.productionJobs.list(orgId, { limit: 300 }), d.decisions.list(orgId, { limit: 300 }),
     ]);
+    // CRM records, for roles that may see customer data.
+    const crm = can(ctx.role, "crm.read");
+    const [crmContacts, crmDeals] = crm ? await Promise.all([d.crmContacts.list(orgId), d.crmDeals.list(orgId)]) : [[], []];
     const results = [
       ...execs.filter((e) => has(e.title, e.functional_mandate, e.short_title)).map((e) => ({ type: "Executive", id: e.id, title: e.title, snippet: e.functional_mandate, href: `/executives/${e.slug}` })),
       ...convs.filter((c) => has(c.title)).map((c) => ({ type: "Conversation", id: c.id, title: c.title, snippet: "Executive conversation", href: `/executives/${execs.find((e) => e.id === c.executive_id)?.slug}?tab=conversation&c=${c.id}` })),
@@ -34,6 +37,8 @@ export async function GET(req: Request) {
       ...reports.filter((r) => has(r.title, r.summary)).map((r) => ({ type: "Report", id: r.id, title: r.title, snippet: r.report_type, href: `/reports/${r.id}` })),
       ...projects.filter((p) => has(p.name, p.description)).map((p) => ({ type: "Project", id: p.id, title: p.name, snippet: truncate(p.description, 80), href: `/projects/${p.id}` })),
       ...jobs.filter((j) => has(j.title, j.request)).map((j) => ({ type: "Studio", id: j.id, title: j.title, snippet: j.artifact_type, href: `/studio/${j.id}` })),
+      ...crmContacts.filter((c) => has(`${c.first_name} ${c.last_name}`, c.email, c.company, c.phone)).map((c) => ({ type: "Contact", id: c.id, title: `${c.first_name} ${c.last_name}`.trim(), snippet: [c.title, c.company].filter(Boolean).join(" · ") || (c.email ?? ""), href: `/crm/contacts/${c.id}` })),
+      ...crmDeals.filter((x) => has(x.name, x.company, x.next_step)).map((x) => ({ type: "Deal", id: x.id, title: x.name, snippet: x.company ?? "CRM deal", href: `/crm/deals/${x.id}` })),
       ...decisions.filter((x) => has(x.title, x.question, x.recommendation)).map((x) => ({ type: "Decision", id: x.id, title: x.title, snippet: truncate(x.recommendation, 80), href: `/decisions#${x.id}` })),
     ].slice(0, 25);
     return NextResponse.json({ results });
