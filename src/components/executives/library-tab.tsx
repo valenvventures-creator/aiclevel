@@ -1,26 +1,27 @@
-import { BookOpen, FileText, Library } from "lucide-react";
+import Link from "next/link";
+import { BookOpen, Brain, FileText, Files as FilesIcon, Library, Lock } from "lucide-react";
 import { ActionForm } from "@/components/settings/action-form";
 import { Badge, Card, Input, Label, SectionTitle, Select, Textarea } from "@/components/ui/primitives";
-import { Button } from "@/components/ui/button";
-import { LibraryUpload } from "./library-upload";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { formatRelative } from "@/lib/utils";
-import { db } from "@/server/db/store";
 import { listLibrary } from "@/server/executives/library";
-import { addLibraryDocumentAction, addLibraryItemAction, deleteLibraryItemAction, toggleLibraryItemAction, updateLibraryItemAction } from "@/server/executives/learning-actions";
+import { listCompanyFiles } from "@/server/files/service";
+import { deleteLibraryItemAction, toggleLibraryItemAction, updateLibraryItemAction } from "@/server/executives/learning-actions";
 import type { AIExecutive, ExecutiveLibraryItem } from "@/types/domain";
 
-const DOC_EXT = /\.(pdf|docx|pptx|xlsx|csv|txt|md)$/i;
-
 const KIND_LABEL: Record<ExecutiveLibraryItem["kind"], string> = { FRAMEWORK: "Framework", PLAYBOOK: "Playbook", REFERENCE: "Reference", DOCUMENT: "Document" };
+const SHOWN_DOCUMENTS = 12;
 
-/** Executive Office → Library: the reference knowledge this executive draws on. */
-export async function LibraryTab({ orgId, exec, canConfigure }: { orgId: string; exec: Pick<AIExecutive, "id" | "title" | "short_title" | "role_code">; canConfigure: boolean }) {
-  const [items, files] = await Promise.all([listLibrary(orgId, exec), canConfigure ? db().files.list(orgId, { orderBy: "created_at", desc: true, limit: 100 }) : Promise.resolve([])]);
-  const own = items.filter((i) => i.origin === "ORGANIZATION");
+/**
+ * Executive Office → Library: what this executive draws on besides its own
+ * knowledge (Learning tab) — the organization's shared company documents
+ * (Files) and the built-in frameworks for its role.
+ */
+export async function LibraryTab({ orgId, exec, canConfigure, canUploadCompany }: { orgId: string; exec: Pick<AIExecutive, "id" | "slug" | "title" | "short_title" | "role_code">; canConfigure: boolean; canUploadCompany: boolean }) {
+  const [items, files] = await Promise.all([listLibrary(orgId, exec), listCompanyFiles(orgId)]);
   const starters = items.filter((i) => i.origin === "STARTER");
-  const inLibrary = new Set(items.map((i) => i.file_id).filter(Boolean));
-  const documents = files.filter((f) => DOC_EXT.test(f.filename) && f.processing_status !== "FAILED" && !inLibrary.has(f.id));
-  const active = items.filter((i) => i.enabled).length;
+  const readable = files.filter((f) => (f.extracted_text ?? "").trim());
+  const unreadable = files.length - readable.length;
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
@@ -29,74 +30,79 @@ export async function LibraryTab({ orgId, exec, canConfigure }: { orgId: string;
           <div className="flex items-start gap-3">
             <Library className="mt-0.5 size-5 shrink-0 text-gold-300" aria-hidden />
             <div>
-              <p className="text-sm">The {exec.title}&apos;s library is the reference knowledge it draws on: your organization&apos;s own playbooks and documents, plus proven frameworks for its field.</p>
-              <p className="mt-1 text-xs text-ivory-muted">For each question, the few most relevant items are used (and cited as [L1], [L2]…). {active} of {items.length} items are turned on.</p>
+              <p className="text-sm">Besides its own knowledge, the {exec.title} draws on what your organization shares with all seven executives: your company documents and proven frameworks for its role.</p>
+              <p className="mt-1 text-xs text-ivory-muted">For each question it uses the few most relevant passages and cites them — [D1] for company documents, [L1] for frameworks and its own knowledge.</p>
             </div>
           </div>
         </Card>
 
-        <section aria-labelledby="own-knowledge">
-          <h2 id="own-knowledge" className="mb-3 font-heading text-xl font-semibold">Your organization&apos;s knowledge</h2>
-          {own.length === 0 ? (
+        <section aria-labelledby="company-documents">
+          <div className="mb-1 flex flex-wrap items-center gap-3">
+            <h2 id="company-documents" className="font-heading text-xl font-semibold">Company documents</h2>
+            <Badge tone="neutral">Shared by all seven</Badge>
+            <ButtonLink href="/files" size="sm" variant="ghost" className="ml-auto"><FilesIcon className="size-3.5" /> {canUploadCompany ? "Add or manage in Files" : "Open Files"}</ButtonLink>
+          </div>
+          <p className="mb-3 text-xs text-ivory-muted">Everything uploaded in Files, including the foundational documents added when your organization was set up. Every executive searches these for each question.</p>
+          {readable.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-line-strong p-6 text-center text-sm text-ivory-muted">
-              Nothing added yet. {canConfigure ? `Add your own playbooks, policies and documents so the ${exec.short_title} works the way your organization does.` : "An admin can add your organization's playbooks and documents here."}
+              No company documents yet. Upload your plans, policies, pitch decks and financials in <Link href="/files" className="text-gold-300 underline-offset-2 hover:underline">Files</Link> — all seven executives will draw on them.
             </p>
           ) : (
-            <ul className="space-y-3">{own.map((i) => <LibraryItemCard key={i.id} item={i} canConfigure={canConfigure} />)}</ul>
+            <ul className="divide-y divide-line rounded-2xl border border-line">
+              {readable.slice(0, SHOWN_DOCUMENTS).map((f) => (
+                <li key={f.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                  <FileText className="size-4 shrink-0 text-gold-300" aria-hidden />
+                  <Link href={`/files#${f.id}`} className="min-w-0 truncate hover:text-gold-200">{f.filename}</Link>
+                  <span className="ml-auto shrink-0 font-mono text-[10px] text-ivory-faint">{f.category.toUpperCase()} · {formatRelative(f.created_at).toUpperCase()}</span>
+                </li>
+              ))}
+              {readable.length > SHOWN_DOCUMENTS && <li className="px-4 py-2.5 text-xs text-ivory-muted">…and {readable.length - SHOWN_DOCUMENTS} more in <Link href="/files" className="text-gold-300 underline-offset-2 hover:underline">Files</Link>.</li>}
+            </ul>
           )}
+          {unreadable > 0 && <p className="mt-2 text-xs text-ivory-faint">{unreadable} {unreadable === 1 ? "file has" : "files have"} no readable text (for example images or scanned PDFs), so executives cannot draw on {unreadable === 1 ? "it" : "them"}.</p>}
         </section>
 
         <section aria-labelledby="starter-knowledge">
-          <h2 id="starter-knowledge" className="mb-1 font-heading text-xl font-semibold">Starter frameworks</h2>
+          <h2 id="starter-knowledge" className="mb-1 font-heading text-xl font-semibold">Built-in frameworks</h2>
           <p className="mb-3 text-xs text-ivory-muted">General, well-established frameworks for the {exec.short_title} role. The executive adapts them to your organization. {canConfigure && "Turn off any you don't want used."}</p>
           <ul className="space-y-3">{starters.map((i) => <LibraryItemCard key={i.id} item={i} canConfigure={canConfigure} />)}</ul>
         </section>
       </div>
 
-      {canConfigure && (
-        <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-          <Card>
-            <SectionTitle>Upload documents</SectionTitle>
-            <p className="mb-3 text-xs text-ivory-muted">Playbooks, policies, price lists, past reports, decks or spreadsheets. The text of each file is added to the {exec.short_title}&apos;s library (up to about 20,000 characters per file), and the file is kept in Files.</p>
-            <LibraryUpload executiveId={exec.id} executiveShortTitle={exec.short_title} />
-          </Card>
-          <Card>
-            <SectionTitle>Write it in</SectionTitle>
-            <ActionForm action={addLibraryItemAction} submit="Add to library">
-              <input type="hidden" name="executive_id" value={exec.id} />
-              <div>
-                <Label htmlFor="lib-kind">Type</Label>
-                <Select id="lib-kind" name="kind" defaultValue="PLAYBOOK">
-                  <option value="PLAYBOOK">Playbook: how we do something</option>
-                  <option value="FRAMEWORK">Framework: a way of thinking</option>
-                  <option value="REFERENCE">Reference: facts, figures, policies</option>
-                </Select>
-              </div>
-              <div><Label htmlFor="lib-title">Title</Label><Input id="lib-title" name="title" required maxLength={160} placeholder="e.g. How we price enterprise deals" /></div>
-              <div><Label htmlFor="lib-content">Content</Label><Textarea id="lib-content" name="content" required rows={7} placeholder="Write it the way you would brief a new senior hire: steps, rules of thumb, numbers, what to avoid." /></div>
-            </ActionForm>
-          </Card>
-          {documents.length > 0 && (
-            <Card>
-              <SectionTitle>Or choose from Files</SectionTitle>
-              <ActionForm action={addLibraryDocumentAction} submit="Add document">
-                <input type="hidden" name="executive_id" value={exec.id} />
-                <div>
-                  <Label htmlFor="lib-file">Document already in Files</Label>
-                  <Select id="lib-file" name="file_id" required>
-                    {documents.map((f) => <option key={f.id} value={f.id}>{f.filename}</option>)}
-                  </Select>
-                </div>
-              </ActionForm>
-            </Card>
-          )}
-        </aside>
-      )}
+      <aside className="xl:sticky xl:top-24 xl:self-start">
+        <WhereKnowledgeGoes exec={exec} />
+      </aside>
     </div>
   );
 }
 
-function LibraryItemCard({ item, canConfigure }: { item: ExecutiveLibraryItem; canConfigure: boolean }) {
+/** The three places knowledge can go, so people pick the right one. */
+export function WhereKnowledgeGoes({ exec }: { exec: Pick<AIExecutive, "slug" | "short_title"> }) {
+  const rows = [
+    { icon: Lock, title: `Only the ${exec.short_title}`, body: "Documents, knowledge and lessons for this executive alone.", href: `/executives/${exec.slug}?tab=learning`, link: "Learning tab" },
+    { icon: FilesIcon, title: "All seven executives", body: "Company documents: plans, policies, decks, financials.", href: "/files", link: "Files" },
+    { icon: Brain, title: "Facts and decisions", body: "Verified organizational facts, decisions and commitments.", href: "/memory", link: "C-Level Memory" },
+  ];
+  return (
+    <Card>
+      <SectionTitle>Where knowledge goes</SectionTitle>
+      <ul className="space-y-3">
+        {rows.map((r) => (
+          <li key={r.title} className="flex gap-3">
+            <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line-gold/60 bg-gold-400/[0.06] text-gold-200"><r.icon className="size-4" aria-hidden /></span>
+            <span className="min-w-0 text-sm">
+              <span className="block font-medium">{r.title}</span>
+              <span className="block text-xs text-ivory-muted">{r.body}</span>
+              <Link href={r.href} className="text-xs text-gold-300 underline-offset-2 hover:underline">{r.link} →</Link>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+export function LibraryItemCard({ item, canConfigure }: { item: ExecutiveLibraryItem; canConfigure: boolean }) {
   const editable = canConfigure && item.origin === "ORGANIZATION";
   return (
     <li className={item.enabled ? "rounded-2xl border border-line p-4" : "rounded-2xl border border-dashed border-line p-4 opacity-60"}>

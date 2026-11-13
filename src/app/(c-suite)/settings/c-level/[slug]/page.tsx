@@ -26,7 +26,7 @@ export default async function ConfigureExecutivePage({ params }: PageProps<"/set
         <div><h2 className="font-heading text-2xl font-semibold">{e.title}</h2><p className="text-xs text-ivory-muted">Database-driven configuration · prompt {e.model.prompt_key}_v1</p></div>
       </div>
       <p className="text-sm text-ivory-muted">
-        To make the {e.short_title} more knowledgeable, add to its <Link href={`/executives/${e.slug}?tab=library`} className="text-gold-300 underline-offset-2 hover:underline">Library</Link>; to correct how it works, use its <Link href={`/executives/${e.slug}?tab=learning`} className="text-gold-300 underline-offset-2 hover:underline">Learning</Link> lessons.
+        To give the {e.short_title} its own knowledge, or to correct how it works, use its <Link href={`/executives/${e.slug}?tab=learning`} className="text-gold-300 underline-offset-2 hover:underline">Learning</Link> tab. Documents for all seven executives belong in <Link href="/files" className="text-gold-300 underline-offset-2 hover:underline">Files</Link>.
       </p>
       <ActionForm action={updateExecutiveConfigAction} submit="Save executive configuration">
         <input type="hidden" name="executive_id" value={e.id} />

@@ -9,7 +9,7 @@ import { LearningTab } from "@/components/executives/learning-tab";
 import { ReportPreview, ProductionJobCard, Empty } from "@/components/hq/widgets";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, Card, SectionTitle } from "@/components/ui/primitives";
-import { cn, formatBytes, formatRelative } from "@/lib/utils";
+import { cn, formatRelative } from "@/lib/utils";
 import { TOOL_REGISTRY } from "@/config/tools/registry";
 import { db } from "@/server/db/store";
 import { AIExecutiveRegistry } from "@/server/executives/registry";
@@ -19,10 +19,9 @@ import { can } from "@/server/auth/permissions";
 const TABS = [
   ["conversation", "Conversation"],
   ["profile", "Executive Profile"],
-  ["library", "Library"],
   ["learning", "Learning"],
+  ["library", "Library"],
   ["reports", "Reports"],
-  ["files", "Files"],
   ["activity", "Activity"],
 ] as const;
 
@@ -44,7 +43,9 @@ export async function generateMetadata({ params }: PageProps<"/executives/[slug]
 export default async function ExecutiveOfficePage({ params, searchParams }: PageProps<"/executives/[slug]">) {
   const { slug } = await params;
   const sp = await searchParams;
-  const tab = (typeof sp.tab === "string" && TABS.some(([k]) => k === sp.tab) ? sp.tab : "conversation") as (typeof TABS)[number][0];
+  // "files" was folded into Library (company documents are listed there).
+  const requested = sp.tab === "files" ? "library" : sp.tab;
+  const tab = (typeof requested === "string" && TABS.some(([k]) => k === requested) ? requested : "conversation") as (typeof TABS)[number][0];
   const ctx = await requireContext();
   const orgId = ctx.organization.id;
   const exec = await AIExecutiveRegistry.resolve(orgId, slug);
@@ -93,10 +94,9 @@ export default async function ExecutiveOfficePage({ params, searchParams }: Page
 
       {tab === "conversation" && <ConversationTab ctx={ctx} exec={exec} others={all.filter((e) => e.id !== exec.id).map(lite)} cParam={typeof sp.c === "string" ? sp.c : null} lite={lite(exec)} />}
       {tab === "profile" && <ProfileTab exec={exec} canConfigure={can(ctx.role, "executives.configure")} />}
-      {tab === "library" && <LibraryTab orgId={orgId} exec={exec} canConfigure={can(ctx.role, "executives.configure")} />}
       {tab === "learning" && <LearningTab orgId={orgId} exec={exec} canConfigure={can(ctx.role, "executives.configure")} />}
+      {tab === "library" && <LibraryTab orgId={orgId} exec={exec} canConfigure={can(ctx.role, "executives.configure")} canUploadCompany={can(ctx.role, "files.upload")} />}
       {tab === "reports" && <ReportsTab orgId={orgId} execId={exec.id} execMap={execMap} roleCode={exec.role_code} />}
-      {tab === "files" && <FilesTab orgId={orgId} />}
       {tab === "activity" && <ActivityTab orgId={orgId} execId={exec.id} execMap={execMap} />}
     </div>
   );
@@ -196,24 +196,6 @@ async function ReportsTab({ orgId, execId, execMap, roleCode }: { orgId: string;
   );
 }
 
-async function FilesTab({ orgId }: { orgId: string }) {
-  const files = await db().files.list(orgId, { orderBy: "created_at", desc: true, limit: 20 });
-  return (
-    <Card>
-      <SectionTitle action={<ButtonLink href="/files?upload=1" size="sm" variant="ghost"><Plus className="size-3.5" /> Upload</ButtonLink>}>Files available to this executive</SectionTitle>
-      {files.length ? (
-        <ul className="divide-y divide-line">
-          {files.map((f) => (
-            <li key={f.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-              <Link href={`/files#${f.id}`} className="truncate hover:text-gold-200">{f.filename}</Link>
-              <span className="shrink-0 font-mono text-[10px] text-ivory-faint">{f.category} · {formatBytes(f.size)}</span>
-            </li>
-          ))}
-        </ul>
-      ) : <Empty>No files uploaded yet.</Empty>}
-    </Card>
-  );
-}
 
 async function ActivityTab({ orgId, execId, execMap }: { orgId: string; execId: string; execMap: Map<string, import("@/types/domain").AIExecutive> }) {
   const [sessions, comms, usage] = await Promise.all([

@@ -1,19 +1,28 @@
-import { GraduationCap, ThumbsDown, ThumbsUp } from "lucide-react";
+import { GraduationCap, Lock, ThumbsDown, ThumbsUp } from "lucide-react";
 import { ActionForm } from "@/components/settings/action-form";
-import { Badge, Card, Input, Label, SectionTitle, Textarea } from "@/components/ui/primitives";
+import { Badge, Card, Input, Label, SectionTitle, Select, Textarea } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { formatRelative } from "@/lib/utils";
 import { db } from "@/server/db/store";
-import { LibraryUpload } from "./library-upload";
-import { createLessonAction, reviewLessonAction } from "@/server/executives/learning-actions";
+import { listLibrary } from "@/server/executives/library";
+import { addLibraryItemAction, createLessonAction, reviewLessonAction } from "@/server/executives/learning-actions";
+import { ExecutiveUpload } from "./executive-upload";
+import { LibraryItemCard, WhereKnowledgeGoes } from "./library-tab";
 import type { AIExecutive, ExecutiveLesson } from "@/types/domain";
 
-/** Executive Office → Learning: feedback on this executive's answers and the lessons drawn from it. */
-export async function LearningTab({ orgId, exec, canConfigure }: { orgId: string; exec: Pick<AIExecutive, "id" | "title" | "short_title">; canConfigure: boolean }) {
-  const [lessons, feedback] = await Promise.all([
+/**
+ * Executive Office → Learning: this executive's OWN intelligence — documents
+ * and knowledge given to it alone (private to it: not in Files, not in
+ * C-Level Memory), plus the lessons drawn from feedback. Company-wide
+ * documents live in Files and are drawn on by every executive (Library tab).
+ */
+export async function LearningTab({ orgId, exec, canConfigure }: { orgId: string; exec: Pick<AIExecutive, "id" | "slug" | "title" | "short_title" | "role_code">; canConfigure: boolean }) {
+  const [lessons, feedback, library] = await Promise.all([
     db().lessons.list(orgId, { where: { executive_id: exec.id } }),
     db().feedback.list(orgId, { where: { executive_id: exec.id } }),
+    listLibrary(orgId, exec),
   ]);
+  const own = library.filter((i) => i.origin === "ORGANIZATION");
   const byNewest = <T extends { updated_at?: string; created_at: string }>(a: T, b: T) => (b.updated_at ?? b.created_at).localeCompare(a.updated_at ?? a.created_at);
   const proposed = lessons.filter((l) => l.status === "PROPOSED").sort(byNewest);
   const approved = lessons.filter((l) => l.status === "APPROVED").sort(byNewest);
@@ -28,16 +37,28 @@ export async function LearningTab({ orgId, exec, canConfigure }: { orgId: string
           <div className="flex items-start gap-3">
             <GraduationCap className="mt-0.5 size-5 shrink-0 text-gold-300" aria-hidden />
             <div className="text-sm">
-              <p>The {exec.title} learns from your feedback. Rate any answer with 👍 or 👎 and say what it should have said or done. Each correction becomes a suggested lesson.</p>
-              <p className="mt-1 text-xs text-ivory-muted">Lessons apply to every future answer once an admin approves them. You can edit, retire or write lessons yourself at any time.</p>
+              <p>This is the {exec.title}&apos;s own intelligence. Documents, knowledge and lessons added here are used by the {exec.short_title} only — they don&apos;t appear in Files or C-Level Memory, and the other executives don&apos;t see them.</p>
+              <p className="mt-1 text-xs text-ivory-muted">The {exec.short_title} also keeps drawing on your company documents in Files, like every executive (see the Library tab). Rate its answers with 👍 or 👎 to suggest lessons; they apply once an admin approves them.</p>
             </div>
           </div>
           <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {([["Active lessons", approved.length], ["Waiting for approval", proposed.length], ["👍 last 30 days", up], ["👎 last 30 days", down]] as const).map(([k, v]) => (
+            {([["Own documents & knowledge", own.length], ["Active lessons", approved.length], ["Waiting for approval", proposed.length], ["👍 / 👎 last 30 days", `${up} / ${down}`]] as const).map(([k, v]) => (
               <div key={k} className="rounded-xl border border-line p-3"><dt className="font-mono text-[10px] tracking-[0.14em] text-ivory-faint">{k.toUpperCase()}</dt><dd className="mt-1 font-heading text-2xl">{v}</dd></div>
             ))}
           </dl>
         </Card>
+
+        <section aria-labelledby="own-knowledge">
+          <h2 id="own-knowledge" className="mb-1 flex items-center gap-2 font-heading text-xl font-semibold"><Lock className="size-4 text-gold-300" aria-hidden /> Documents &amp; knowledge only the {exec.short_title} uses</h2>
+          <p className="mb-3 text-xs text-ivory-muted">For each question, the most relevant items are used and cited as [L1], [L2]…</p>
+          {own.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-line-strong p-6 text-center text-sm text-ivory-muted">
+              Nothing yet. {canConfigure ? `Upload documents or write knowledge on the right to make the ${exec.short_title} work the way your organization does.` : `An admin can add documents and knowledge for the ${exec.short_title} here.`}
+            </p>
+          ) : (
+            <ul className="space-y-3">{own.map((i) => <LibraryItemCard key={i.id} item={i} canConfigure={canConfigure} />)}</ul>
+          )}
+        </section>
 
         <section aria-labelledby="waiting">
           <h2 id="waiting" className="mb-3 font-heading text-xl font-semibold">Waiting for approval</h2>
@@ -132,24 +153,43 @@ export async function LearningTab({ orgId, exec, canConfigure }: { orgId: string
         </section>
       </div>
 
-      {canConfigure && (
-        <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-          <Card>
-            <SectionTitle>Teach the {exec.short_title} directly</SectionTitle>
-            <p className="mb-3 text-xs text-ivory-muted">Write a standing instruction. It applies to every answer straight away.</p>
-            <ActionForm action={createLessonAction} submit="Add lesson">
-              <input type="hidden" name="executive_id" value={exec.id} />
-              <div><Label htmlFor="new-title">Title</Label><Input id="new-title" name="title" required maxLength={160} placeholder="e.g. Always show runway in months" /></div>
-              <div><Label htmlFor="new-guidance">Lesson</Label><Textarea id="new-guidance" name="guidance" required rows={4} maxLength={1200} placeholder="e.g. Whenever cash or hiring comes up, state runway in months under base and downside scenarios, and the monthly burn used." /></div>
-            </ActionForm>
-          </Card>
-          <Card>
-            <SectionTitle>Teach with documents</SectionTitle>
-            <p className="mb-3 text-xs text-ivory-muted">Upload playbooks, policies, reports or spreadsheets. They go into the {exec.short_title}&apos;s Library, which it draws on whenever they are relevant.</p>
-            <LibraryUpload executiveId={exec.id} executiveShortTitle={exec.short_title} compact />
-          </Card>
-        </aside>
-      )}
+      <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+        {canConfigure && (
+          <>
+            <Card>
+              <SectionTitle>Upload documents for the {exec.short_title}</SectionTitle>
+              <p className="mb-3 text-xs text-ivory-muted">Its own playbooks, models, policies or past work. The text of each file (up to about 20,000 characters) becomes the {exec.short_title}&apos;s private knowledge.</p>
+              <ExecutiveUpload slug={exec.slug} shortTitle={exec.short_title} />
+            </Card>
+            <Card>
+              <SectionTitle>Write knowledge</SectionTitle>
+              <ActionForm action={addLibraryItemAction} submit="Add knowledge">
+                <input type="hidden" name="executive_id" value={exec.id} />
+                <div>
+                  <Label htmlFor="lib-kind">Type</Label>
+                  <Select id="lib-kind" name="kind" defaultValue="PLAYBOOK">
+                    <option value="PLAYBOOK">Playbook: how we do something</option>
+                    <option value="FRAMEWORK">Framework: a way of thinking</option>
+                    <option value="REFERENCE">Reference: facts, figures, policies</option>
+                  </Select>
+                </div>
+                <div><Label htmlFor="lib-title">Title</Label><Input id="lib-title" name="title" required maxLength={160} placeholder="e.g. How we price enterprise deals" /></div>
+                <div><Label htmlFor="lib-content">Content</Label><Textarea id="lib-content" name="content" required rows={6} placeholder="Write it the way you would brief a new senior hire: steps, rules of thumb, numbers, what to avoid." /></div>
+              </ActionForm>
+            </Card>
+            <Card>
+              <SectionTitle>Teach the {exec.short_title} a lesson</SectionTitle>
+              <p className="mb-3 text-xs text-ivory-muted">A short standing instruction on how it should work. It applies to every answer straight away.</p>
+              <ActionForm action={createLessonAction} submit="Add lesson">
+                <input type="hidden" name="executive_id" value={exec.id} />
+                <div><Label htmlFor="new-title">Title</Label><Input id="new-title" name="title" required maxLength={160} placeholder="e.g. Always show runway in months" /></div>
+                <div><Label htmlFor="new-guidance">Lesson</Label><Textarea id="new-guidance" name="guidance" required rows={4} maxLength={1200} placeholder="e.g. Whenever cash or hiring comes up, state runway in months under base and downside scenarios." /></div>
+              </ActionForm>
+            </Card>
+          </>
+        )}
+        <WhereKnowledgeGoes exec={exec} />
+      </aside>
     </div>
   );
 }

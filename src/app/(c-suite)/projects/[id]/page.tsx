@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { listCompanyFiles } from "@/server/files/service";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { DecisionCard, Empty, ProductionJobCard, ReportPreview, SessionPreview, Widget } from "@/components/hq/widgets";
@@ -19,7 +20,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[id]"
   if (!project) notFound();
   const w = { where: { project_id: id } };
   const [execs, sessions, memory, files, reports, jobs, decisions, convs] = await Promise.all([
-    AIExecutiveRegistry.getAllExecutives(orgId), d.sessions.list(orgId, w), d.memory.list(orgId, w), d.files.list(orgId, w), d.reports.list(orgId, w), d.productionJobs.list(orgId, w), d.decisions.list(orgId, w), d.conversations.list(orgId, { where: { project_id: id, user_id: ctx.user.id } }),
+    AIExecutiveRegistry.getAllExecutives(orgId), d.sessions.list(orgId, w), d.memory.list(orgId, w), listCompanyFiles(orgId, { projectId: id }), d.reports.list(orgId, w), d.productionJobs.list(orgId, w), d.decisions.list(orgId, w), d.conversations.list(orgId, { where: { project_id: id, user_id: ctx.user.id } }),
   ]);
   const map = new Map(execs.map((e) => [e.id, e]));
   return (

@@ -260,7 +260,7 @@ export const TUTORIALS: Tutorial[] = [
     who: "Everyone except Viewers can start conversations",
     open: { href: "/executives", label: "Open Executive Offices" },
     overview:
-      "Each executive has an office: a private conversation space plus their profile, library, lessons, reports, files and activity. Conversations are private to you; nobody else in your organization can read them.",
+      "Each executive has an office: a private conversation space plus their profile, their own knowledge and lessons (Learning), the shared knowledge they draw on (Library), reports and activity. Conversations are private to you; nobody else in your organization can read them.",
     flow: [
       { icon: Building2, label: "Choose an office" },
       { icon: MessageSquare, label: "Ask" },
@@ -276,7 +276,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: "The office",
         icon: LayoutDashboard,
-        body: "The header has quick actions: Start conversation, Send message (Executive Comms), Request report and Assign work (Studio), Add to C-Level Session and Voice. Below are the tabs: Conversation, Executive Profile, Library, Learning, Reports, Files and Activity.",
+        body: "The header has quick actions: Start conversation, Send message (Executive Comms), Request report and Assign work (Studio), Add to C-Level Session and Voice. Below are the tabs: Conversation, Executive Profile, Learning, Library, Reports and Activity.",
         image: { name: "office-header", alt: "The Chief Financial Officer's office header and quick actions", caption: DEMO },
       },
       {
@@ -598,14 +598,14 @@ export const TUTORIALS: Tutorial[] = [
   },
   {
     slug: "files",
-    title: "Files: your document library",
+    title: "Files: company documents for all seven executives",
     category: "Intelligence",
     icon: Files,
     minutes: 3,
-    summary: "Upload documents privately so your executives can read and cite them.",
+    summary: "Upload company documents once; every executive draws on them.",
     who: "Everyone can read; all but Viewers and Advisors upload; Owners, Admins and Executives delete",
     open: { href: "/files", label: "Open Files" },
-    overview: "Files are private to your organization. Text from your documents becomes searchable by your executives and can be attached to sessions or added to an executive's library.",
+    overview: "Files holds your company documents: plans, policies, pitch decks, financials and the foundational documents added when your organization was set up. All seven executives search them for every question and cite what they use as [D1], [D2]. Files are private to your organization. For knowledge only one executive should use, upload it in that executive's Learning tab instead.",
     flow: [
       { icon: Upload, label: "Upload" },
       { icon: BadgeCheck, label: "Processed" },
@@ -618,7 +618,7 @@ export const TUTORIALS: Tutorial[] = [
         body: "Drag files onto the Upload box or click to browse. Supported: PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, images and common audio and video up to 20 MB. The text of PDF, Word, PowerPoint, Excel, CSV, TXT and Markdown files is read on upload, so the executives can use it. Images, audio and video are stored as they are.",
         image: { name: "files", alt: "The Files library with the upload box", caption: DEMO },
       },
-      { title: "Use them", icon: Users, body: "Attach up to five files when you set up a C-Level Session, or add a document to an executive's Library. A summary of each new document also appears in C-Level Memory as PROPOSED for you to confirm." },
+      { title: "Every executive uses them", icon: Users, body: "You don't need to do anything else: for each question, every executive picks the most relevant passages from your company documents. You can also attach up to five files when you set up a C-Level Session. A summary of each new document appears in C-Level Memory as PROPOSED for you to confirm." },
     ],
     symbols: [{ kind: "badge", text: "READY", tone: "ok", meaning: "Processed: its text can be used by the executives." }],
     tips: ["Downloads use short-lived private links: never permanent public ones."],
@@ -656,14 +656,14 @@ export const TUTORIALS: Tutorial[] = [
   /* ------------------------------------------------------------------ */
   {
     slug: "teaching-your-executives",
-    title: "Teaching your executives with feedback",
+    title: "Learning: each executive's own intelligence",
     category: "Make your C-Level better",
     icon: GraduationCap,
-    minutes: 5,
-    summary: "Rate answers, turn corrections into lessons, and approve what each executive should always do.",
-    who: "Everyone except Viewers rates answers; Owners and Admins approve lessons",
+    minutes: 6,
+    summary: "Give one executive its own documents, knowledge and lessons, used by that executive only.",
+    who: "Everyone except Viewers rates answers; Owners and Admins add documents, knowledge and lessons",
     overview:
-      "Each executive learns from your feedback. A 👎 with a short note on what you wanted becomes a suggested lesson, a general rule like “Always state runway in months under base and downside scenarios.” Once an admin approves it, the executive follows it in every future answer.",
+      "Each of the seven executives has a Learning tab: its own intelligence. Documents you upload there, knowledge you write there and lessons it learns are used by that executive only. They don't appear in Files or C-Level Memory, and the other executives don't see them. Every executive still draws on your company documents in Files as well. Lessons are short rules, like “Always state runway in months under base and downside scenarios”, drafted from your 👍/👎 feedback or written by an admin.",
     flow: [
       { icon: ThumbsDown, label: "Rate & explain" },
       { icon: Sparkles, label: "Lesson drafted" },
@@ -671,6 +671,14 @@ export const TUTORIALS: Tutorial[] = [
       { icon: GraduationCap, label: "Applied from now on" },
     ],
     steps: [
+      {
+        title: "Open the Learning tab",
+        icon: GraduationCap,
+        body: "In an executive's office, open Learning. You'll see what only this executive uses (its own documents and knowledge), lessons waiting for approval, active lessons and recent feedback.",
+        image: { name: "learning", alt: "The CFO's Learning tab with its own documents, lessons and upload box", caption: DEMO },
+      },
+      { title: "Upload documents for this executive", icon: Upload, body: "Owners and Admins drag files onto Upload documents for the CFO (or whichever executive). PDF, Word, PowerPoint, Excel, CSV, TXT and Markdown work. The text of each file (up to about 20,000 characters) becomes that executive's private knowledge. A scanned PDF has no text to read, so upload a version with selectable text." },
+      { title: "Write knowledge", icon: BookmarkPlus, body: "Under Write knowledge, choose Playbook (how we do something), Framework (a way of thinking) or Reference (facts, figures, policies), give it a title and write it as you would brief a new senior hire. Items can be read, edited, turned off or deleted under Documents & knowledge only the CFO uses." },
       {
         title: "Rate the answer",
         icon: ThumbsDown,
@@ -681,42 +689,40 @@ export const TUTORIALS: Tutorial[] = [
         title: "Approve the lesson",
         icon: CheckCircle2,
         body: "Admins get a notification. Open the executive's office → Learning tab (a number shows how many are waiting). Under Waiting for approval, edit the title or wording if needed, then Approve lesson or Dismiss.",
-        image: { name: "learning", alt: "Lessons waiting for approval with Approve and Dismiss", caption: DEMO },
       },
-      { title: "Teach directly", icon: GraduationCap, body: "Admins can write a lesson straight away with Teach the CFO directly (or whichever executive). Under Active lessons you can edit or retire a lesson at any time. To teach with a document instead, upload it under Teach with documents: it goes into the executive's Library." },
+      { title: "Teach a lesson directly", icon: GraduationCap, body: "Admins can write a lesson straight away with Teach the CFO a lesson (or whichever executive). Under Active lessons you can edit or retire a lesson at any time." },
     ],
     symbols: [
       { kind: "badge", text: "SUGGESTED", tone: "gold", meaning: "Drafted from feedback and waiting for an admin." },
       { kind: "badge", text: "ACTIVE", tone: "ok", meaning: "Approved: applied to every future answer." },
     ],
-    tips: ["Write corrections as general rules (“always…”, “when…”), not about one number, so they help every future answer."],
+    tips: ["Write corrections as general rules (“always…”, “when…”), not about one number, so they help every future answer.", "Documents every executive should use belong in Files, not in one executive's Learning tab."],
     related: ["executive-library", "configuring-executives"],
   },
   {
     slug: "executive-library",
-    title: "The Executive Library: knowledge for each role",
+    title: "The Library: what every executive also draws on",
     category: "Make your C-Level better",
     icon: BookOpen,
-    minutes: 5,
-    summary: "Give each executive your playbooks and documents alongside proven frameworks for their field.",
-    who: "Everyone reads; Owners and Admins curate",
+    minutes: 4,
+    summary: "See the company documents and built-in frameworks each executive uses besides its own knowledge.",
+    who: "Everyone reads; Owners and Admins turn frameworks on or off",
     overview:
-      "Each executive has a library of reference knowledge: starter frameworks for their field (for example the 13-week cash flow for the CFO, or a contract review checklist for the CLO) plus your organization's own playbooks, references and documents. For each question the executive uses the few most relevant items and cites them as [L1], [L2].",
+      "Besides its own knowledge (Learning tab), every executive draws on two shared sources, shown in its Library tab: your company documents from Files (cited as [D1], [D2]) and built-in frameworks for its role, for example the 13-week cash flow for the CFO or a contract review checklist for the CLO (cited as [L1], [L2]). For each question it uses only the few most relevant passages.",
     flow: [
-      { icon: BookOpen, label: "Starter frameworks" },
-      { icon: BookmarkPlus, label: "Add your playbooks" },
-      { icon: Search, label: "Relevant items used" },
+      { icon: Files, label: "Company documents" },
+      { icon: BookOpen, label: "Built-in frameworks" },
+      { icon: Search, label: "Relevant passages used" },
     ],
     steps: [
       {
         title: "Open the library",
         icon: BookOpen,
-        body: "In an executive's office, open the Library tab. Your organization's knowledge is listed first, then the Starter frameworks. Click Read to see an item.",
-        image: { name: "library", alt: "The CFO's starter frameworks", caption: DEMO },
+        body: "In an executive's office, open the Library tab. Company documents (shared by all seven) are listed first, then the Built-in frameworks for the role. Where knowledge goes, on the right, shows which tab to use for what.",
+        image: { name: "library", alt: "The CFO's Library with company documents and built-in frameworks", caption: DEMO },
       },
-      { title: "Upload your documents", icon: Upload, body: "Owners and Admins drag files onto Upload documents (or click Choose files). PDF, Word, PowerPoint, Excel, CSV, TXT and Markdown all work. The text of each file is added to the library (up to about 20,000 characters per file) and the file is kept in Files. A scanned PDF has no text to read, so upload a version with selectable text." },
-      { title: "Or write it in", icon: BookmarkPlus, body: "Under Write it in, choose Playbook (how we do something), Framework (a way of thinking) or Reference (facts, figures, policies), give it a title and write it as you would brief a new senior hire. Or choose from Files adds a document you uploaded earlier." },
-      { title: "Keep it relevant", icon: SlidersHorizontal, body: "Turn off any starter you don't want used. Your own items can be edited or deleted. Only turned-on items are used." },
+      { title: "Add company documents in Files", icon: Upload, body: "To add or remove a company document, use Files (Add or manage in Files). Every executive picks it up automatically: there is nothing to copy into each library. For a document only one executive should use, upload it in that executive's Learning tab." },
+      { title: "Keep frameworks relevant", icon: SlidersHorizontal, body: "Owners and Admins can turn off any built-in framework they don't want used. Only turned-on frameworks are used." },
     ],
     symbols: [
       { kind: "badge", text: "PLAYBOOK", tone: "neutral", meaning: "How your organization does something." },
@@ -819,7 +825,7 @@ export const TUTORIALS: Tutorial[] = [
       },
       { title: "Tools", icon: Plug, body: "Tick the tools this executive may use, such as Web research. Tools marked “requires approval” always go through a human approval. Press Save executive configuration." },
     ],
-    tips: ["To add knowledge, use the executive's Library; to correct behaviour, use Learning lessons. Both are quicker than rewriting the profile."],
+    tips: ["To give one executive its own knowledge or correct how it works, use its Learning tab; documents for all seven go in Files. Both are quicker than rewriting the profile."],
     related: ["executive-library", "teaching-your-executives", "ai-models-and-connections"],
   },
   {

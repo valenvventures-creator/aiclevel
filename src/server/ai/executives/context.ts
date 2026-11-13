@@ -4,6 +4,7 @@ import { getConstitution } from "@/server/organizations/service";
 import { retrieveMemory } from "@/server/memory/service";
 import { approvedLessons } from "@/server/executives/learning";
 import { retrieveLibrary } from "@/server/executives/library";
+import { retrieveCompanyDocuments } from "@/server/files/company-documents";
 import { PromptRegistry } from "../prompts/registry";
 import { buildExecutivePrompt, resolveCore, type BuiltPrompt, type ContextBundle } from "../prompts/builders";
 import type { Organization, ResolvedExecutive, Role } from "@/types/domain";
@@ -11,7 +12,8 @@ import type { Organization, ResolvedExecutive, Role } from "@/types/domain";
 /**
  * Assembles layered context for one executive and one request. Retrieves only
  * what is relevant: top-k memory within the executive's permitted categories,
- * explicitly attached files, and the project in scope.
+ * the most relevant passages of company documents (every executive), this
+ * executive's own library, explicitly attached files, and the project in scope.
  */
 export async function assembleExecutiveContext(args: {
   organization: Organization;
@@ -23,10 +25,10 @@ export async function assembleExecutiveContext(args: {
   taskInstructions?: string;
   /** True when the answer may use web research (see webResearchFor). */
   webResearch?: boolean;
-}): Promise<BuiltPrompt & { memoryIds: string[]; libraryIds: string[]; lessonIds: string[] }> {
+}): Promise<BuiltPrompt & { memoryIds: string[]; libraryIds: string[]; lessonIds: string[]; documentFileIds: string[] }> {
   const orgId = args.organization.id;
   const d = db();
-  const [constitution, memory, files, project, ceoIntelligence, platformRules, core, webResearchRules, lessons, library] = await Promise.all([
+  const [constitution, memory, files, project, ceoIntelligence, platformRules, core, webResearchRules, lessons, library, companyDocuments] = await Promise.all([
     getConstitution(orgId),
     retrieveMemory({ organizationId: orgId, query: args.query, executiveRole: args.exec.role_code, allowedCategories: args.exec.model.memory_categories, projectId: args.projectId, viewerRole: args.viewerRole, limit: 8 }),
     Promise.all((args.fileIds ?? []).slice(0, 5).map((id) => d.files.get(orgId, id))),
@@ -37,6 +39,8 @@ export async function assembleExecutiveContext(args: {
     args.webResearch ? PromptRegistry.resolve(orgId, "web_research_rules") : Promise.resolve(null),
     approvedLessons(orgId, args.exec.id),
     retrieveLibrary(orgId, args.exec, args.query),
+    // Company-wide documents: every executive draws on them, whatever its memory areas.
+    retrieveCompanyDocuments({ organizationId: orgId, query: args.query, viewerRole: args.viewerRole, excludeFileIds: args.fileIds }),
   ]);
   const ctx: ContextBundle = {
     organization: args.organization,
@@ -47,7 +51,8 @@ export async function assembleExecutiveContext(args: {
     ceoIntelligence,
     lessons,
     library,
+    companyDocuments,
   };
   const built = buildExecutivePrompt({ platformRules, core, exec: args.exec, ctx, taskInstructions: args.taskInstructions, webResearchRules });
-  return { ...built, memoryIds: memory.map((m) => m.record.id), libraryIds: library.map((l) => l.id), lessonIds: lessons.map((l) => l.id) };
+  return { ...built, memoryIds: memory.map((m) => m.record.id), libraryIds: library.map((l) => l.id), lessonIds: lessons.map((l) => l.id), documentFileIds: [...new Set(companyDocuments.map((c) => c.fileId))] };
 }
