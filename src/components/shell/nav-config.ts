@@ -6,6 +6,7 @@ import {
   FolderKanban,
   Gavel,
   GraduationCap,
+  Handshake,
   LayoutDashboard,
   Mail,
   Settings,
@@ -30,6 +31,7 @@ export const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { href: "/executives", label: "Executive Offices", icon: Building2, shortcut: "G E" },
       { href: "/comms", label: "Executive Comms", icon: Mail, shortcut: "G C" },
       { href: "/sessions", label: "C-Level Sessions", icon: Users, shortcut: "G S" },
+      { href: "/crm", label: "CRM", icon: Handshake },
     ],
   },
   {

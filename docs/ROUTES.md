@@ -23,6 +23,7 @@
 | `/reports`, `/reports/[id]` | Reports |
 | `/files` | Files |
 | `/projects`, `/projects/[id]` | Projects |
+| `/crm`, `/crm/contacts[/new\|/[id]]`, `/crm/deals[/new\|/[id]]`, `/crm/transfer` | CRM: pipeline board, contacts, deals, import & export (see CRM.md) |
 | `/settings/[section]`, `/settings/c-level/[slug]` | Settings (18 sections) |
 
 ## API (route handlers)
@@ -47,3 +48,5 @@ Server actions (forms) live beside their domains in `src/server/**/actions.ts`.
 | `/tutorials/[slug]` | One tutorial: overview, at-a-glance flow, numbered steps with screenshots, symbol guide, tips, related guides |
 
 Content lives in `src/config/tutorials.ts`. Screenshots (`public/tutorials/media/*.webp`, from the demo organization) are listed in `src/config/tutorial-media.ts`. `/tutorials` is in the proxy's protected list, so the pages and their images require sign-in. `tests/unit/tutorials.test.ts` checks the slugs, related links, images and coverage of every menu area. To refresh a screenshot, capture the same region from the demo organization, convert it to WebP and update its size in `tutorial-media.ts`.
+
+API: `POST /api/crm/import/preview`, `POST /api/crm/import/commit`, `GET /api/crm/export`.

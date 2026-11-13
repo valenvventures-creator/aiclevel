@@ -12,7 +12,8 @@ export type AuditEvent =
   | "file.upload" | "file.delete"
   | "session.create" | "session.run" | "session.stop" | "report.create" | "report.export" | "report.delete" | "studio.job_create" | "studio.revision"
   | "approval.action" | "ceo_intelligence.change" | "comms.send"
-  | "executive.feedback" | "executive.lesson" | "executive.library";
+  | "executive.feedback" | "executive.lesson" | "executive.library"
+  | "crm.contact" | "crm.deal" | "crm.activity" | "crm.import" | "crm.export";
 
 /** Append-only audit trail. Failures are logged loudly but never block the user action. */
 export async function audit(

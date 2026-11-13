@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Brain, FileText, Mail, MessageSquare, Search, Upload, Users, Workflow, type LucideIcon } from "lucide-react";
+import { ArrowRight, Brain, ContactRound, FileText, Handshake, Mail, MessageSquare, Search, Upload, Users, Workflow, type LucideIcon } from "lucide-react";
 import { ALL_NAV } from "./nav-config";
 import type { ShellExecutive } from "./app-shell";
 import { cn } from "@/lib/utils";
@@ -37,6 +37,8 @@ export function CommandPalette({ onClose, executives }: { onClose: () => void; e
     const actions: Command[] = [
       { id: "message", label: "Message the C-Level", hint: "Executive Comms", icon: Mail, href: "/comms?compose=1", group: "Actions" },
       { id: "session", label: "Start C-Level Session", hint: "Convene leadership", icon: Users, href: "/sessions/new", group: "Actions" },
+      { id: "deal", label: "New deal", hint: "CRM pipeline", icon: Handshake, href: "/crm/deals/new", group: "Actions" },
+      { id: "contact", label: "New contact", hint: "CRM contacts", icon: ContactRound, href: "/crm/contacts/new", group: "Actions" },
       { id: "studio", label: "Open Studio", hint: "Request Finished Work", icon: Workflow, href: "/studio", group: "Actions" },
       { id: "memory", label: "Search Memory", hint: "C-Level Memory", icon: Brain, href: "/memory", group: "Actions" },
       { id: "upload", label: "Upload File", hint: "Files", icon: Upload, href: "/files?upload=1", group: "Actions" },

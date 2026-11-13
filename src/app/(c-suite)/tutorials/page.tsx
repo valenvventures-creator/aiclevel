@@ -15,6 +15,7 @@ const AREA_TUTORIAL: Record<string, string> = {
   "/executives": "executive-offices",
   "/comms": "executive-comms",
   "/sessions": "c-level-sessions",
+  "/crm": "crm",
   "/memory": "c-level-memory",
   "/studio": "c-level-studio",
   "/decisions": "decisions",
