@@ -18,19 +18,19 @@ describe("C-Level Memory retrieval", () => {
     expect(canView(memory({ title: "x", content: "y", visibility: "LEADERSHIP" }), "EXECUTIVE")).toBe(true);
     expect(canView(memory({ title: "x", content: "y", visibility: "LEADERSHIP" }), "MEMBER")).toBe(false);
   });
-  it("respects executive memory-category permissions", () => {
-    const rows = [memory({ title: "Burn rate", content: "burn rate monthly", category: "FINANCE" }), memory({ title: "Burn rate brand", content: "burn rate monthly", category: "BRAND" })];
-    const out = rankMemories(rows, { ...base, query: "burn rate", allowedCategories: ["FINANCE"] });
-    expect(out.map((r) => r.record.category)).toEqual(["FINANCE"]);
+  it("lets every executive draw on all of C-Level Memory, ranking its focus areas first", () => {
+    const rows = [memory({ title: "Burn rate brand", content: "burn rate monthly", category: "BRAND" }), memory({ title: "Burn rate", content: "burn rate monthly", category: "FINANCE" })];
+    // A CFO-style focus ranks Finance first, but the Brand entry is still available.
+    const cfo = rankMemories(rows, { ...base, query: "burn rate", focusCategories: ["FINANCE"] });
+    expect(cfo.map((r) => r.record.category)).toEqual(["FINANCE", "BRAND"]);
+    // A CCO-style focus (no Finance) still sees the Finance entry.
+    const cco = rankMemories(rows, { ...base, query: "burn rate", focusCategories: ["BRAND", "COMMUNICATIONS"] });
+    expect(cco.map((r) => r.record.category)).toEqual(["BRAND", "FINANCE"]);
   });
-  it("lets every executive recall approved decisions, but not unverified ones", () => {
-    const rows = [
-      memory({ title: "Decision: UK expansion", content: "UK expansion pilot approved", category: "DECISIONS", status: "VERIFIED" }),
-      memory({ title: "Decision draft: UK expansion", content: "UK expansion pilot proposed", category: "DECISIONS", status: "PROPOSED" }),
-    ];
-    // e.g. the CHRO, whose categories do not include DECISIONS
-    const out = rankMemories(rows, { ...base, query: "UK expansion pilot", allowedCategories: ["HR", "PEOPLE"] });
-    expect(out.map((r) => r.record.status)).toEqual(["VERIFIED"]);
+  it("still applies the asking person's visibility, whatever the executive", () => {
+    const rows = [memory({ title: "Board salary bands", content: "salary bands board", category: "HR", visibility: "LEADERSHIP" })];
+    expect(rankMemories(rows, { ...base, query: "salary bands", focusCategories: "ALL" })).toHaveLength(0);
+    expect(rankMemories(rows, { ...base, viewerRole: "ADMIN", query: "salary bands", focusCategories: ["FINANCE"] })).toHaveLength(1);
   });
   it("ranks verified above proposed for equal relevance", () => {
     const rows = [memory({ title: "Pricing", content: "enterprise pricing annual", status: "PROPOSED" }), memory({ title: "Pricing", content: "enterprise pricing annual", status: "VERIFIED" })];

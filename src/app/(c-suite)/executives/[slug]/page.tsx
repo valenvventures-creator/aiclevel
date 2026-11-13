@@ -167,8 +167,8 @@ function ProfileTab({ exec, canConfigure }: { exec: NonNullable<Awaited<ReturnTy
           <div className="flex flex-wrap gap-1.5">
             {exec.model.tool_permissions.map((t) => <Badge key={t} tone="neutral">{TOOL_REGISTRY[t]?.label ?? t}</Badge>)}
           </div>
-          <p className="mt-4 font-mono text-[10px] tracking-[0.18em] text-ivory-faint">MEMORY ACCESS</p>
-          <p className="mt-1 text-xs text-ivory-muted">{exec.model.memory_categories === "ALL" ? "All categories" : exec.model.memory_categories.join(", ").toLowerCase()}</p>
+          <p className="mt-4 font-mono text-[10px] tracking-[0.18em] text-ivory-faint">C-LEVEL MEMORY</p>
+          <p className="mt-1 text-xs text-ivory-muted">All of C-Level Memory{exec.model.memory_categories === "ALL" ? "" : ` · focus: ${exec.model.memory_categories.join(", ").toLowerCase()}`}</p>
           <p className="mt-4 font-mono text-[10px] tracking-[0.18em] text-ivory-faint">ENGINE</p>
           <p className="mt-1 text-xs text-ivory-muted">{exec.model.primary_model} · fallback {exec.model.fallback_model ?? "none"} · prompt {exec.model.prompt_key}_v1</p>
         </Card>

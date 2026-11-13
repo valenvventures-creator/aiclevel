@@ -18,7 +18,7 @@ Every answer's metadata records the `lesson_ids` and `library_ids` that informed
 | **Its own knowledge**: documents uploaded and knowledge written in its **Learning** tab | That executive only | Learning tab (`executives.configure`) | [L#] |
 | **Built-in frameworks** for its role | That executive | Library tab: turn on/off | [L#] |
 | **Company documents**: Files tab and onboarding uploads | All seven executives | Files (`files.upload`) | [D#] |
-| **C-Level Memory**: facts, decisions, commitments | Executives whose memory areas include them; approved decisions always | Memory | [M#] |
+| **C-Level Memory**: facts, decisions, commitments | All seven executives (each ranks its focus areas first); the asking person's visibility applies | Memory | [M#] |
 
 ### Private executive documents
 - Uploaded with `POST /api/executives/[slug]/documents`. The file is stored with `files.executive_id` set (migration 012), so it is **not listed in Files** (`listCompanyFiles`) and **not added to C-Level Memory**.
@@ -32,12 +32,12 @@ Every answer's metadata records the `lesson_ids` and `library_ids` that informed
 - **Retrieval:** for each request, enabled items are ranked by lexical similarity to the query, with a small preference for the organization's own items. At most 4 items and about 7,000 characters reach the model, as the `executive_library` layer ("your own knowledge").
 
 ### Company documents (`src/server/files/company-documents.ts`)
-- Every executive, whatever its memory areas, searches the organization's company files for each request: documents are split into ~1,600-character passages, and the 3 most relevant passages (at most 2 per file, ~6,000 characters) reach the model as the `company_documents` layer.
+- Every executive searches the organization's company files for each request: documents are split into ~1,600-character passages, and the 3 most relevant passages (at most 2 per file, ~6,000 characters) reach the model as the `company_documents` layer.
 - The 80 most recent readable files are considered, the first 60,000 characters of each. Files private to one executive are excluded.
 - Documents uploaded before their format was readable get their text read in the background (`backfillDocumentText`, scheduled with `after()` from `requireContext`).
 
-## Skills and memory areas
-In Settings → A.I. C-Level → Configure, admins can now edit each executive's **skills** ("Name — description" per line; given to the model as its expertise) and **memory areas** (all, or chosen categories). Approved decisions are always shared with every executive (`isSharedDecision`).
+## Skills and memory focus
+In Settings → A.I. C-Level → Configure, admins can now edit each executive's **skills** ("Name — description" per line; given to the model as its expertise) and **memory focus** (no particular focus, or chosen categories ranked first). Every executive draws on all of C-Level Memory.
 
 ## Data and security
 Migration 009 adds `executive_feedback`, `executive_lessons` and `executive_library_items`, each with `organization_id` and RLS.

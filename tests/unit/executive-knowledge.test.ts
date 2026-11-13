@@ -52,7 +52,7 @@ describe("each executive's own knowledge vs company documents", () => {
       assembleExecutiveContext({ organization: org, viewerRole: "OWNER", exec: (await AIExecutiveRegistry.resolve(org.id, (role === "CFO" ? cfo : cco)!.id))!, query });
     const [forCfo, forCco] = await Promise.all([ask("CFO"), ask("CCO")]);
 
-    // Both executives draw on the company document — including the CCO, whose memory areas exclude documents.
+    // Both executives draw on the company document — including the CCO, whose focus areas exclude documents.
     expect(forCfo.system).toContain("# COMPANY DOCUMENTS");
     expect(forCfo.system).toContain("Operating plan.txt");
     expect(forCco.system).toContain("Operating plan.txt");
@@ -60,5 +60,20 @@ describe("each executive's own knowledge vs company documents", () => {
     // Only the CFO sees its private document.
     expect(forCfo.system).toContain("Discount approval matrix");
     expect(forCco.system).not.toContain("Discount approval matrix");
+  });
+
+  it("every executive draws on all of C-Level Memory, not only its focus areas", async () => {
+    const { newId, nowIso } = await import("@/server/db/store");
+    const now = nowIso();
+    await db().memory.insert({
+      id: newId(), organization_id: org.id, project_id: null, title: "Cash runway", content: "Cash runway is 14 months at the current monthly burn.", category: "FINANCE", importance: 4, status: "VERIFIED", pinned: false,
+      source_type: "HUMAN_ENTRY", source_id: null, executive_relevance: [], visibility: "ORGANIZATION", confidence: 1, created_by: "u1", verified_by: "u1", embedding: null, created_at: now, updated_at: now,
+    } as never);
+    const cco = await AIExecutiveRegistry.getByRole(org.id, "CCO");
+    expect(cco!.id).toBeTruthy();
+    const resolved = (await AIExecutiveRegistry.resolve(org.id, cco!.id))!;
+    expect(resolved.model.memory_categories).not.toContain("FINANCE");
+    const built = await assembleExecutiveContext({ organization: org, viewerRole: "MEMBER", exec: resolved, query: "How long is our cash runway?" });
+    expect(built.system).toContain("Cash runway is 14 months");
   });
 });

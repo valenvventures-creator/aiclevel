@@ -9,7 +9,7 @@ import { listCompanyFiles } from "./service";
  *
  * Company-wide files (the Files tab and the foundational documents uploaded
  * during onboarding) are searched for every request, by all seven executives,
- * whatever their memory areas. Each document is split into passages and only
+ * whatever their focus areas. Each document is split into passages and only
  * the few passages most relevant to the question reach the model, within a
  * character budget. Files private to one executive (its Learning tab) are
  * excluded here; that executive reads them through its own library.

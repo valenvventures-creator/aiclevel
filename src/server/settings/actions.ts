@@ -183,14 +183,14 @@ export async function updateExecutiveConfigAction(_: SettingsState, fd: FormData
     const ctx = await authorize("executives.configure");
     const p = ExecPatch.parse(Object.fromEntries(fd));
     const tools = fd.getAll("tools").map(String).filter((t) => t in TOOL_REGISTRY);
-    // Memory areas: "all", or the chosen categories (at least one).
+    // Memory focus: no particular focus ("ALL"), or the chosen focus areas (at least one). Every executive can draw on all memory.
     const areas = fd.getAll("memory_categories").map(String);
     const memory_categories: AIExecutiveModelConfig["memory_categories"] | undefined = fd.has("memory_scope")
       ? fd.get("memory_scope") === "ALL"
         ? "ALL"
         : (MEMORY_CATEGORIES.filter((c) => areas.includes(c)) as MemoryCategory[])
       : undefined;
-    if (Array.isArray(memory_categories) && memory_categories.length === 0) return { error: "Choose at least one memory area, or allow all areas." };
+    if (Array.isArray(memory_categories) && memory_categories.length === 0) return { error: "Tick at least one focus area, or choose No particular focus." };
     const skills = fd.has("skills") ? parseSkills(String(fd.get("skills"))) : null;
     const exec = await AIExecutiveRegistry.getExecutive(ctx.organization.id, p.executive_id);
     if (!exec) return { error: "Executive not found." };

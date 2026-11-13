@@ -27,7 +27,7 @@ Custom specialist executives use `role_code = CUSTOM_*`, `is_core = false`; noth
 - Outputs record `prompt_version` (e.g. `cfo_core_v1+financial_review_v1`).
 
 ### Context layers (fixed order)
-1 Platform rules → 2 Organization Constitution → 3 Executive role → 4 Persona → 5 Expertise → 6 Human CEO leadership intelligence (**CEO only**, included items only) → 7 Task instructions → 8 Relevant C-Level Memory (top-k, permitted categories) → 8a This executive's own knowledge (library) → 8b Company documents (most relevant passages; **every executive**) → 9 Attached files → 10 Project → 11 Recent conversation (≤12 turns, as messages) → 12 Current request.
+1 Platform rules → 2 Organization Constitution → 3 Executive role → 4 Persona → 5 Expertise → 6 Human CEO leadership intelligence (**CEO only**, included items only) → 7 Task instructions → 8 Relevant C-Level Memory (top-k from all of it, focus areas ranked first, asking person's visibility) → 8a This executive's own knowledge (library) → 8b Company documents (most relevant passages; **every executive**) → 9 Attached files → 10 Project → 11 Recent conversation (≤12 turns, as messages) → 12 Current request.
 
 Untrusted content is wrapped in `<organization_memory>`, `<company_documents>`, `<executive_library>`, `<files>`, `<project>`, `<retrieved_content>`, `<human_leadership_intelligence>`; closing-tag injection is neutralised and platform rules declare these blocks to be data.
 
