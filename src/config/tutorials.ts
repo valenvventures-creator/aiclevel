@@ -495,7 +495,7 @@ export const TUTORIALS: Tutorial[] = [
     who: "Everyone can read; Members and above add; Owners, Admins and Executives verify and delete",
     open: { href: "/memory", label: "Open C-Level Memory" },
     overview:
-      "C-Level Memory is not chat history. It holds facts, decisions, commitments and lessons about your organization, each with where it came from. The executives search it for every answer, but only the parts relevant to the question. Anything an A.I. Executive concludes arrives as PROPOSED and never becomes organizational fact until a person confirms it.",
+      "C-Level Memory is not chat history. It holds facts, decisions, commitments and lessons about your organization, each with where it came from. All seven executives search it for every answer, but only the parts relevant to the question; each one ranks its own focus areas first. Anything an A.I. Executive concludes arrives as PROPOSED and never becomes organizational fact until a person confirms it.",
     flow: [
       { icon: BookmarkPlus, label: "Add or save" },
       { icon: BadgeCheck, label: "Verify" },
@@ -511,7 +511,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: "Add knowledge",
         icon: BookmarkPlus,
-        body: "Use Add to C-Level Memory: a Title and Content, a Category, Importance (1 to 5), Visibility (Organization, Leadership only or Owner only), an optional Project, and which executives it is Most relevant to. Things you add yourself count as confirmed.",
+        body: "Use Add to C-Level Memory: a Title and Content, a Category, Importance (1 to 5), Visibility (Organization, Leadership only or Owner only), an optional Project, and which executives it is Most relevant to. Things you add yourself count as confirmed. Every executive can use it; Visibility decides for whom: an executive only uses a Leadership only entry when answering the Owner, an Admin or an Executive, and an Owner only entry when answering the Owner.",
       },
       {
         title: "Confirm what's proposed",
@@ -526,7 +526,7 @@ export const TUTORIALS: Tutorial[] = [
       { kind: "badge", text: "USER CONFIRMED", tone: "ok", meaning: "Added or edited by a person." },
       { kind: "icon", icon: Pin, label: "Pinned", meaning: "Given extra weight when executives search memory." },
     ],
-    tips: ["Approved decisions are shared with all seven executives, whatever memory areas each one normally searches."],
+    tips: ["Most relevant to makes an entry come up more readily for the executives you tick; it does not hide it from the others."],
     related: ["files", "decisions", "configuring-executives"],
   },
   {
@@ -818,10 +818,10 @@ export const TUTORIALS: Tutorial[] = [
       { title: "Identity and persona", icon: Users, body: "Change the title, functional mandate and description; then the persona: core question, north star, communication and decision style, reasoning framework, output preferences, risk constraints and system instructions. Be specific, e.g. “Always give base, upside and downside cases.”" },
       { title: "Model and effort", icon: Sparkles, body: "Choose the provider and model, a fallback, and the reasoning effort (low to max). Higher effort means deeper but slower and more expensive answers; very high effort can make long conversations hit the time limit." },
       {
-        title: "Skills and memory areas",
+        title: "Skills and memory focus",
         icon: Brain,
-        body: "Skills: one per line as “Name — what it covers”. Memory areas: let the executive search all of C-Level Memory, or only the areas you tick. Approved decisions are always shared.",
-        image: { name: "configure-memory", alt: "The Memory areas section with area checkboxes", caption: DEMO },
+        body: "Skills: one per line as “Name — what it covers”. Memory focus: every executive draws on all of C-Level Memory; tick the areas this executive should rank first, or choose No particular focus.",
+        image: { name: "configure-memory", alt: "The Memory focus section with focus-area checkboxes", caption: DEMO },
       },
       { title: "Tools", icon: Plug, body: "Tick the tools this executive may use, such as Web research. Tools marked “requires approval” always go through a human approval. Press Save executive configuration." },
     ],

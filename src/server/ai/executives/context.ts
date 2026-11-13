@@ -11,7 +11,8 @@ import type { Organization, ResolvedExecutive, Role } from "@/types/domain";
 
 /**
  * Assembles layered context for one executive and one request. Retrieves only
- * what is relevant: top-k memory within the executive's permitted categories,
+ * what is relevant: top-k C-Level Memory (all of it, focus areas first; the asking
+ * person's visibility applies),
  * the most relevant passages of company documents (every executive), this
  * executive's own library, explicitly attached files, and the project in scope.
  */
@@ -30,7 +31,7 @@ export async function assembleExecutiveContext(args: {
   const d = db();
   const [constitution, memory, files, project, ceoIntelligence, platformRules, core, webResearchRules, lessons, library, companyDocuments] = await Promise.all([
     getConstitution(orgId),
-    retrieveMemory({ organizationId: orgId, query: args.query, executiveRole: args.exec.role_code, allowedCategories: args.exec.model.memory_categories, projectId: args.projectId, viewerRole: args.viewerRole, limit: 8 }),
+    retrieveMemory({ organizationId: orgId, query: args.query, executiveRole: args.exec.role_code, focusCategories: args.exec.model.memory_categories, projectId: args.projectId, viewerRole: args.viewerRole, limit: 8 }),
     Promise.all((args.fileIds ?? []).slice(0, 5).map((id) => d.files.get(orgId, id))),
     args.projectId ? d.projects.get(orgId, args.projectId) : Promise.resolve(null),
     args.exec.role_code === "CEO" ? d.ceoIntelligence.list(orgId, { where: { included: true }, limit: 20 }) : Promise.resolve([]),
@@ -39,7 +40,7 @@ export async function assembleExecutiveContext(args: {
     args.webResearch ? PromptRegistry.resolve(orgId, "web_research_rules") : Promise.resolve(null),
     approvedLessons(orgId, args.exec.id),
     retrieveLibrary(orgId, args.exec, args.query),
-    // Company-wide documents: every executive draws on them, whatever its memory areas.
+    // Company-wide documents: every executive draws on them.
     retrieveCompanyDocuments({ organizationId: orgId, query: args.query, viewerRole: args.viewerRole, excludeFileIds: args.fileIds }),
   ]);
   const ctx: ContextBundle = {

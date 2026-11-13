@@ -74,11 +74,11 @@ export default async function ConfigureExecutivePage({ params }: PageProps<"/set
           <Textarea id="skills" name="skills" aria-label="Skills" rows={Math.min(12, Math.max(4, e.skills.length + 1))} defaultValue={e.skills.map((s) => (s.description ? `${s.name} — ${s.description}` : s.name)).join("\n")} placeholder="Scenario modeling — base, upside and downside cases with explicit drivers" />
         </Card>
         <Card className="space-y-3">
-          <SectionTitle>Memory areas</SectionTitle>
-          <p className="text-xs text-ivory-muted">Which parts of C-Level Memory this executive searches when answering. Approved decisions are always shared with every executive.</p>
+          <SectionTitle>Memory focus</SectionTitle>
+          <p className="text-xs text-ivory-muted">All seven executives draw on all of C-Level Memory. Focus areas are ranked first for this executive when they are relevant. Each entry&apos;s visibility still decides whether it can be used in an answer to a given person.</p>
           <div className="flex flex-wrap gap-4 text-sm">
-            <label className="flex items-center gap-2"><input type="radio" name="memory_scope" value="ALL" defaultChecked={e.model.memory_categories === "ALL"} className="accent-gold-400" /> All areas</label>
-            <label className="flex items-center gap-2"><input type="radio" name="memory_scope" value="SELECTED" defaultChecked={e.model.memory_categories !== "ALL"} className="accent-gold-400" /> Only the areas ticked below</label>
+            <label className="flex items-center gap-2"><input type="radio" name="memory_scope" value="ALL" defaultChecked={e.model.memory_categories === "ALL"} className="accent-gold-400" /> No particular focus</label>
+            <label className="flex items-center gap-2"><input type="radio" name="memory_scope" value="SELECTED" defaultChecked={e.model.memory_categories !== "ALL"} className="accent-gold-400" /> Focus on the areas ticked below</label>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
             {MEMORY_CATEGORIES.map((c) => (

@@ -8,7 +8,7 @@ export const TUTORIAL_MEDIA = {
   "ceo-intelligence": { width: 1176, height: 836 },
   "comms-compose": { width: 1176, height: 823 },
   "comms": { width: 1176, height: 836 },
-  "configure-memory": { width: 868, height: 356 },
+  "configure-memory": { width: 868, height: 372 },
   "configure": { width: 868, height: 284 },
   "conversation": { width: 832, height: 531 },
   "decisions": { width: 1096, height: 455 },
