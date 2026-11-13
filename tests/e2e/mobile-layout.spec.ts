@@ -14,6 +14,7 @@ const APP = [
   "/executives/chief-financial-officer?tab=library",
   "/executives/chief-financial-officer?tab=learning",
   "/crm",
+  "/projects?view=map",
   "/crm/contacts",
   "/crm/transfer",
   "/crm/deals/new",

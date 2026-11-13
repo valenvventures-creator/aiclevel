@@ -344,3 +344,27 @@ body {
   .draw-underline path { stroke-dashoffset: 0; animation: none; }
   .grain::after { animation: none; }
 }
+
+/* ------------------------------------------------------------------ */
+/* Project maps (Leaflet) — dark, gold, on-brand                       */
+/* ------------------------------------------------------------------ */
+.ta-map.leaflet-container { background: #05070d; font: inherit; }
+/* OpenStreetMap's standard tiles, turned into a dark gold-friendly map. */
+.ta-map .ta-tiles-dark { filter: invert(100%) hue-rotate(180deg) brightness(88%) contrast(92%) saturate(35%); }
+.ta-map .leaflet-control-zoom a { background: var(--ink-900); color: var(--ivory); border-color: var(--line-gold); }
+.ta-map .leaflet-control-zoom a:hover { background: #121726; color: var(--gold-300); }
+.ta-map .leaflet-bar { border: 1px solid var(--line-gold); border-radius: 10px; overflow: hidden; }
+.ta-map.leaflet-container .leaflet-control-attribution { background: rgba(5, 7, 13, 0.75); color: rgba(255, 255, 255, 0.5); font-size: 10px; }
+.ta-map.leaflet-container .leaflet-control-attribution a { color: rgba(242, 207, 104, 0.8); }
+.ta-map .leaflet-popup-content-wrapper { background: var(--ink-900); color: var(--ivory); border: 1px solid var(--line-gold); border-radius: 16px; box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.8); }
+.ta-map .leaflet-popup-tip { background: var(--ink-900); border: 1px solid var(--line-gold); }
+.ta-map .leaflet-popup-content { margin: 12px; }
+.ta-map .leaflet-popup-close-button { color: rgba(255, 255, 255, 0.6) !important; }
+.ta-map .leaflet-tooltip { background: var(--ink-900); color: var(--ivory); border: 1px solid var(--line-gold); border-radius: 8px; box-shadow: none; font-size: 12px; }
+.ta-map .leaflet-tooltip-top::before { border-top-color: var(--line-gold); }
+.ta-pin { background: none; border: none; }
+.ta-pop-img { width: 100%; height: 110px; object-fit: cover; border-radius: 10px; margin-bottom: 8px; }
+.ta-pop-status { font-family: var(--font-code), monospace; font-size: 9px; letter-spacing: 0.16em; color: var(--gold-300); margin: 0; }
+.ta-pop-name { font-family: var(--font-head), sans-serif; font-size: 15px; font-weight: 600; margin: 2px 0 0; }
+.ta-pop-place { font-size: 12px; color: rgba(255, 255, 255, 0.62); margin: 4px 0 0; }
+.ta-pop-link { display: inline-block; margin-top: 8px; font-size: 12px; color: var(--gold-300) !important; }
