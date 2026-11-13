@@ -74,7 +74,23 @@ const blobs = {
   },
 };
 
-export async function storeFile(args: { organization: Organization; userId: string; filename: string; bytes: Uint8Array; projectId?: string | null }): Promise<FileRecord> {
+/** Company-wide file (Files tab, onboarding) — not one executive's private upload. */
+export function isCompanyFile(f: Pick<FileRecord, "executive_id">): boolean {
+  return !f.executive_id;
+}
+
+/** Files shared by the whole organization (every executive draws on them). */
+export async function listCompanyFiles(orgId: string, opts: { limit?: number; projectId?: string } = {}): Promise<FileRecord[]> {
+  const all = await db().files.list(orgId, { orderBy: "created_at", desc: true, ...(opts.projectId ? { where: { project_id: opts.projectId } } : {}) });
+  const company = all.filter(isCompanyFile);
+  return opts.limit ? company.slice(0, opts.limit) : company;
+}
+
+/**
+ * Stores an upload. With `executiveId` the file is private to that executive
+ * (its Learning tab): it is not added to C-Level Memory and not listed in Files.
+ */
+export async function storeFile(args: { organization: Organization; userId: string; filename: string; bytes: Uint8Array; projectId?: string | null; executiveId?: string | null }): Promise<FileRecord> {
   const v = validateUpload(args.filename, args.bytes);
   if (!v.ok) throw new UploadError(v.error);
   const id = newId();
@@ -91,14 +107,14 @@ export async function storeFile(args: { organization: Organization; userId: stri
   const extracted = readable ? await extractText(v.ext, args.bytes) : null;
   const rec: FileRecord = {
     id, organization_id: args.organization.id, project_id: args.projectId ?? null, uploaded_by: args.userId, filename, mime_type: v.mime, size: args.bytes.byteLength,
-    storage_path, category: CATEGORY[v.ext] ?? "Document", processing_status: readable && !extracted ? "FAILED" : "READY", extracted_text: extracted, created_at: nowIso(),
+    storage_path, category: CATEGORY[v.ext] ?? "Document", processing_status: readable && !extracted ? "FAILED" : "READY", extracted_text: extracted, executive_id: args.executiveId ?? null, created_at: nowIso(),
   };
   await db().files.insert(rec);
-  if (extracted) {
+  if (extracted && !args.executiveId) {
     // Searchable document memory is PROPOSED until a human verifies it.
     await db().memory.insert({ id: newId(), organization_id: args.organization.id, project_id: rec.project_id, title: `Document: ${filename}`, content: extracted.slice(0, 1500), category: "DOCUMENTS", importance: 2, status: "PROPOSED", pinned: false, source_type: "UPLOADED_DOCUMENT", source_id: id, created_by: args.userId, verified_by: null, confidence: 0.7, embedding: lexicalEmbedding(extracted.slice(0, 4000)), visibility: "ORGANIZATION", executive_relevance: [], created_at: nowIso(), updated_at: nowIso() });
   }
-  await audit(args.organization.id, args.userId, "file.upload", "file", id, { mime: v.mime, size: rec.size });
+  await audit(args.organization.id, args.userId, "file.upload", "file", id, { mime: v.mime, size: rec.size, ...(args.executiveId ? { executive_id: args.executiveId } : {}) });
   return rec;
 }
 
@@ -127,6 +143,31 @@ export async function ensureExtracted(rec: FileRecord): Promise<string> {
   const text = (await extractText(ext, bytes)) ?? "";
   await db().files.update(rec.organization_id, rec.id, { extracted_text: text || null, processing_status: text ? "READY" : "FAILED" });
   return text;
+}
+
+const backfilled = new Set<string>();
+const BACKFILL_PER_RUN = 10;
+
+/**
+ * Reads the text of documents uploaded before their format was readable
+ * (e.g. PDFs and Word files from onboarding), so every executive can draw on
+ * them. Runs once per organization per server instance, after the response.
+ */
+export async function backfillDocumentText(orgId: string): Promise<number> {
+  if (backfilled.has(orgId)) return 0;
+  backfilled.add(orgId);
+  let done = 0;
+  try {
+    const pending = (await db().files.list(orgId)).filter((f) => f.processing_status === "PENDING" && !(f.extracted_text ?? "").trim() && canExtract(f.filename.toLowerCase().split(".").pop() ?? ""));
+    for (const f of pending.slice(0, BACKFILL_PER_RUN)) {
+      if (await ensureExtracted(f)) done++;
+    }
+    if (pending.length > BACKFILL_PER_RUN) backfilled.delete(orgId); // more next time
+  } catch (err) {
+    backfilled.delete(orgId);
+    console.error("[files] reading older documents failed", orgId, err instanceof Error ? err.message : err);
+  }
+  return done;
 }
 
 export async function deleteFile(rec: FileRecord) {

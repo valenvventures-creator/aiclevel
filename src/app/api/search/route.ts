@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { listCompanyFiles } from "@/server/files/service";
 import { apiError } from "@/lib/http";
 import { requireContext } from "@/server/organizations/service";
 import { db } from "@/server/db/store";
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
     const has = (...s: (string | null | undefined)[]) => s.some((x) => x?.toLowerCase().includes(q));
     const [execs, convs, comms, sessions, memory, files, reports, projects, jobs, decisions] = await Promise.all([
       d.executives.list(orgId), d.conversations.list(orgId, { where: { user_id: ctx.user.id }, limit: 300 }), d.communications.list(orgId, { limit: 500 }), d.sessions.list(orgId, { limit: 300 }),
-      can(ctx.role, "memory.read") ? d.memory.list(orgId, { limit: 1000 }) : [], d.files.list(orgId, { limit: 500 }), d.reports.list(orgId, { limit: 300 }), d.projects.list(orgId), d.productionJobs.list(orgId, { limit: 300 }), d.decisions.list(orgId, { limit: 300 }),
+      can(ctx.role, "memory.read") ? d.memory.list(orgId, { limit: 1000 }) : [], listCompanyFiles(orgId, { limit: 500 }), d.reports.list(orgId, { limit: 300 }), d.projects.list(orgId), d.productionJobs.list(orgId, { limit: 300 }), d.decisions.list(orgId, { limit: 300 }),
     ]);
     const results = [
       ...execs.filter((e) => has(e.title, e.functional_mandate, e.short_title)).map((e) => ({ type: "Executive", id: e.id, title: e.title, snippet: e.functional_mandate, href: `/executives/${e.slug}` })),

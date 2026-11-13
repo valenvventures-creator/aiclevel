@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
+import { listCompanyFiles } from "@/server/files/service";
 import { Download, FileText, Files as FilesIcon, Image as ImageIcon, Sheet } from "lucide-react";
 import { FileUploader } from "@/components/files/file-uploader";
 import { Badge, Card, EmptyState, PageHeader, SectionTitle } from "@/components/ui/primitives";
 import { formatBytes, formatRelative } from "@/lib/utils";
-import { db } from "@/server/db/store";
 import { requireContext } from "@/server/organizations/service";
 import { can } from "@/server/auth/permissions";
 import { deleteFileAction } from "@/server/files/actions";
@@ -14,11 +14,11 @@ const icon = (mime: string) => (mime.startsWith("image/") ? ImageIcon : mime.inc
 
 export default async function FilesPage() {
   const ctx = await requireContext();
-  const files = await db().files.list(ctx.organization.id, { orderBy: "created_at", desc: true });
+  const files = await listCompanyFiles(ctx.organization.id);
   const canDelete = can(ctx.role, "files.delete");
   return (
     <div>
-      <PageHeader eyebrow="Files" title="Organizational document library" description="Private to your organization. Downloads are authorized per request — never permanent public links. Text from documents becomes searchable by your executives." />
+      <PageHeader eyebrow="Files" title="Company documents" description="Shared by all seven executives: each one draws on these documents when they are relevant to a question. For knowledge only one executive should use, upload it in that executive's Learning tab. Private to your organization; downloads are authorized per request." />
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div>
           {files.length === 0 ? (

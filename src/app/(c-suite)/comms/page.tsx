@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { listCompanyFiles } from "@/server/files/service";
 import type { Metadata } from "next";
 import { Archive, ArrowLeft, FileEdit, Inbox, Mail, PenSquare, Search, Send, Star } from "lucide-react";
 import { ExecutiveAvatar } from "@/components/executives/executive-avatar";
@@ -43,7 +44,7 @@ export default async function CommsPage({ searchParams }: PageProps<"/comms">) {
     d.sessions.list(orgId, { orderBy: "created_at", desc: true, limit: 10 }),
     d.memory.list(orgId, { orderBy: "updated_at", desc: true, limit: 10 }),
     d.projects.list(orgId, { limit: 10 }),
-    d.files.list(orgId, { orderBy: "created_at", desc: true, limit: 10 }),
+    listCompanyFiles(orgId, { limit: 10 }),
   ]);
   const execMap = new Map(execs.map((e) => [e.id, e]));
   // Only messages this user sent or received.

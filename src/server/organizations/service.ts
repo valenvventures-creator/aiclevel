@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { dataMode } from "@/lib/env";
@@ -12,6 +13,7 @@ import { assertCan, type Capability } from "@/server/auth/permissions";
 import { seedExecutivesForOrganization } from "@/server/executives/seed";
 import { audit } from "@/server/audit";
 import { upgradeStoredLabels } from "@/server/organizations/stored-labels";
+import { backfillDocumentText } from "@/server/files/service";
 import type { Organization, OrganizationConstitution, OrganizationMember, Role, UserProfile } from "@/types/domain";
 
 export interface Membership {
@@ -59,6 +61,12 @@ export const requireContext = cache(async (): Promise<RequestContext> => {
   const preferred = (await cookies()).get(ORG_COOKIE)?.value;
   const active = memberships.find((m) => m.organization.id === preferred) ?? memberships[0];
   await upgradeStoredLabels(active.organization);
+  // Older PDFs/Word files get their text read in the background so every executive can use them.
+  try {
+    after(() => backfillDocumentText(active.organization.id));
+  } catch {
+    /* outside a request (tests) */
+  }
   return { user, organization: active.organization, member: active.member, role: active.member.role, memberships };
 });
 

@@ -439,6 +439,12 @@ export interface FileRecord {
   category: string;
   processing_status: "PENDING" | "PROCESSING" | "READY" | "FAILED";
   extracted_text: string | null;
+  /**
+   * Set: private to one executive (uploaded in its Learning tab) — used only by
+   * that executive, not listed in Files and not added to C-Level Memory.
+   * Null/absent: a company-wide file every executive draws on.
+   */
+  executive_id?: UUID | null;
   created_at: ISODate;
 }
 

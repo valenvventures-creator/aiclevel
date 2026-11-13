@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { listCompanyFiles } from "@/server/files/service";
 import { NewSessionForm } from "@/components/sessions/new-session-form";
 import { PageHeader } from "@/components/ui/primitives";
 import { SESSION_MODES } from "@/config/sessions/modes";
@@ -12,7 +13,7 @@ export default async function NewSessionPage({ searchParams }: PageProps<"/sessi
   const sp = await searchParams;
   const ctx = await authorize("sessions.create");
   const orgId = ctx.organization.id;
-  const [execs, projects, files] = await Promise.all([AIExecutiveRegistry.getAllExecutives(orgId), db().projects.list(orgId), db().files.list(orgId, { orderBy: "created_at", desc: true, limit: 30 })]);
+  const [execs, projects, files] = await Promise.all([AIExecutiveRegistry.getAllExecutives(orgId), db().projects.list(orgId), listCompanyFiles(orgId, { limit: 30 })]);
   return (
     <div>
       <PageHeader eyebrow="C-Level Session" title="Convene your C-Level" description="Define the question, choose who sits at the table and how they should work together." />
